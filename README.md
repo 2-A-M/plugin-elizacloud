@@ -7,7 +7,7 @@ This plugin provides integration with ElizaOS Cloud's models.
 Add the plugin to your character configuration:
 
 ```json
-"plugins": ["@elizaos-plugins/plugin-services"]
+"plugins": ["@elizaos-plugins/plugin-elizacloud"]
 ```
 
 ## Configuration

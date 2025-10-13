@@ -2,7 +2,7 @@
   "lockfileVersion": 1,
   "workspaces": {
     "": {
-      "name": "@elizaos/plugin-services",
+      "name": "@elizaos/plugin-elizacloud",
       "dependencies": {
         "@ai-sdk/openai": "^2.0.32",
         "@elizaos/core": "^1.6.0-alpha.4",

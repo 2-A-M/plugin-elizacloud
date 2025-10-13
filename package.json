@@ -1,5 +1,5 @@
 {
-  "name": "@elizaos/plugin-services",
+  "name": "@elizaos/plugin-elizacloud",
   "version": "1.5.16",
   "type": "module",
   "main": "dist/cjs/index.node.cjs",
@@ -9,7 +9,7 @@
   "sideEffects": false,
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/elizaos-plugins/plugin-services.git"
+    "url": "git+https://github.com/elizaos-plugins/plugin-elizacloud.git"
   },
   "exports": {
     "./package.json": "./package.json",
