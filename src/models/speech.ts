@@ -19,13 +19,13 @@ async function fetchTextToSpeech(
 ): Promise<ReadableStream<Uint8Array> | Readable> {
   const defaultModel = getSetting(
     runtime,
-    "ELIZAOS_TTS_MODEL",
+    "ELIZAOS_CLOUD_TTS_MODEL",
     "gpt-4o-mini-tts",
   );
-  const defaultVoice = getSetting(runtime, "ELIZAOS_TTS_VOICE", "nova");
+  const defaultVoice = getSetting(runtime, "ELIZAOS_CLOUD_TTS_VOICE", "nova");
   const defaultInstructions = getSetting(
     runtime,
-    "ELIZAOS_TTS_INSTRUCTIONS",
+    "ELIZAOS_CLOUD_TTS_INSTRUCTIONS",
     "",
   );
   const baseURL = getBaseURL(runtime);
@@ -55,12 +55,12 @@ async function fetchTextToSpeech(
 
     if (!res.ok) {
       const err = await res.text();
-      throw new Error(`OpenAI TTS error ${res.status}: ${err}`);
+      throw new Error(`ElizaOS Cloud TTS error ${res.status}: ${err}`);
     }
 
     // Ensure response body exists
     if (!res.body) {
-      throw new Error("OpenAI TTS response body is null");
+      throw new Error("ElizaOS Cloud TTS response body is null");
     }
 
     // In Node.js, convert Web ReadableStream to Node.js Readable
@@ -72,7 +72,7 @@ async function fetchTextToSpeech(
     return res.body;
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : String(err);
-    throw new Error(`Failed to fetch speech from OpenAI TTS: ${message}`);
+    throw new Error(`Failed to fetch speech from ElizaOS Cloud TTS: ${message}`);
   }
 }
 
@@ -91,7 +91,7 @@ export async function handleTextToSpeech(
 
   const resolvedModel =
     options.model ||
-    (getSetting(runtime, "ELIZAOS_TTS_MODEL", "gpt-4o-mini-tts") as string);
+    (getSetting(runtime, "ELIZAOS_CLOUD_TTS_MODEL", "gpt-4o-mini-tts") as string);
   logger.log(`[ELIZAOS_CLOUD] Using TEXT_TO_SPEECH model: ${resolvedModel}`);
   try {
     const speechStream = await fetchTextToSpeech(runtime, options);

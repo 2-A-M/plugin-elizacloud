@@ -20,7 +20,7 @@ async function tokenizeText(
 ): Promise<number[]> {
   const modelName =
     model === ModelType.TEXT_SMALL
-      ? (process.env.ELIZAOS_SMALL_MODEL ??
+      ? (process.env.ELIZAOS_CLOUD_SMALL_MODEL ??
         process.env.SMALL_MODEL ??
         "gpt-5-nano")
       : (process.env.LARGE_MODEL ?? "gpt-5-mini");
@@ -41,10 +41,10 @@ async function detokenizeText(
 ): Promise<string> {
   const modelName =
     model === ModelType.TEXT_SMALL
-      ? (process.env.ELIZAOS_SMALL_MODEL ??
+      ? (process.env.ELIZAOS_CLOUD_SMALL_MODEL ??
         process.env.SMALL_MODEL ??
         "gpt-5-nano")
-      : (process.env.ELIZAOS_LARGE_MODEL ??
+      : (process.env.ELIZAOS_CLOUD_LARGE_MODEL ??
         process.env.LARGE_MODEL ??
         "gpt-5-mini");
   return encodingForModel(modelName as TiktokenModel).decode(tokens);

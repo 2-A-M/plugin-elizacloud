@@ -7,7 +7,7 @@ import {
 } from "./utils/config";
 
 /**
- * Initialize and validate OpenAI configuration
+ * Initialize and validate ElizaOS Cloud configuration
  */
 export function initializeOpenAI(
   _config: Record<string, unknown>,
@@ -19,7 +19,10 @@ export function initializeOpenAI(
     try {
       if (!getApiKey(runtime) && !isBrowser()) {
         logger.warn(
-          "ELIZAOS_API_KEY is not set in environment - OpenAI functionality will be limited",
+          "ELIZAOS_CLOUD_API_KEY is not set in environment - ElizaOS Cloud functionality will be limited",
+        );
+        logger.info(
+          "Get your API key from https://www.elizacloud.ai/dashboard/api-keys",
         );
         return;
       }
@@ -30,20 +33,23 @@ export function initializeOpenAI(
         });
         if (!response.ok) {
           logger.warn(
-            `OpenAI API key validation failed: ${response.statusText}`,
+            `ElizaOS Cloud API key validation failed: ${response.statusText}`,
           );
           logger.warn(
-            "OpenAI functionality will be limited until a valid API key is provided",
+            "ElizaOS Cloud functionality will be limited until a valid API key is provided",
+          );
+          logger.info(
+            "Get your API key from https://www.elizacloud.ai/dashboard/api-keys",
           );
         } else {
-          logger.log("OpenAI API key validated successfully");
+          logger.log("ElizaOS Cloud API key validated successfully");
         }
       } catch (fetchError: unknown) {
         const message =
           fetchError instanceof Error ? fetchError.message : String(fetchError);
-        logger.warn(`Error validating OpenAI API key: ${message}`);
+        logger.warn(`Error validating ElizaOS Cloud API key: ${message}`);
         logger.warn(
-          "OpenAI functionality will be limited until a valid API key is provided",
+          "ElizaOS Cloud functionality will be limited until a valid API key is provided",
         );
       }
     } catch (error: unknown) {
@@ -53,7 +59,10 @@ export function initializeOpenAI(
           .join(", ") ||
         (error instanceof Error ? error.message : String(error));
       logger.warn(
-        `OpenAI plugin configuration issue: ${message} - You need to configure the ELIZAOS_API_KEY in your environment variables`,
+        `ElizaOS Cloud plugin configuration issue: ${message} - You need to configure the ELIZAOS_CLOUD_API_KEY in your environment variables`,
+      );
+      logger.info(
+        "Get your API key from https://www.elizacloud.ai/dashboard/api-keys",
       );
     }
   });

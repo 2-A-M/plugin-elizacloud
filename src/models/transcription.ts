@@ -13,7 +13,7 @@ export async function handleTranscription(
 ): Promise<string> {
   let modelName = getSetting(
     runtime,
-    "ELIZAOS_TRANSCRIPTION_MODEL",
+    "ELIZAOS_CLOUD_TRANSCRIPTION_MODEL",
     "gpt-4o-mini-transcribe",
   );
   logger.log(`[ELIZAOS_CLOUD] Using TRANSCRIPTION model: ${modelName}`);

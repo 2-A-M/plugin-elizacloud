@@ -28,7 +28,7 @@ export function isBrowser(): boolean {
  * In this mode, we do not require a real API key on the client and rely on the proxy to inject it.
  */
 export function isProxyMode(runtime: IAgentRuntime): boolean {
-  return isBrowser() && !!getSetting(runtime, "ELIZAOS_BROWSER_BASE_URL");
+  return isBrowser() && !!getSetting(runtime, "ELIZAOS_CLOUD_BROWSER_BASE_URL");
 }
 
 export function getAuthHeader(
@@ -41,31 +41,31 @@ export function getAuthHeader(
 }
 
 /**
- * Retrieves the OpenAI API base URL from runtime settings, environment variables, or defaults, using provider-aware resolution.
+ * Retrieves the ElizaOS Cloud API base URL from runtime settings, environment variables, or defaults.
  *
- * @returns The resolved base URL for OpenAI API requests.
+ * @returns The resolved base URL for ElizaOS Cloud API requests.
  */
 export function getBaseURL(runtime: IAgentRuntime): string {
-  const browserURL = getSetting(runtime, "ELIZAOS_BROWSER_BASE_URL");
+  const browserURL = getSetting(runtime, "ELIZAOS_CLOUD_BROWSER_BASE_URL");
   const baseURL = (
     isBrowser() && browserURL
       ? browserURL
-      : getSetting(runtime, "ELIZAOS_BASE_URL", "https://api.openai.com/v1")
+      : getSetting(runtime, "ELIZAOS_CLOUD_BASE_URL", "https://www.elizacloud.ai/api/v1")
   ) as string;
   logger.debug(`[ELIZAOS_CLOUD] Default base URL: ${baseURL}`);
   return baseURL;
 }
 
 /**
- * Retrieves the OpenAI API base URL for embeddings, falling back to the general base URL.
+ * Retrieves the ElizaOS Cloud API base URL for embeddings, falling back to the general base URL.
  *
- * @returns The resolved base URL for OpenAI embedding requests.
+ * @returns The resolved base URL for ElizaOS Cloud embedding requests.
  */
 export function getEmbeddingBaseURL(runtime: IAgentRuntime): string {
   const embeddingURL = isBrowser()
-    ? getSetting(runtime, "ELIZAOS_BROWSER_EMBEDDING_URL") ||
-      getSetting(runtime, "ELIZAOS_BROWSER_BASE_URL")
-    : getSetting(runtime, "ELIZAOS_EMBEDDING_URL");
+    ? getSetting(runtime, "ELIZAOS_CLOUD_BROWSER_EMBEDDING_URL") ||
+      getSetting(runtime, "ELIZAOS_CLOUD_BROWSER_BASE_URL")
+    : getSetting(runtime, "ELIZAOS_CLOUD_EMBEDDING_URL");
   if (embeddingURL) {
     logger.debug(
       `[ELIZAOS_CLOUD] Using specific embedding base URL: ${embeddingURL}`,
@@ -79,23 +79,24 @@ export function getEmbeddingBaseURL(runtime: IAgentRuntime): string {
 }
 
 /**
- * Helper function to get the API key for OpenAI
+ * Helper function to get the API key for ElizaOS Cloud
+ * Expected format: eliza_<random_32_chars>
  *
  * @param runtime The runtime context
  * @returns The configured API key
  */
 export function getApiKey(runtime: IAgentRuntime): string | undefined {
-  return getSetting(runtime, "ELIZAOS_API_KEY");
+  return getSetting(runtime, "ELIZAOS_CLOUD_API_KEY");
 }
 
 /**
- * Helper function to get the embedding API key for OpenAI, falling back to the general API key if not set.
+ * Helper function to get the embedding API key for ElizaOS Cloud, falling back to the general API key if not set.
  *
  * @param runtime The runtime context
  * @returns The configured API key
  */
 export function getEmbeddingApiKey(runtime: IAgentRuntime): string | undefined {
-  const embeddingApiKey = getSetting(runtime, "ELIZAOS_EMBEDDING_API_KEY");
+  const embeddingApiKey = getSetting(runtime, "ELIZAOS_CLOUD_EMBEDDING_API_KEY");
   if (embeddingApiKey) {
     logger.debug("[ELIZAOS_CLOUD] Using specific embedding API key (present)");
     return embeddingApiKey;
@@ -108,27 +109,29 @@ export function getEmbeddingApiKey(runtime: IAgentRuntime): string | undefined {
 
 /**
  * Helper function to get the small model name with fallbacks
+ * Available models on ElizaOS Cloud: gpt-4o-mini, gpt-4o, claude-3-5-sonnet, gemini-2.0-flash
  *
  * @param runtime The runtime context
  * @returns The configured small model name
  */
 export function getSmallModel(runtime: IAgentRuntime): string {
   return (
-    getSetting(runtime, "ELIZAOS_SMALL_MODEL") ??
-    (getSetting(runtime, "SMALL_MODEL", "gpt-5-nano") as string)
+    getSetting(runtime, "ELIZAOS_CLOUD_SMALL_MODEL") ??
+    (getSetting(runtime, "SMALL_MODEL", "gpt-4o-mini") as string)
   );
 }
 
 /**
  * Helper function to get the large model name with fallbacks
+ * Available models on ElizaOS Cloud: gpt-4o-mini, gpt-4o, claude-3-5-sonnet, gemini-2.0-flash
  *
  * @param runtime The runtime context
  * @returns The configured large model name
  */
 export function getLargeModel(runtime: IAgentRuntime): string {
   return (
-    getSetting(runtime, "ELIZAOS_LARGE_MODEL") ??
-    (getSetting(runtime, "LARGE_MODEL", "gpt-5-mini") as string)
+    getSetting(runtime, "ELIZAOS_CLOUD_LARGE_MODEL") ??
+    (getSetting(runtime, "LARGE_MODEL", "gpt-4o") as string)
   );
 }
 
@@ -140,8 +143,8 @@ export function getLargeModel(runtime: IAgentRuntime): string {
  */
 export function getImageDescriptionModel(runtime: IAgentRuntime): string {
   return (
-    getSetting(runtime, "ELIZAOS_IMAGE_DESCRIPTION_MODEL", "gpt-5-nano") ??
-    "gpt-5-nano"
+    getSetting(runtime, "ELIZAOS_CLOUD_IMAGE_DESCRIPTION_MODEL", "gpt-4o-mini") ??
+    "gpt-4o-mini"
   );
 }
 
@@ -154,7 +157,7 @@ export function getImageDescriptionModel(runtime: IAgentRuntime): string {
 export function getExperimentalTelemetry(runtime: IAgentRuntime): boolean {
   const setting = getSetting(
     runtime,
-    "ELIZAOS_EXPERIMENTAL_TELEMETRY",
+    "ELIZAOS_CLOUD_EXPERIMENTAL_TELEMETRY",
     "false",
   );
   // Convert to string and check for truthy values
