@@ -24,7 +24,7 @@ export async function handleImageGeneration(
   const n = params.n || 1;
   const size = params.size || "1024x1024";
   const prompt = params.prompt;
-  const modelName = "gpt-image-1"; // Updated image model
+  const modelName = "gpt-image-1"; // ElizaOS Cloud image model
   logger.log(`[ELIZAOS_CLOUD] Using IMAGE model: ${modelName}`);
 
   const baseURL = getBaseURL(runtime);
@@ -70,7 +70,7 @@ export async function handleImageDescription(
   const modelName = getImageDescriptionModel(runtime);
   logger.log(`[ELIZAOS_CLOUD] Using IMAGE_DESCRIPTION model: ${modelName}`);
   const maxTokens = Number.parseInt(
-    getSetting(runtime, "ELIZAOS_IMAGE_DESCRIPTION_MAX_TOKENS", "8192") ||
+    getSetting(runtime, "ELIZAOS_CLOUD_IMAGE_DESCRIPTION_MAX_TOKENS", "8192") ||
       "8192",
     10,
   );
@@ -115,7 +115,7 @@ export async function handleImageDescription(
     });
 
     if (!response.ok) {
-      throw new Error(`OpenAI API error: ${response.status}`);
+      throw new Error(`ElizaOS Cloud API error: ${response.status}`);
     }
 
     const result: unknown = await response.json();

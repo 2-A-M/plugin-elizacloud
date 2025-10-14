@@ -24,28 +24,49 @@ export type {
 } from "./types";
 
 /**
- * Defines the OpenAI plugin with its name, description, and configuration options.
+ * Defines the ElizaOS Cloud plugin with its name, description, and configuration options.
+ * 
+ * Configuration:
+ * - ELIZAOS_CLOUD_API_KEY: Your ElizaOS Cloud API key (format: eliza_xxxxx)
+ *   Get it from: https://www.elizacloud.ai/dashboard/api-keys
+ * 
+ * - ELIZAOS_CLOUD_BASE_URL: ElizaOS Cloud API base URL
+ *   Default: https://www.elizacloud.ai/api/v1
+ * 
+ * - ELIZAOS_CLOUD_SMALL_MODEL: Small/fast model for quick tasks
+ *   Available: gpt-4o-mini, gpt-4o, claude-3-5-sonnet, gemini-2.0-flash
+ *   Default: gpt-4o-mini
+ * 
+ * - ELIZAOS_CLOUD_LARGE_MODEL: Large/powerful model for complex tasks
+ *   Available: gpt-4o-mini, gpt-4o, claude-3-5-sonnet, gemini-2.0-flash
+ *   Default: gpt-4o
+ * 
+ * - ELIZAOS_CLOUD_EMBEDDING_MODEL: Model for text embeddings
+ * - ELIZAOS_CLOUD_EMBEDDING_API_KEY: Separate API key for embeddings (optional)
+ * - ELIZAOS_CLOUD_EMBEDDING_URL: Separate URL for embeddings (optional)
+ * - ELIZAOS_CLOUD_IMAGE_DESCRIPTION_MODEL: Model for image description (default: gpt-4o-mini)
+ * 
  * @type {Plugin}
  */
-export const openaiPlugin: Plugin = {
-  name: "openai",
-  description: "OpenAI plugin",
+export const elizaOSCloudPlugin: Plugin = {
+  name: "elizaOSCloud",
+  description: "ElizaOS Cloud plugin - Multi-model AI generation with text, image, and video support",
   config: {
-    ELIZAOS_API_KEY: process.env.ELIZAOS_API_KEY,
-    ELIZAOS_BASE_URL: process.env.ELIZAOS_BASE_URL,
-    ELIZAOS_SMALL_MODEL: process.env.ELIZAOS_SMALL_MODEL,
-    ELIZAOS_LARGE_MODEL: process.env.ELIZAOS_LARGE_MODEL,
+    ELIZAOS_CLOUD_API_KEY: process.env.ELIZAOS_CLOUD_API_KEY,
+    ELIZAOS_CLOUD_BASE_URL: process.env.ELIZAOS_CLOUD_BASE_URL,
+    ELIZAOS_CLOUD_SMALL_MODEL: process.env.ELIZAOS_CLOUD_SMALL_MODEL,
+    ELIZAOS_CLOUD_LARGE_MODEL: process.env.ELIZAOS_CLOUD_LARGE_MODEL,
     SMALL_MODEL: process.env.SMALL_MODEL,
     LARGE_MODEL: process.env.LARGE_MODEL,
-    ELIZAOS_EMBEDDING_MODEL: process.env.ELIZAOS_EMBEDDING_MODEL,
-    ELIZAOS_EMBEDDING_API_KEY: process.env.ELIZAOS_EMBEDDING_API_KEY,
-    ELIZAOS_EMBEDDING_URL: process.env.ELIZAOS_EMBEDDING_URL,
-    ELIZAOS_EMBEDDING_DIMENSIONS: process.env.ELIZAOS_EMBEDDING_DIMENSIONS,
-    ELIZAOS_IMAGE_DESCRIPTION_MODEL:
-      process.env.ELIZAOS_IMAGE_DESCRIPTION_MODEL,
-    ELIZAOS_IMAGE_DESCRIPTION_MAX_TOKENS:
-      process.env.ELIZAOS_IMAGE_DESCRIPTION_MAX_TOKENS,
-    ELIZAOS_EXPERIMENTAL_TELEMETRY: process.env.ELIZAOS_EXPERIMENTAL_TELEMETRY,
+    ELIZAOS_CLOUD_EMBEDDING_MODEL: process.env.ELIZAOS_CLOUD_EMBEDDING_MODEL,
+    ELIZAOS_CLOUD_EMBEDDING_API_KEY: process.env.ELIZAOS_CLOUD_EMBEDDING_API_KEY,
+    ELIZAOS_CLOUD_EMBEDDING_URL: process.env.ELIZAOS_CLOUD_EMBEDDING_URL,
+    ELIZAOS_CLOUD_EMBEDDING_DIMENSIONS: process.env.ELIZAOS_CLOUD_EMBEDDING_DIMENSIONS,
+    ELIZAOS_CLOUD_IMAGE_DESCRIPTION_MODEL:
+      process.env.ELIZAOS_CLOUD_IMAGE_DESCRIPTION_MODEL,
+    ELIZAOS_CLOUD_IMAGE_DESCRIPTION_MAX_TOKENS:
+      process.env.ELIZAOS_CLOUD_IMAGE_DESCRIPTION_MAX_TOKENS,
+    ELIZAOS_CLOUD_EXPERIMENTAL_TELEMETRY: process.env.ELIZAOS_CLOUD_EXPERIMENTAL_TELEMETRY,
   },
   async init(config, runtime) {
     initializeOpenAI(config, runtime);
@@ -66,10 +87,10 @@ export const openaiPlugin: Plugin = {
   },
   tests: [
     {
-      name: "ELIZAOS_plugin_tests",
+      name: "ELIZAOS_CLOUD_plugin_tests",
       tests: [
         {
-          name: "ELIZAOS_test_url_and_api_key_validation",
+          name: "ELIZAOS_CLOUD_test_url_and_api_key_validation",
           fn: async (runtime: IAgentRuntime) => {
             const baseURL = getBaseURL(runtime);
             const response = await fetch(`${baseURL}/models`, {
@@ -90,7 +111,7 @@ export const openaiPlugin: Plugin = {
           },
         },
         {
-          name: "ELIZAOS_test_text_embedding",
+          name: "ELIZAOS_CLOUD_test_text_embedding",
           fn: async (runtime: IAgentRuntime) => {
             try {
               const embedding = await runtime.useModel(
@@ -109,7 +130,7 @@ export const openaiPlugin: Plugin = {
           },
         },
         {
-          name: "ELIZAOS_test_text_large",
+          name: "ELIZAOS_CLOUD_test_text_large",
           fn: async (runtime: IAgentRuntime) => {
             try {
               const text = await runtime.useModel(ModelType.TEXT_LARGE, {
@@ -128,7 +149,7 @@ export const openaiPlugin: Plugin = {
           },
         },
         {
-          name: "ELIZAOS_test_text_small",
+          name: "ELIZAOS_CLOUD_test_text_small",
           fn: async (runtime: IAgentRuntime) => {
             try {
               const text = await runtime.useModel(ModelType.TEXT_SMALL, {
@@ -147,9 +168,9 @@ export const openaiPlugin: Plugin = {
           },
         },
         {
-          name: "ELIZAOS_test_image_generation",
+          name: "ELIZAOS_CLOUD_test_image_generation",
           fn: async (runtime: IAgentRuntime) => {
-            logger.log("ELIZAOS_test_image_generation");
+            logger.log("ELIZAOS_CLOUD_test_image_generation");
             try {
               const image = await runtime.useModel(ModelType.IMAGE, {
                 prompt: "A beautiful sunset over a calm ocean",
@@ -169,7 +190,7 @@ export const openaiPlugin: Plugin = {
           name: "image-description",
           fn: async (runtime: IAgentRuntime) => {
             try {
-              logger.log("ELIZAOS_test_image_description");
+              logger.log("ELIZAOS_CLOUD_test_image_description");
               try {
                 const result = await runtime.useModel(
                   ModelType.IMAGE_DESCRIPTION,
@@ -196,15 +217,15 @@ export const openaiPlugin: Plugin = {
             } catch (e: unknown) {
               const message = e instanceof Error ? e.message : String(e);
               logger.error(
-                `Error in ELIZAOS_test_image_description: ${message}`,
+                `Error in ELIZAOS_CLOUD_test_image_description: ${message}`,
               );
             }
           },
         },
         {
-          name: "ELIZAOS_test_transcription",
+          name: "ELIZAOS_CLOUD_test_transcription",
           fn: async (runtime: IAgentRuntime) => {
-            logger.log("ELIZAOS_test_transcription");
+            logger.log("ELIZAOS_CLOUD_test_transcription");
             try {
               const response = await fetch(
                 "https://upload.wikimedia.org/wikipedia/en/4/40/Chris_Benoit_Voice_Message.ogg",
@@ -227,7 +248,7 @@ export const openaiPlugin: Plugin = {
           },
         },
         {
-          name: "ELIZAOS_test_text_tokenizer_encode",
+          name: "ELIZAOS_CLOUD_test_text_tokenizer_encode",
           fn: async (runtime: IAgentRuntime) => {
             const prompt = "Hello tokenizer encode!";
             const tokens = await runtime.useModel(
@@ -243,7 +264,7 @@ export const openaiPlugin: Plugin = {
           },
         },
         {
-          name: "ELIZAOS_test_text_tokenizer_decode",
+          name: "ELIZAOS_CLOUD_test_text_tokenizer_decode",
           fn: async (runtime: IAgentRuntime) => {
             const prompt = "Hello tokenizer decode!";
             const tokens = await runtime.useModel(
@@ -263,7 +284,7 @@ export const openaiPlugin: Plugin = {
           },
         },
         {
-          name: "ELIZAOS_test_text_to_speech",
+          name: "ELIZAOS_CLOUD_test_text_to_speech",
           fn: async (runtime: IAgentRuntime) => {
             try {
               const response = await fetchTextToSpeech(runtime, {
@@ -276,7 +297,7 @@ export const openaiPlugin: Plugin = {
             } catch (error: unknown) {
               const message =
                 error instanceof Error ? error.message : String(error);
-              logger.error(`Error in ELIZAOS_test_text_to_speech: ${message}`);
+              logger.error(`Error in ELIZAOS_CLOUD_test_text_to_speech: ${message}`);
               throw error;
             }
           },
@@ -285,4 +306,4 @@ export const openaiPlugin: Plugin = {
     },
   ],
 };
-export default openaiPlugin;
+export default elizaOSCloudPlugin;

@@ -1,8 +1,14 @@
 # ElizaOS Cloud Services Plugin
 
-This plugin provides integration with ElizaOS Cloud's models.
+This plugin provides integration with ElizaOS Cloud's multi-model AI platform, including text generation, image creation, video generation, and more.
 
-## Usage
+## Getting Started
+
+### 1. Get Your API Key
+
+Visit [https://www.elizacloud.ai/dashboard/api-keys](https://www.elizacloud.ai/dashboard/api-keys) to create your API key. Your key will be in the format: `eliza_xxxxx`
+
+### 2. Add the Plugin
 
 Add the plugin to your character configuration:
 
@@ -16,61 +22,67 @@ The plugin requires these environment variables (can be set in .env file or char
 
 ```json
 "settings": {
-  "ELIZAOS_API_KEY": "your_ELIZAOS_API_KEY",
-  "ELIZAOS_BASE_URL": "optional_custom_endpoint",
-  "ELIZAOS_SMALL_MODEL": "gpt-4o-mini",
-  "ELIZAOS_LARGE_MODEL": "gpt-4o",
-  "ELIZAOS_EMBEDDING_MODEL": "text-embedding-3-small",
-  "ELIZAOS_EMBEDDING_API_KEY": "your_ELIZAOS_API_KEY_for_embedding",
-  "ELIZAOS_EMBEDDING_URL": "optional_custom_endpoint",
-  "ELIZAOS_EMBEDDING_DIMENSIONS": "1536",
-  "ELIZAOS_IMAGE_DESCRIPTION_MODEL": "gpt-4o-mini",
-  "ELIZAOS_IMAGE_DESCRIPTION_MAX_TOKENS": "8192",
-  "ELIZAOS_EXPERIMENTAL_TELEMETRY": "false",
-  "ELIZAOS_BROWSER_BASE_URL": "https://your-proxy.example.com/openai",
-  "ELIZAOS_BROWSER_EMBEDDING_URL": "https://your-proxy.example.com/openai"
+  "ELIZAOS_CLOUD_API_KEY": "eliza_your_api_key_here",
+  "ELIZAOS_CLOUD_BASE_URL": "https://www.elizacloud.ai/api/v1",
+  "ELIZAOS_CLOUD_SMALL_MODEL": "gpt-4o-mini",
+  "ELIZAOS_CLOUD_LARGE_MODEL": "gpt-4o",
+  "ELIZAOS_CLOUD_EMBEDDING_MODEL": "text-embedding-3-small",
+  "ELIZAOS_CLOUD_EMBEDDING_API_KEY": "eliza_your_api_key_here",
+  "ELIZAOS_CLOUD_EMBEDDING_URL": "https://www.elizacloud.ai/api/v1",
+  "ELIZAOS_CLOUD_EMBEDDING_DIMENSIONS": "1536",
+  "ELIZAOS_CLOUD_IMAGE_DESCRIPTION_MODEL": "gpt-4o-mini",
+  "ELIZAOS_CLOUD_IMAGE_DESCRIPTION_MAX_TOKENS": "8192",
+  "ELIZAOS_CLOUD_EXPERIMENTAL_TELEMETRY": "false",
+  "ELIZAOS_CLOUD_BROWSER_BASE_URL": "https://your-proxy.example.com/api",
+  "ELIZAOS_CLOUD_BROWSER_EMBEDDING_URL": "https://your-proxy.example.com/api"
 }
 ```
 
 Or in `.env` file:
 
-```
-ELIZAOS_API_KEY=your_ELIZAOS_API_KEY
-# Optional overrides:
-ELIZAOS_BASE_URL=optional_custom_endpoint
-ELIZAOS_SMALL_MODEL=gpt-4o-mini
-ELIZAOS_LARGE_MODEL=gpt-4o
-ELIZAOS_EMBEDDING_MODEL=text-embedding-3-small
-ELIZAOS_EMBEDDING_API_KEY=your_ELIZAOS_API_KEY_for_embedding
-ELIZAOS_EMBEDDING_URL=optional_custom_endpoint
-ELIZAOS_EMBEDDING_DIMENSIONS=1536
-ELIZAOS_IMAGE_DESCRIPTION_MODEL=gpt-4o-mini
-ELIZAOS_IMAGE_DESCRIPTION_MAX_TOKENS=8192
-ELIZAOS_EXPERIMENTAL_TELEMETRY=false
+```bash
+# Required: Your ElizaOS Cloud API key (get it from https://www.elizacloud.ai/dashboard/api-keys)
+ELIZAOS_CLOUD_API_KEY=eliza_your_api_key_here
+
+# Optional overrides (defaults shown):
+ELIZAOS_CLOUD_BASE_URL=https://www.elizacloud.ai/api/v1
+ELIZAOS_CLOUD_SMALL_MODEL=gpt-4o-mini
+ELIZAOS_CLOUD_LARGE_MODEL=gpt-4o
+ELIZAOS_CLOUD_EMBEDDING_MODEL=text-embedding-3-small
+ELIZAOS_CLOUD_EMBEDDING_API_KEY=eliza_your_api_key_here
+ELIZAOS_CLOUD_EMBEDDING_URL=https://www.elizacloud.ai/api/v1
+ELIZAOS_CLOUD_EMBEDDING_DIMENSIONS=1536
+ELIZAOS_CLOUD_IMAGE_DESCRIPTION_MODEL=gpt-4o-mini
+ELIZAOS_CLOUD_IMAGE_DESCRIPTION_MAX_TOKENS=8192
+ELIZAOS_CLOUD_EXPERIMENTAL_TELEMETRY=false
+
 # Browser proxy (frontend builds only)
-ELIZAOS_BROWSER_BASE_URL=https://your-proxy.example.com/openai
-ELIZAOS_BROWSER_EMBEDDING_URL=https://your-proxy.example.com/openai
+ELIZAOS_CLOUD_BROWSER_BASE_URL=https://your-proxy.example.com/api
+ELIZAOS_CLOUD_BROWSER_EMBEDDING_URL=https://your-proxy.example.com/api
 ```
 
 ### Configuration Options
 
-- `ELIZAOS_API_KEY` (required): Your OpenAI API credentials
-- `ELIZAOS_BASE_URL`: Custom API endpoint (default: https://api.openai.com/v1)
-- `ELIZAOS_SMALL_MODEL`: Defaults to GPT-4o Mini ("gpt-4o-mini")
-- `ELIZAOS_LARGE_MODEL`: Defaults to GPT-4o ("gpt-4o")
-- `ELIZAOS_EMBEDDING_MODEL`: Defaults to text-embedding-3-small ("text-embedding-3-small")
-- `ELIZAOS_EMBEDDING_API_KEY`: Custom embedding api key (defaults to `ELIZAOS_API_KEY`)
-- `ELIZAOS_EMBEDDING_URL`: Custom embedding endpoint (defaults to `ELIZAOS_BASE_URL`)
-- `ELIZAOS_EMBEDDING_DIMENSIONS`: Defaults to 1536 (1536)
-- `ELIZAOS_IMAGE_DESCRIPTION_MODEL`: Model used for image description (default: "gpt-4o-mini")
-- `ELIZAOS_IMAGE_DESCRIPTION_MAX_TOKENS`: Maximum tokens for image descriptions (default: 8192)
-- `ELIZAOS_EXPERIMENTAL_TELEMETRY`: Enable experimental telemetry features for enhanced debugging and usage analytics (default: false)
-- `ELIZAOS_BROWSER_BASE_URL`: Browser-only base URL to a proxy endpoint that forwards requests to OpenAI without exposing keys
-- `ELIZAOS_BROWSER_EMBEDDING_URL`: Browser-only embeddings endpoint base URL
+- `ELIZAOS_CLOUD_API_KEY` (required): Your ElizaOS Cloud API key (format: `eliza_xxxxx`)
+  - Get it from: [https://www.elizacloud.ai/dashboard/api-keys](https://www.elizacloud.ai/dashboard/api-keys)
+- `ELIZAOS_CLOUD_BASE_URL`: ElizaOS Cloud API endpoint (default: `https://www.elizacloud.ai/api/v1`)
+- `ELIZAOS_CLOUD_SMALL_MODEL`: Small/fast model for quick tasks (default: `gpt-4o-mini`)
+  - Available models: `gpt-4o-mini`, `gpt-4o`, `claude-3-5-sonnet`, `gemini-2.0-flash`
+- `ELIZAOS_CLOUD_LARGE_MODEL`: Large/powerful model for complex tasks (default: `gpt-4o`)
+  - Available models: `gpt-4o-mini`, `gpt-4o`, `claude-3-5-sonnet`, `gemini-2.0-flash`
+- `ELIZAOS_CLOUD_EMBEDDING_MODEL`: Model for text embeddings (default: `text-embedding-3-small`)
+- `ELIZAOS_CLOUD_EMBEDDING_API_KEY`: Separate API key for embeddings (defaults to `ELIZAOS_CLOUD_API_KEY`)
+- `ELIZAOS_CLOUD_EMBEDDING_URL`: Separate endpoint for embeddings (defaults to `ELIZAOS_CLOUD_BASE_URL`)
+- `ELIZAOS_CLOUD_EMBEDDING_DIMENSIONS`: Embedding vector dimensions (default: 1536)
+- `ELIZAOS_CLOUD_IMAGE_DESCRIPTION_MODEL`: Model for image description (default: `gpt-4o-mini`)
+- `ELIZAOS_CLOUD_IMAGE_DESCRIPTION_MAX_TOKENS`: Max tokens for image descriptions (default: 8192)
+- `ELIZAOS_CLOUD_EXPERIMENTAL_TELEMETRY`: Enable telemetry for debugging and analytics (default: false)
+- `ELIZAOS_CLOUD_BROWSER_BASE_URL`: Browser-only proxy endpoint (to avoid exposing keys in frontend)
+- `ELIZAOS_CLOUD_BROWSER_EMBEDDING_URL`: Browser-only embeddings proxy endpoint
 
 ### Browser mode and proxying
 
-When bundled for the browser, this plugin avoids sending Authorization headers. Set `ELIZAOS_BROWSER_BASE_URL` (and optionally `ELIZAOS_BROWSER_EMBEDDING_URL`) to a server-side proxy you control that injects the OpenAI API key. This prevents exposing secrets in frontend builds.
+When bundled for the browser, this plugin avoids sending Authorization headers. Set `ELIZAOS_CLOUD_BROWSER_BASE_URL` (and optionally `ELIZAOS_CLOUD_BROWSER_EMBEDDING_URL`) to a server-side proxy you control that injects the ElizaOS Cloud API key. This prevents exposing secrets in frontend builds.
 
 Example minimal proxy (Express):
 
@@ -81,12 +93,12 @@ import fetch from 'node-fetch';
 const app = express();
 app.use(express.json());
 
-app.post('/openai/*', async (req, res) => {
-  const url = `https://api.openai.com/v1/${req.params[0]}`;
+app.post('/api/*', async (req, res) => {
+  const url = `https://www.elizacloud.ai/api/v1/${req.params[0]}`;
   const r = await fetch(url, {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${process.env.ELIZAOS_API_KEY}`,
+      'Authorization': `Bearer ${process.env.ELIZAOS_CLOUD_API_KEY}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify(req.body),
@@ -99,25 +111,42 @@ app.listen(3000);
 
 ### Experimental Telemetry
 
-When `ELIZAOS_EXPERIMENTAL_TELEMETRY` is set to `true`, the plugin enables advanced telemetry features that provide:
+When `ELIZAOS_CLOUD_EXPERIMENTAL_TELEMETRY` is set to `true`, the plugin enables advanced telemetry features that provide:
 
 - Enhanced debugging capabilities for model performance issues
 - Detailed usage analytics for optimization
-- Better observability into OpenAI API interactions
+- Better observability into ElizaOS Cloud API interactions
 - Foundation for future monitoring and analytics features through Sentry or other frameworks
 
 **Note**: This feature is opt-in due to privacy considerations, as telemetry data may contain information about model usage patterns. Enable only when you need enhanced debugging or analytics capabilities.
 
+## Features
+
+ElizaOS Cloud provides comprehensive AI capabilities through a unified API:
+
+### Supported Model Types
+
 The plugin provides these model classes:
 
-- `TEXT_SMALL`: Optimized for fast, cost-effective responses
-- `TEXT_LARGE`: For complex tasks requiring deeper reasoning
+- `TEXT_SMALL`: Optimized for fast, cost-effective responses (default: gpt-4o-mini)
+- `TEXT_LARGE`: For complex tasks requiring deeper reasoning (default: gpt-4o)
 - `TEXT_EMBEDDING`: Text embedding model (text-embedding-3-small by default)
-- `IMAGE`: DALL-E image generation
-- `IMAGE_DESCRIPTION`: GPT-4o image analysis
-- `TRANSCRIPTION`: Whisper audio transcription
+- `IMAGE`: Image generation via Google Gemini (costs 100 credits)
+- `IMAGE_DESCRIPTION`: Image analysis and description (gpt-4o-mini by default)
+- `TRANSCRIPTION`: Audio transcription
+- `TEXT_TO_SPEECH`: Text-to-speech generation
 - `TEXT_TOKENIZER_ENCODE`: Text tokenization
 - `TEXT_TOKENIZER_DECODE`: Token decoding
+- `OBJECT_SMALL`: Object/structured output generation (small model)
+- `OBJECT_LARGE`: Object/structured output generation (large model)
+
+### Credit System
+
+ElizaOS Cloud uses a credit-based pricing model:
+- **Text Generation**: Token-based (varies by model)
+- **Image Generation**: 100 credits per image
+- **Video Generation**: 500 credits per video
+- Purchase credits at: [https://www.elizacloud.ai/dashboard/billing](https://www.elizacloud.ai/dashboard/billing)
 
 ## Additional Features
 

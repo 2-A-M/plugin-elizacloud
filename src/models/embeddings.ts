@@ -16,11 +16,11 @@ export async function handleTextEmbedding(
 ): Promise<number[]> {
   const embeddingModelName = getSetting(
     runtime,
-    "ELIZAOS_EMBEDDING_MODEL",
+    "ELIZAOS_CLOUD_EMBEDDING_MODEL",
     "text-embedding-3-small",
   );
   const embeddingDimension = Number.parseInt(
-    getSetting(runtime, "ELIZAOS_EMBEDDING_DIMENSIONS", "1536") || "1536",
+    getSetting(runtime, "ELIZAOS_CLOUD_EMBEDDING_DIMENSIONS", "1536") || "1536",
     10,
   ) as (typeof VECTOR_DIMS)[keyof typeof VECTOR_DIMS];
 
@@ -70,7 +70,7 @@ export async function handleTextEmbedding(
 
     if (!response.ok) {
       logger.error(
-        `OpenAI API error: ${response.status} - ${response.statusText}`,
+        `ElizaOS Cloud API error: ${response.status} - ${response.statusText}`,
       );
       const errorVector = Array(embeddingDimension).fill(0);
       errorVector[0] = 0.4;
