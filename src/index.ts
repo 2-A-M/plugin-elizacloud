@@ -25,32 +25,33 @@ export type {
 
 /**
  * Defines the ElizaOS Cloud plugin with its name, description, and configuration options.
- * 
+ *
  * Configuration:
  * - ELIZAOS_CLOUD_API_KEY: Your ElizaOS Cloud API key (format: eliza_xxxxx)
  *   Get it from: https://www.elizacloud.ai/dashboard/api-keys
- * 
+ *
  * - ELIZAOS_CLOUD_BASE_URL: ElizaOS Cloud API base URL
  *   Default: https://www.elizacloud.ai/api/v1
- * 
+ *
  * - ELIZAOS_CLOUD_SMALL_MODEL: Small/fast model for quick tasks
  *   Available: gpt-4o-mini, gpt-4o, claude-3-5-sonnet, gemini-2.0-flash
  *   Default: gpt-4o-mini
- * 
+ *
  * - ELIZAOS_CLOUD_LARGE_MODEL: Large/powerful model for complex tasks
  *   Available: gpt-4o-mini, gpt-4o, claude-3-5-sonnet, gemini-2.0-flash
  *   Default: gpt-4o
- * 
+ *
  * - ELIZAOS_CLOUD_EMBEDDING_MODEL: Model for text embeddings
  * - ELIZAOS_CLOUD_EMBEDDING_API_KEY: Separate API key for embeddings (optional)
  * - ELIZAOS_CLOUD_EMBEDDING_URL: Separate URL for embeddings (optional)
  * - ELIZAOS_CLOUD_IMAGE_DESCRIPTION_MODEL: Model for image description (default: gpt-4o-mini)
- * 
+ *
  * @type {Plugin}
  */
 export const elizaOSCloudPlugin: Plugin = {
   name: "elizaOSCloud",
-  description: "ElizaOS Cloud plugin - Multi-model AI generation with text, image, and video support",
+  description:
+    "ElizaOS Cloud plugin - Multi-model AI generation with text, image, and video support",
   config: {
     ELIZAOS_CLOUD_API_KEY: process.env.ELIZAOS_CLOUD_API_KEY,
     ELIZAOS_CLOUD_BASE_URL: process.env.ELIZAOS_CLOUD_BASE_URL,
@@ -59,14 +60,17 @@ export const elizaOSCloudPlugin: Plugin = {
     SMALL_MODEL: process.env.SMALL_MODEL,
     LARGE_MODEL: process.env.LARGE_MODEL,
     ELIZAOS_CLOUD_EMBEDDING_MODEL: process.env.ELIZAOS_CLOUD_EMBEDDING_MODEL,
-    ELIZAOS_CLOUD_EMBEDDING_API_KEY: process.env.ELIZAOS_CLOUD_EMBEDDING_API_KEY,
+    ELIZAOS_CLOUD_EMBEDDING_API_KEY:
+      process.env.ELIZAOS_CLOUD_EMBEDDING_API_KEY,
     ELIZAOS_CLOUD_EMBEDDING_URL: process.env.ELIZAOS_CLOUD_EMBEDDING_URL,
-    ELIZAOS_CLOUD_EMBEDDING_DIMENSIONS: process.env.ELIZAOS_CLOUD_EMBEDDING_DIMENSIONS,
+    ELIZAOS_CLOUD_EMBEDDING_DIMENSIONS:
+      process.env.ELIZAOS_CLOUD_EMBEDDING_DIMENSIONS,
     ELIZAOS_CLOUD_IMAGE_DESCRIPTION_MODEL:
       process.env.ELIZAOS_CLOUD_IMAGE_DESCRIPTION_MODEL,
     ELIZAOS_CLOUD_IMAGE_DESCRIPTION_MAX_TOKENS:
       process.env.ELIZAOS_CLOUD_IMAGE_DESCRIPTION_MAX_TOKENS,
-    ELIZAOS_CLOUD_EXPERIMENTAL_TELEMETRY: process.env.ELIZAOS_CLOUD_EXPERIMENTAL_TELEMETRY,
+    ELIZAOS_CLOUD_EXPERIMENTAL_TELEMETRY:
+      process.env.ELIZAOS_CLOUD_EXPERIMENTAL_TELEMETRY,
   },
   async init(config, runtime) {
     initializeOpenAI(config, runtime);
@@ -74,14 +78,14 @@ export const elizaOSCloudPlugin: Plugin = {
 
   models: {
     [ModelType.TEXT_EMBEDDING]: handleTextEmbedding,
-    [ModelType.TEXT_TOKENIZER_ENCODE]: handleTokenizerEncode,
-    [ModelType.TEXT_TOKENIZER_DECODE]: handleTokenizerDecode,
+    // [ModelType.TEXT_TOKENIZER_ENCODE]: handleTokenizerEncode,
+    // [ModelType.TEXT_TOKENIZER_DECODE]: handleTokenizerDecode,
     [ModelType.TEXT_SMALL]: handleTextSmall,
     [ModelType.TEXT_LARGE]: handleTextLarge,
     [ModelType.IMAGE]: handleImageGeneration,
     [ModelType.IMAGE_DESCRIPTION]: handleImageDescription,
-    [ModelType.TRANSCRIPTION]: handleTranscription,
-    [ModelType.TEXT_TO_SPEECH]: handleTextToSpeech,
+    // [ModelType.TRANSCRIPTION]: handleTranscription,
+    // [ModelType.TEXT_TO_SPEECH]: handleTextToSpeech,
     [ModelType.OBJECT_SMALL]: handleObjectSmall,
     [ModelType.OBJECT_LARGE]: handleObjectLarge,
   },
@@ -297,7 +301,9 @@ export const elizaOSCloudPlugin: Plugin = {
             } catch (error: unknown) {
               const message =
                 error instanceof Error ? error.message : String(error);
-              logger.error(`Error in ELIZAOS_CLOUD_test_text_to_speech: ${message}`);
+              logger.error(
+                `Error in ELIZAOS_CLOUD_test_text_to_speech: ${message}`,
+              );
               throw error;
             }
           },
