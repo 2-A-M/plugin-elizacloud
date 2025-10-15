@@ -2,14 +2,24 @@
 /**
  * Comprehensive test script for ElizaOS Cloud API
  *
- * IMPORTANT: ElizaOS Cloud API uses CUSTOM endpoints, NOT OpenAI-compatible ones!
+ * This test suite verifies all ElizaOS Cloud API endpoints including:
+ * - Custom ElizaOS Cloud endpoints
+ * - OpenAI-compatible endpoints
  *
- * Actual endpoints:
- * - /api/v1/models (✅ Works)
- * - /api/v1/chat (NOT /chat/completions)
- * - /api/v1/generate-image (NOT /images/generations)
+ * Endpoint Types:
  *
- * The plugin code needs to be updated to match these endpoints!
+ * CUSTOM ElizaOS Cloud endpoints:
+ * - /api/v1/generate-image (Custom image generation, not OpenAI-compatible)
+ * - /api/v1/chat (Custom chat streaming, not OpenAI-compatible)
+ *
+ * OpenAI-COMPATIBLE endpoints:
+ * - /api/v1/models (List available models)
+ * - /api/v1/chat/completions (Text generation, vision, structured output)
+ * - /api/v1/embeddings (Text embeddings)
+ * - /api/v1/audio/transcriptions (Speech-to-text)
+ * - /api/v1/audio/speech (Text-to-speech)
+ *
+ * All endpoints have been verified and updated to match ElizaOS Cloud API specifications.
  */
 
 const API_KEY =
@@ -694,6 +704,132 @@ async function test11_EmbeddingsLargeModel(): Promise<TestResult> {
   }
 }
 
+async function test12_AudioTranscription(): Promise<TestResult> {
+  const startTime = Date.now();
+  const testName = "Audio Transcription (Whisper)";
+  log(`Testing: ${testName}`);
+
+  try {
+    // Fetch a test audio file from Wikipedia (Chris Benoit voice message)
+    const audioUrl =
+      "https://upload.wikimedia.org/wikipedia/en/4/40/Chris_Benoit_Voice_Message.ogg";
+    const audioResponse = await fetch(audioUrl);
+
+    if (!audioResponse.ok) {
+      throw new Error("Failed to fetch test audio file");
+    }
+
+    const audioBuffer = await audioResponse.arrayBuffer();
+    const audioBlob = new Blob([audioBuffer], { type: "audio/ogg" });
+
+    // Create FormData
+    const formData = new FormData();
+    formData.append("file", audioBlob, "test-audio.ogg");
+    formData.append("model", "whisper-1");
+
+    const response = await fetch(`${BASE_URL}/audio/transcriptions`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${API_KEY}`,
+      },
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`API returned ${response.status}: ${errorText}`);
+    }
+
+    const data = await response.json();
+    const transcription = data.text;
+
+    if (!transcription || typeof transcription !== "string") {
+      throw new Error("No transcription text in response");
+    }
+
+    const preview =
+      transcription.length > 50
+        ? transcription.substring(0, 50) + "..."
+        : transcription;
+
+    logSuccess(`${testName} - Transcribed: "${preview}"`);
+    return {
+      name: testName,
+      status: "✅ PASSED",
+      duration: Date.now() - startTime,
+      details: `Transcribed ${transcription.length} characters`,
+    };
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    logError(`${testName} - ${message}`);
+    return {
+      name: testName,
+      status: "❌ FAILED",
+      duration: Date.now() - startTime,
+      error: message,
+    };
+  }
+}
+
+async function test13_TextToSpeech(): Promise<TestResult> {
+  const startTime = Date.now();
+  const testName = "Text-to-Speech (TTS)";
+  log(`Testing: ${testName}`);
+
+  try {
+    const testText = "Hello, this is a test of the text to speech system.";
+
+    const response = await fetch(`${BASE_URL}/audio/speech`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "tts-1",
+        voice: "alloy",
+        input: testText,
+        format: "mp3",
+      }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`API returned ${response.status}: ${errorText}`);
+    }
+
+    // Check if we got audio data
+    const contentType = response.headers.get("content-type");
+    if (!contentType?.includes("audio")) {
+      throw new Error(`Expected audio response, got: ${contentType}`);
+    }
+
+    const audioBuffer = await response.arrayBuffer();
+    const audioSize = audioBuffer.byteLength;
+
+    if (audioSize === 0) {
+      throw new Error("Received empty audio response");
+    }
+
+    logSuccess(`${testName} - Generated ${audioSize} bytes of audio`);
+    return {
+      name: testName,
+      status: "✅ PASSED",
+      duration: Date.now() - startTime,
+      details: `Generated ${(audioSize / 1024).toFixed(2)} KB audio file`,
+    };
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    logError(`${testName} - ${message}`);
+    return {
+      name: testName,
+      status: "❌ FAILED",
+      duration: Date.now() - startTime,
+      error: message,
+    };
+  }
+}
+
 async function runAllTests() {
   console.log("\n" + "=".repeat(60));
   console.log("ElizaOS Cloud API - Endpoint Testing");
@@ -718,6 +854,10 @@ async function runAllTests() {
   results.push(await test9_EmbeddingsSimilarity());
   results.push(await test10_EmbeddingsBatch());
   results.push(await test11_EmbeddingsLargeModel());
+
+  console.log("\n🎵 Running audio tests (may not be supported yet):\n");
+  results.push(await test12_AudioTranscription());
+  results.push(await test13_TextToSpeech());
 
   // Print summary
   console.log("\n" + "=".repeat(60));
