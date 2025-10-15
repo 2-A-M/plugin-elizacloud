@@ -12,6 +12,7 @@ import type { ImageDescriptionResult } from "../types";
 
 /**
  * IMAGE model handler - generates images from text prompts
+ * Uses ElizaOS Cloud's custom /generate-image endpoint (not OpenAI-compatible)
  */
 export async function handleImageGeneration(
   runtime: IAgentRuntime,
@@ -21,39 +22,57 @@ export async function handleImageGeneration(
     size?: string;
   },
 ): Promise<{ url: string }[]> {
-  const n = params.n || 1;
+  const numImages = params.n || 1;
   const size = params.size || "1024x1024";
   const prompt = params.prompt;
-  const modelName = "gpt-image-1"; // ElizaOS Cloud image model
+  const modelName = "google/gemini-2.5-flash-image-preview";
   logger.log(`[ELIZAOS_CLOUD] Using IMAGE model: ${modelName}`);
 
   const baseURL = getBaseURL(runtime);
 
+  // Convert size to aspect ratio for ElizaOS Cloud API
+  const aspectRatioMap: Record<string, string> = {
+    "1024x1024": "1:1",
+    "1792x1024": "16:9",
+    "1024x1792": "9:16",
+  };
+  const aspectRatio = aspectRatioMap[size] || "1:1";
+
   try {
-    const response = await fetch(`${baseURL}/images/generations`, {
+    // ElizaOS Cloud uses /generate-image endpoint, not /images/generations
+    const response = await fetch(`${baseURL}/generate-image`, {
       method: "POST",
       headers: {
         ...getAuthHeader(runtime),
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: modelName,
         prompt: prompt,
-        n: n,
-        size: size,
+        numImages: numImages,
+        aspectRatio: aspectRatio,
       }),
     });
 
     if (!response.ok) {
-      throw new Error(`Failed to generate image: ${response.statusText}`);
+      const errorText = await response.text();
+      throw new Error(
+        `Failed to generate image: ${response.status} ${errorText}`,
+      );
     }
 
     const data = await response.json();
-    const typedData = data as { data: { url: string }[] };
+    const typedData = data as {
+      images: Array<{ url?: string; image: string }>;
+      numImages: number;
+    };
 
-    return typedData.data;
+    // Map response to expected format
+    return typedData.images.map((img) => ({
+      url: img.url || img.image,
+    }));
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);
+    logger.error(`[ELIZAOS_CLOUD] Image generation error: ${message}`);
     throw error;
   }
 }
