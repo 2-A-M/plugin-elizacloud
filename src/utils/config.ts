@@ -52,7 +52,7 @@ export function getBaseURL(runtime: IAgentRuntime): string {
       ? browserURL
       : getSetting(runtime, "ELIZAOS_CLOUD_BASE_URL", "https://www.elizacloud.ai/api/v1")
   ) as string;
-  logger.debug(`[ELIZAOS_CLOUD] Default base URL: ${baseURL}`);
+  console.log(`[ELIZAOS_CLOUD] Default base URL: ${baseURL}`);
   return baseURL;
 }
 
