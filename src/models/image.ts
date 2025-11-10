@@ -5,6 +5,7 @@ import {
   getBaseURL,
   getAuthHeader,
   getImageDescriptionModel,
+  getImageGenerationModel,
 } from "../utils/config";
 import { emitModelUsageEvent } from "../utils/events";
 import { parseImageDescriptionResponse } from "../utils/helpers";
@@ -25,7 +26,7 @@ export async function handleImageGeneration(
   const numImages = params.n || 1;
   const size = params.size || "1024x1024";
   const prompt = params.prompt;
-  const modelName = "google/gemini-2.5-flash-image-preview";
+  const modelName = getImageGenerationModel(runtime);
   logger.log(`[ELIZAOS_CLOUD] Using IMAGE model: ${modelName}`);
 
   const baseURL = getBaseURL(runtime);

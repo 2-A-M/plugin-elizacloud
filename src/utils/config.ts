@@ -149,6 +149,19 @@ export function getImageDescriptionModel(runtime: IAgentRuntime): string {
 }
 
 /**
+ * Helper function to get the image generation model name with fallbacks
+ *
+ * @param runtime The runtime context
+ * @returns The configured image generation model name
+ */
+export function getImageGenerationModel(runtime: IAgentRuntime): string {
+  return (
+    getSetting(runtime, "ELIZAOS_CLOUD_IMAGE_GENERATION_MODEL", "openai/gpt-5-nano") ??
+    "openai/gpt-5-nano"
+  );
+}
+
+/**
  * Helper function to get experimental telemetry setting
  *
  * @param runtime The runtime context
