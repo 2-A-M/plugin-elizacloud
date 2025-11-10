@@ -71,6 +71,8 @@ export const elizaOSCloudPlugin: Plugin = {
       process.env.ELIZAOS_CLOUD_IMAGE_DESCRIPTION_MAX_TOKENS,
     ELIZAOS_CLOUD_EXPERIMENTAL_TELEMETRY:
       process.env.ELIZAOS_CLOUD_EXPERIMENTAL_TELEMETRY,
+    ELIZAOS_CLOUD_IMAGE_GENERATION_MODEL:
+      process.env.ELIZAOS_CLOUD_IMAGE_GENERATION_MODEL,
   },
   async init(config, runtime) {
     initializeOpenAI(config, runtime);
