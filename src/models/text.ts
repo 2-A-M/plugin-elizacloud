@@ -1,6 +1,10 @@
-import type { GenerateTextParams, IAgentRuntime } from "@elizaos/core";
+import type {
+  GenerateTextParams,
+  IAgentRuntime,
+  TextStreamResult,
+} from "@elizaos/core";
 import { logger, ModelType } from "@elizaos/core";
-import { generateText } from "ai";
+import { generateText, streamText } from "ai";
 import { createOpenAIClient } from "../providers/openai";
 import {
   getSmallModel,
@@ -10,27 +14,30 @@ import {
 import { emitModelUsageEvent } from "../utils/events";
 
 /**
- * TEXT_SMALL model handler
+ * Build common generation parameters for both streaming and non-streaming modes
  */
-export async function handleTextSmall(
+function buildGenerateParams(
   runtime: IAgentRuntime,
-  {
-    prompt,
-    stopSequences = [],
-    maxTokens = 8192,
-    temperature = 0.7,
-    frequencyPenalty = 0.7,
-    presencePenalty = 0.7,
-  }: GenerateTextParams,
-): Promise<string> {
+  modelType: typeof ModelType.TEXT_SMALL | typeof ModelType.TEXT_LARGE,
+  params: GenerateTextParams,
+) {
+  const { prompt, stopSequences = [] } = params;
+  const temperature = params.temperature ?? 0.7;
+  const frequencyPenalty = params.frequencyPenalty ?? 0.7;
+  const presencePenalty = params.presencePenalty ?? 0.7;
+  const maxTokens =
+    (params as any).maxOutputTokens ?? (params as any).maxTokens ?? 8192;
+
   const openai = createOpenAIClient(runtime);
-  const modelName = getSmallModel(runtime);
+  const modelName =
+    modelType === ModelType.TEXT_SMALL
+      ? getSmallModel(runtime)
+      : getLargeModel(runtime);
+  const modelLabel =
+    modelType === ModelType.TEXT_SMALL ? "TEXT_SMALL" : "TEXT_LARGE";
   const experimentalTelemetry = getExperimentalTelemetry(runtime);
 
-  logger.log(`[ELIZAOS_CLOUD] Using TEXT_SMALL model: ${modelName}`);
-  logger.log(prompt);
-
-  const { text: openaiResponse, usage } = await generateText({
+  const generateParams: Parameters<typeof generateText>[0] = {
     model: openai.languageModel(modelName),
     prompt: prompt,
     system: runtime.character.system ?? undefined,
@@ -42,53 +49,111 @@ export async function handleTextSmall(
     experimental_telemetry: {
       isEnabled: experimentalTelemetry,
     },
-  });
+  };
 
-  if (usage) {
-    emitModelUsageEvent(runtime, ModelType.TEXT_SMALL, prompt, usage);
+  return { generateParams, modelName, modelLabel, prompt };
+}
+
+/**
+ * Handle streaming text generation
+ */
+function handleStreamingGeneration(
+  runtime: IAgentRuntime,
+  modelType: typeof ModelType.TEXT_SMALL | typeof ModelType.TEXT_LARGE,
+  generateParams: Parameters<typeof streamText>[0],
+  prompt: string,
+  modelLabel: string,
+): TextStreamResult {
+  logger.debug(`[ELIZAOS_CLOUD] Streaming text with ${modelLabel} model`);
+
+  const streamResult = streamText(generateParams);
+
+  return {
+    textStream: streamResult.textStream,
+    text: streamResult.text,
+    usage: streamResult.usage.then((usage) => {
+      if (usage) {
+        emitModelUsageEvent(runtime, modelType, prompt, usage);
+        const inputTokens = usage.inputTokens ?? 0;
+        const outputTokens = usage.outputTokens ?? 0;
+        return {
+          promptTokens: inputTokens,
+          completionTokens: outputTokens,
+          totalTokens: inputTokens + outputTokens,
+        };
+      }
+      return undefined;
+    }),
+    finishReason: streamResult.finishReason,
+  };
+}
+
+/**
+ * Common text generation logic for both small and large models
+ */
+async function generateTextWithModel(
+  runtime: IAgentRuntime,
+  modelType: typeof ModelType.TEXT_SMALL | typeof ModelType.TEXT_LARGE,
+  params: GenerateTextParams,
+): Promise<string | TextStreamResult> {
+  const { generateParams, modelName, modelLabel, prompt } = buildGenerateParams(
+    runtime,
+    modelType,
+    params,
+  );
+
+  logger.debug(
+    `[ELIZAOS_CLOUD] Generating text with ${modelLabel} model: ${modelName}`,
+  );
+
+  // Handle streaming mode
+  if (params.stream) {
+    return handleStreamingGeneration(
+      runtime,
+      modelType,
+      generateParams,
+      prompt,
+      modelLabel,
+    );
   }
 
-  return openaiResponse;
+  // Non-streaming mode
+  logger.log(`[ELIZAOS_CLOUD] Using ${modelLabel} model: ${modelName}`);
+  logger.log(prompt);
+
+  const response = await generateText(generateParams);
+
+  if (response.usage) {
+    emitModelUsageEvent(runtime, modelType, prompt, response.usage);
+  }
+
+  return response.text;
+}
+
+/**
+ * TEXT_SMALL model handler
+ *
+ * Returns:
+ * - `string` for simple text generation
+ * - `TextStreamResult` for streaming (when params.stream = true)
+ */
+export async function handleTextSmall(
+  runtime: IAgentRuntime,
+  params: GenerateTextParams,
+): Promise<string | TextStreamResult> {
+  return generateTextWithModel(runtime, ModelType.TEXT_SMALL, params);
 }
 
 /**
  * TEXT_LARGE model handler
+ *
+ * Returns:
+ * - `string` for simple text generation
+ * - `TextStreamResult` for streaming (when params.stream = true)
  */
 export async function handleTextLarge(
   runtime: IAgentRuntime,
-  {
-    prompt,
-    stopSequences = [],
-    maxTokens = 8192,
-    temperature = 0.7,
-    frequencyPenalty = 0.7,
-    presencePenalty = 0.7,
-  }: GenerateTextParams,
-): Promise<string> {
-  const openai = createOpenAIClient(runtime);
-  const modelName = getLargeModel(runtime);
-  const experimentalTelemetry = getExperimentalTelemetry(runtime);
-
-  logger.log(`[ELIZAOS_CLOUD] Using TEXT_LARGE model: ${modelName}`);
-  logger.log(prompt);
-
-  const { text: openaiResponse, usage } = await generateText({
-    model: openai.languageModel(modelName),
-    prompt: prompt,
-    system: runtime.character.system ?? undefined,
-    temperature: temperature,
-    maxOutputTokens: maxTokens,
-    frequencyPenalty: frequencyPenalty,
-    presencePenalty: presencePenalty,
-    stopSequences: stopSequences,
-    experimental_telemetry: {
-      isEnabled: experimentalTelemetry,
-    },
-  });
-
-  if (usage) {
-    emitModelUsageEvent(runtime, ModelType.TEXT_LARGE, prompt, usage);
-  }
-
-  return openaiResponse;
+  params: GenerateTextParams,
+): Promise<string | TextStreamResult> {
+  return generateTextWithModel(runtime, ModelType.TEXT_LARGE, params);
 }

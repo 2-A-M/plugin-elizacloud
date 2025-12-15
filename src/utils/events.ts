@@ -18,14 +18,30 @@ export function emitModelUsageEvent(
   prompt: string,
   usage: LanguageModelUsage,
 ) {
+  // Never emit the full prompt; truncate to avoid leaking secrets/PII
+  const truncatedPrompt =
+    typeof prompt === "string"
+      ? prompt.length > 200
+        ? `${prompt.slice(0, 200)}…`
+        : prompt
+      : "";
+
+  const inputTokens = Number(usage.inputTokens || 0);
+  const outputTokens = Number(usage.outputTokens || 0);
+  const totalTokens = Number(
+    usage.totalTokens != null ? usage.totalTokens : inputTokens + outputTokens,
+  );
+
   runtime.emitEvent(EventType.MODEL_USED, {
-    provider: "openai",
+    runtime,
+    source: "elizacloud",
+    provider: "elizacloud",
     type,
-    prompt,
+    prompt: truncatedPrompt,
     tokens: {
-      prompt: usage.inputTokens,
-      completion: usage.outputTokens,
-      total: usage.totalTokens,
+      prompt: inputTokens,
+      completion: outputTokens,
+      total: totalTokens,
     },
   });
 }

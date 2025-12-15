@@ -1,6 +1,6 @@
 {
   "name": "@elizaos/plugin-elizacloud",
-  "version": "1.5.20",
+  "version": "1.6.0",
   "type": "module",
   "main": "dist/cjs/index.node.cjs",
   "module": "dist/node/index.node.js",

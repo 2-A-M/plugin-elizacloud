@@ -13,7 +13,12 @@ export function getSetting(
   key: string,
   defaultValue?: string,
 ): string | undefined {
-  return runtime.getSetting(key) ?? process.env[key] ?? defaultValue;
+  const value = runtime.getSetting(key);
+  // Convert to string if value is a number or boolean
+  if (value !== undefined && value !== null) {
+    return String(value);
+  }
+  return process.env[key] ?? defaultValue;
 }
 
 export function isBrowser(): boolean {
