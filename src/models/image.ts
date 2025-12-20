@@ -1,4 +1,8 @@
-import type { IAgentRuntime, ImageDescriptionParams } from "@elizaos/core";
+import type {
+  IAgentRuntime,
+  ImageDescriptionParams,
+  ImageGenerationParams,
+} from "@elizaos/core";
 import { logger, ModelType } from "@elizaos/core";
 import {
   getSetting,
@@ -9,7 +13,6 @@ import {
 } from "../utils/config";
 import { emitModelUsageEvent } from "../utils/events";
 import { parseImageDescriptionResponse } from "../utils/helpers";
-import type { ImageDescriptionResult } from "../types";
 
 /**
  * IMAGE model handler - generates images from text prompts
@@ -17,13 +20,9 @@ import type { ImageDescriptionResult } from "../types";
  */
 export async function handleImageGeneration(
   runtime: IAgentRuntime,
-  params: {
-    prompt: string;
-    n?: number;
-    size?: string;
-  },
+  params: ImageGenerationParams,
 ): Promise<{ url: string }[]> {
-  const numImages = params.n || 1;
+  const numImages = params.count || 1;
   const size = params.size || "1024x1024";
   const prompt = params.prompt;
   const modelName = getImageGenerationModel(runtime);
@@ -84,7 +83,7 @@ export async function handleImageGeneration(
 export async function handleImageDescription(
   runtime: IAgentRuntime,
   params: ImageDescriptionParams | string,
-): Promise<ImageDescriptionResult | string> {
+): Promise<{ title: string; description: string }> {
   let imageUrl: string;
   let promptText: string | undefined;
   const modelName = getImageDescriptionModel(runtime);
@@ -175,19 +174,7 @@ export async function handleImageDescription(
       };
     }
 
-    // Check if a custom prompt was provided (not the default prompt)
-    const isCustomPrompt =
-      typeof params === "object" &&
-      params.prompt &&
-      params.prompt !==
-        "Please analyze this image and provide a title and detailed description.";
-
-    // If custom prompt is used, return the raw content
-    if (isCustomPrompt) {
-      return content;
-    }
-
-    // Otherwise, maintain backwards compatibility with object return
+    // Always return structured object with title and description
     const processedResult = parseImageDescriptionResponse(content);
     return processedResult;
   } catch (error: unknown) {

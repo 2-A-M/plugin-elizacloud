@@ -1,6 +1,6 @@
 import type { IAgentRuntime, ObjectGenerationParams } from "@elizaos/core";
 import { logger, ModelType } from "@elizaos/core";
-import { generateObject, JSONParseError, type JSONValue } from "ai";
+import { generateObject, JSONParseError } from "ai";
 import { createOpenAIClient } from "../providers/openai";
 import { getSmallModel, getLargeModel } from "../utils/config";
 import { emitModelUsageEvent } from "../utils/events";
@@ -14,7 +14,7 @@ async function generateObjectByModelType(
   params: ObjectGenerationParams,
   modelType: string,
   getModelFn: (runtime: IAgentRuntime) => string,
-): Promise<JSONValue> {
+): Promise<Record<string, unknown>> {
   const openai = createOpenAIClient(runtime);
   const modelName = getModelFn(runtime);
   logger.log(`[ELIZAOS_CLOUD] Using ${modelType} model: ${modelName}`);
@@ -39,7 +39,7 @@ async function generateObjectByModelType(
     if (usage) {
       emitModelUsageEvent(runtime, modelType as never, params.prompt, usage);
     }
-    return object;
+    return object as Record<string, unknown>;
   } catch (error: unknown) {
     if (error instanceof JSONParseError) {
       logger.error(`[generateObject] Failed to parse JSON: ${error.message}`);
@@ -54,7 +54,7 @@ async function generateObjectByModelType(
         try {
           const repairedObject = JSON.parse(repairedJsonString);
           logger.info("[generateObject] Successfully repaired JSON.");
-          return repairedObject;
+          return repairedObject as Record<string, unknown>;
         } catch (repairParseError: unknown) {
           const message =
             repairParseError instanceof Error
@@ -83,7 +83,7 @@ async function generateObjectByModelType(
 export async function handleObjectSmall(
   runtime: IAgentRuntime,
   params: ObjectGenerationParams,
-): Promise<JSONValue> {
+): Promise<Record<string, unknown>> {
   return generateObjectByModelType(
     runtime,
     params,
@@ -98,7 +98,7 @@ export async function handleObjectSmall(
 export async function handleObjectLarge(
   runtime: IAgentRuntime,
   params: ObjectGenerationParams,
-): Promise<JSONValue> {
+): Promise<Record<string, unknown>> {
   return generateObjectByModelType(
     runtime,
     params,

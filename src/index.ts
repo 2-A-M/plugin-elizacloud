@@ -180,7 +180,7 @@ export const elizaOSCloudPlugin: Plugin = {
             try {
               const image = await runtime.useModel(ModelType.IMAGE, {
                 prompt: "A beautiful sunset over a calm ocean",
-                n: 1,
+                count: 1,
                 size: "1024x1024",
               });
               logger.log({ image }, "generated with test_image_generation");
@@ -259,7 +259,7 @@ export const elizaOSCloudPlugin: Plugin = {
             const prompt = "Hello tokenizer encode!";
             const tokens = await runtime.useModel(
               ModelType.TEXT_TOKENIZER_ENCODE,
-              { prompt },
+              { prompt, modelType: ModelType.TEXT_SMALL },
             );
             if (!Array.isArray(tokens) || tokens.length === 0) {
               throw new Error(
@@ -275,11 +275,11 @@ export const elizaOSCloudPlugin: Plugin = {
             const prompt = "Hello tokenizer decode!";
             const tokens = await runtime.useModel(
               ModelType.TEXT_TOKENIZER_ENCODE,
-              { prompt },
+              { prompt, modelType: ModelType.TEXT_SMALL },
             );
             const decodedText = await runtime.useModel(
               ModelType.TEXT_TOKENIZER_DECODE,
-              { tokens },
+              { tokens, modelType: ModelType.TEXT_SMALL },
             );
             if (decodedText !== prompt) {
               throw new Error(

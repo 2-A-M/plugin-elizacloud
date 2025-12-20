@@ -1,6 +1,6 @@
 {
   "name": "@elizaos/plugin-elizacloud",
-  "version": "1.5.20",
+  "version": "1.6.0",
   "type": "module",
   "main": "dist/cjs/index.node.cjs",
   "module": "dist/node/index.node.js",
@@ -44,7 +44,7 @@
   ],
   "dependencies": {
     "@ai-sdk/openai": "^2.0.32",
-    "@elizaos/core": "^1.6.0-alpha.4",
+    "@elizaos/core": "^1.7.0",
     "ai": "^5.0.47",
     "js-tiktoken": "^1.0.21",
     "undici": "^7.16.0"
