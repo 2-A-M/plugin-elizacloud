@@ -39,18 +39,22 @@ export async function handleImageGeneration(
   const aspectRatio = aspectRatioMap[size] || "1:1";
 
   try {
+    const requestUrl = `${baseURL}/generate-image`;
+    const requestBody = {
+      prompt: prompt,
+      numImages: numImages,
+      aspectRatio: aspectRatio,
+      model: modelName,
+    };
+
     // ElizaOS Cloud uses /generate-image endpoint, not /images/generations
-    const response = await fetch(`${baseURL}/generate-image`, {
+    const response = await fetch(requestUrl, {
       method: "POST",
       headers: {
         ...getAuthHeader(runtime),
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        prompt: prompt,
-        numImages: numImages,
-        aspectRatio: aspectRatio,
-      }),
+      body: JSON.stringify(requestBody),
     });
 
     if (!response.ok) {
@@ -67,9 +71,10 @@ export async function handleImageGeneration(
     };
 
     // Map response to expected format
-    return typedData.images.map((img) => ({
+    const result = typedData.images.map((img) => ({
       url: img.url || img.image,
     }));
+    return result;
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);
     logger.error(`[ELIZAOS_CLOUD] Image generation error: ${message}`);

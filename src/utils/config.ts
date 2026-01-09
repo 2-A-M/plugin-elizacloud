@@ -57,7 +57,6 @@ export function getBaseURL(runtime: IAgentRuntime): string {
       ? browserURL
       : getSetting(runtime, "ELIZAOS_CLOUD_BASE_URL", "https://www.elizacloud.ai/api/v1")
   ) as string;
-  console.log(`[ELIZAOS_CLOUD] Default base URL: ${baseURL}`);
   return baseURL;
 }
 
@@ -161,8 +160,8 @@ export function getImageDescriptionModel(runtime: IAgentRuntime): string {
  */
 export function getImageGenerationModel(runtime: IAgentRuntime): string {
   return (
-    getSetting(runtime, "ELIZAOS_CLOUD_IMAGE_GENERATION_MODEL", "openai/gpt-5-nano") ??
-    "openai/gpt-5-nano"
+    getSetting(runtime, "ELIZAOS_CLOUD_IMAGE_GENERATION_MODEL", "google/gemini-2.5-flash-image") ??
+    "google/gemini-2.5-flash-image"
   );
 }
 
