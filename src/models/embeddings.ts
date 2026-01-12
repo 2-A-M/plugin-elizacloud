@@ -42,10 +42,14 @@ function getEmbeddingConfig(runtime: IAgentRuntime) {
     "ELIZAOS_CLOUD_EMBEDDING_MODEL",
     "text-embedding-3-small",
   );
-  const embeddingDimension = Number.parseInt(
-    getSetting(runtime, "ELIZAOS_CLOUD_EMBEDDING_DIMENSIONS", "1536") || "1536",
-    10,
-  ) as (typeof VECTOR_DIMS)[keyof typeof VECTOR_DIMS];
+
+  // Use EMBEDDING_DIMENSION (new standard from runtime settings)
+  // Falls back to ELIZAOS_CLOUD_EMBEDDING_DIMENSIONS for backward compatibility
+  const dimensionStr =
+    getSetting(runtime, "EMBEDDING_DIMENSION") ||
+    getSetting(runtime, "ELIZAOS_CLOUD_EMBEDDING_DIMENSIONS") ||
+    "1536";
+  const embeddingDimension = Number.parseInt(dimensionStr, 10) as (typeof VECTOR_DIMS)[keyof typeof VECTOR_DIMS];
 
   if (!Object.values(VECTOR_DIMS).includes(embeddingDimension)) {
     const errorMsg = `Invalid embedding dimension: ${embeddingDimension}. Must be one of: ${Object.values(VECTOR_DIMS).join(", ")}`;

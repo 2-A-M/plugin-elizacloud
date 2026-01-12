@@ -42,6 +42,7 @@ export type {
  *   Default: gpt-4o
  *
  * - ELIZAOS_CLOUD_EMBEDDING_MODEL: Model for text embeddings
+ * - EMBEDDING_DIMENSION: Embedding vector dimension (default: 1536, skips API dimension check)
  * - ELIZAOS_CLOUD_EMBEDDING_API_KEY: Separate API key for embeddings (optional)
  * - ELIZAOS_CLOUD_EMBEDDING_URL: Separate URL for embeddings (optional)
  * - ELIZAOS_CLOUD_IMAGE_DESCRIPTION_MODEL: Model for image description (default: gpt-4o-mini)
@@ -60,11 +61,10 @@ export const elizaOSCloudPlugin: Plugin = {
     SMALL_MODEL: process.env.SMALL_MODEL,
     LARGE_MODEL: process.env.LARGE_MODEL,
     ELIZAOS_CLOUD_EMBEDDING_MODEL: process.env.ELIZAOS_CLOUD_EMBEDDING_MODEL,
+    EMBEDDING_DIMENSION: process.env.EMBEDDING_DIMENSION,
     ELIZAOS_CLOUD_EMBEDDING_API_KEY:
       process.env.ELIZAOS_CLOUD_EMBEDDING_API_KEY,
     ELIZAOS_CLOUD_EMBEDDING_URL: process.env.ELIZAOS_CLOUD_EMBEDDING_URL,
-    ELIZAOS_CLOUD_EMBEDDING_DIMENSIONS:
-      process.env.ELIZAOS_CLOUD_EMBEDDING_DIMENSIONS,
     ELIZAOS_CLOUD_IMAGE_DESCRIPTION_MODEL:
       process.env.ELIZAOS_CLOUD_IMAGE_DESCRIPTION_MODEL,
     ELIZAOS_CLOUD_IMAGE_DESCRIPTION_MAX_TOKENS:
