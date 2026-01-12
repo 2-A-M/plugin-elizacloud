@@ -33,5 +33,6 @@ export interface OpenAIConfig {
   largeModel?: string;
   imageDescriptionModel?: string;
   embeddingModel?: string;
-  embeddingDimensions?: number;
+  /** Embedding vector dimension (e.g., 1536 for text-embedding-3-small) */
+  embeddingDimension?: number;
 }
