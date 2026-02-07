@@ -87,7 +87,9 @@ describe("CloudApiClient construction", () => {
 
   it("builds WebSocket URL by replacing http with ws", () => {
     const client = new CloudApiClient("http://localhost:3000/api/v1");
-    expect(client.buildWsUrl("/bridge/abc")).toBe("ws://localhost:3000/api/v1/bridge/abc");
+    expect(client.buildWsUrl("/bridge/abc")).toBe(
+      "ws://localhost:3000/api/v1/bridge/abc",
+    );
   });
 
   it("builds wss URL from https", () => {
@@ -102,7 +104,9 @@ describe("GET requests", () => {
   it("sends correct method and path", async () => {
     setResponse(200, { success: true, data: [1, 2, 3] });
     const client = new CloudApiClient(baseUrl);
-    const result = await client.get<{ success: boolean; data: number[] }>("/items");
+    const result = await client.get<{ success: boolean; data: number[] }>(
+      "/items",
+    );
     expect(lastRequest.method).toBe("GET");
     expect(lastRequest.url).toBe("/items");
     expect(result.data).toEqual([1, 2, 3]);
@@ -198,7 +202,9 @@ describe("error handling", () => {
   it("throws CloudApiError on 500 JSON response", async () => {
     setResponse(500, { success: false, error: "Internal server error" });
     const client = new CloudApiClient(baseUrl);
-    const err = await client.post("/explode", {}).catch((e: CloudApiError) => e);
+    const err = await client
+      .post("/explode", {})
+      .catch((e: CloudApiError) => e);
     expect(err).toBeInstanceOf(CloudApiError);
     expect(err.statusCode).toBe(500);
   });
@@ -223,7 +229,9 @@ describe("error handling", () => {
   it("InsufficientCreditsError defaults requiredCredits to 0 when missing", async () => {
     setResponse(402, { success: false, error: "No credits" });
     const client = new CloudApiClient(baseUrl);
-    const err = await client.get("/x").catch((e: InsufficientCreditsError) => e);
+    const err = await client
+      .get("/x")
+      .catch((e: InsufficientCreditsError) => e);
     expect(err.requiredCredits).toBe(0);
   });
 
@@ -250,7 +258,9 @@ describe("error handling", () => {
       quota: { current: 5, max: 5 },
     });
     const client = new CloudApiClient(baseUrl);
-    const err = await client.post("/containers", {}).catch((e: CloudApiError) => e);
+    const err = await client
+      .post("/containers", {})
+      .catch((e: CloudApiError) => e);
     expect(err.statusCode).toBe(403);
     expect(err.errorBody.quota).toEqual({ current: 5, max: 5 });
   });

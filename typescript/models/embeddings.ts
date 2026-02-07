@@ -1,6 +1,10 @@
 import type { IAgentRuntime, TextEmbeddingParams } from "@elizaos/core";
 import { logger, ModelType, VECTOR_DIMS } from "@elizaos/core";
-import { getAuthHeader, getEmbeddingBaseURL, getSetting } from "../utils/config";
+import {
+  getAuthHeader,
+  getEmbeddingBaseURL,
+  getSetting,
+} from "../utils/config";
 import { emitModelUsageEvent } from "../utils/events";
 
 const MAX_BATCH_SIZE = 100;
@@ -15,15 +19,26 @@ function extractRateLimitInfo(response: Response): {
 } {
   return {
     remainingRequests:
-      parseInt(response.headers.get("x-ratelimit-remaining-requests") || "", 10) || undefined,
+      parseInt(
+        response.headers.get("x-ratelimit-remaining-requests") || "",
+        10,
+      ) || undefined,
     remainingTokens:
-      parseInt(response.headers.get("x-ratelimit-remaining-tokens") || "", 10) || undefined,
+      parseInt(
+        response.headers.get("x-ratelimit-remaining-tokens") || "",
+        10,
+      ) || undefined,
     limitRequests:
-      parseInt(response.headers.get("x-ratelimit-limit-requests") || "", 10) || undefined,
-    limitTokens: parseInt(response.headers.get("x-ratelimit-limit-tokens") || "", 10) || undefined,
-    resetRequests: response.headers.get("x-ratelimit-reset-requests") || undefined,
+      parseInt(response.headers.get("x-ratelimit-limit-requests") || "", 10) ||
+      undefined,
+    limitTokens:
+      parseInt(response.headers.get("x-ratelimit-limit-tokens") || "", 10) ||
+      undefined,
+    resetRequests:
+      response.headers.get("x-ratelimit-reset-requests") || undefined,
     resetTokens: response.headers.get("x-ratelimit-reset-tokens") || undefined,
-    retryAfter: parseInt(response.headers.get("retry-after") || "", 10) || undefined,
+    retryAfter:
+      parseInt(response.headers.get("retry-after") || "", 10) || undefined,
   };
 }
 
@@ -31,11 +46,11 @@ function getEmbeddingConfig(runtime: IAgentRuntime) {
   const embeddingModelName = getSetting(
     runtime,
     "ELIZAOS_CLOUD_EMBEDDING_MODEL",
-    "text-embedding-3-small"
+    "text-embedding-3-small",
   );
   const embeddingDimension = Number.parseInt(
     getSetting(runtime, "ELIZAOS_CLOUD_EMBEDDING_DIMENSIONS", "1536") || "1536",
-    10
+    10,
   ) as (typeof VECTOR_DIMS)[keyof typeof VECTOR_DIMS];
 
   if (!Object.values(VECTOR_DIMS).includes(embeddingDimension)) {
@@ -59,7 +74,7 @@ export interface BatchEmbeddingParams {
 
 export async function handleTextEmbedding(
   runtime: IAgentRuntime,
-  params: TextEmbeddingParams | string | null
+  params: TextEmbeddingParams | string | null,
 ): Promise<number[]> {
   const { embeddingDimension } = getEmbeddingConfig(runtime);
 
@@ -96,9 +111,10 @@ export interface BatchEmbeddingResult {
 
 export async function handleBatchTextEmbedding(
   runtime: IAgentRuntime,
-  texts: string[]
+  texts: string[],
 ): Promise<number[][]> {
-  const { embeddingModelName, embeddingDimension } = getEmbeddingConfig(runtime);
+  const { embeddingModelName, embeddingDimension } =
+    getEmbeddingConfig(runtime);
   const embeddingBaseURL = getEmbeddingBaseURL(runtime);
 
   if (!texts || texts.length === 0) {
@@ -123,13 +139,17 @@ export async function handleBatchTextEmbedding(
     return results;
   }
 
-  for (let batchStart = 0; batchStart < validTexts.length; batchStart += MAX_BATCH_SIZE) {
+  for (
+    let batchStart = 0;
+    batchStart < validTexts.length;
+    batchStart += MAX_BATCH_SIZE
+  ) {
     const batchEnd = Math.min(batchStart + MAX_BATCH_SIZE, validTexts.length);
     const batch = validTexts.slice(batchStart, batchEnd);
     const batchTexts = batch.map((b) => b.text);
 
     logger.info(
-      `[BatchEmbeddings] Processing batch ${Math.floor(batchStart / MAX_BATCH_SIZE) + 1}/${Math.ceil(validTexts.length / MAX_BATCH_SIZE)}: ${batch.length} texts`
+      `[BatchEmbeddings] Processing batch ${Math.floor(batchStart / MAX_BATCH_SIZE) + 1}/${Math.ceil(validTexts.length / MAX_BATCH_SIZE)}: ${batch.length} texts`,
     );
 
     try {
@@ -147,15 +167,20 @@ export async function handleBatchTextEmbedding(
 
       const rateLimitInfo = extractRateLimitInfo(response);
 
-      if (rateLimitInfo.remainingRequests !== undefined && rateLimitInfo.remainingRequests < 50) {
+      if (
+        rateLimitInfo.remainingRequests !== undefined &&
+        rateLimitInfo.remainingRequests < 50
+      ) {
         logger.warn(
-          `[BatchEmbeddings] Rate limit: ${rateLimitInfo.remainingRequests}/${rateLimitInfo.limitRequests} requests remaining`
+          `[BatchEmbeddings] Rate limit: ${rateLimitInfo.remainingRequests}/${rateLimitInfo.limitRequests} requests remaining`,
         );
       }
 
       if (response.status === 429) {
         const retryAfter = rateLimitInfo.retryAfter || 30;
-        logger.warn(`[BatchEmbeddings] Rate limited, waiting ${retryAfter}s...`);
+        logger.warn(
+          `[BatchEmbeddings] Rate limited, waiting ${retryAfter}s...`,
+        );
         await new Promise((resolve) => setTimeout(resolve, retryAfter * 1000));
 
         const retryResponse = await fetch(`${embeddingBaseURL}/embeddings`, {
@@ -171,9 +196,14 @@ export async function handleBatchTextEmbedding(
         });
 
         if (!retryResponse.ok) {
-          logger.error(`[BatchEmbeddings] Retry failed: ${retryResponse.status}`);
+          logger.error(
+            `[BatchEmbeddings] Retry failed: ${retryResponse.status}`,
+          );
           for (const item of batch) {
-            results[item.originalIndex] = createErrorVector(embeddingDimension, 0.4);
+            results[item.originalIndex] = createErrorVector(
+              embeddingDimension,
+              0.4,
+            );
           }
           continue;
         }
@@ -187,15 +217,22 @@ export async function handleBatchTextEmbedding(
             const originalIndex = batch[item.index].originalIndex;
             results[originalIndex] = item.embedding;
           }
-          logger.info(`[BatchEmbeddings] Retry successful for ${batch.length} embeddings`);
+          logger.info(
+            `[BatchEmbeddings] Retry successful for ${batch.length} embeddings`,
+          );
         }
         continue;
       }
 
       if (!response.ok) {
-        logger.error(`[BatchEmbeddings] API error: ${response.status} - ${response.statusText}`);
+        logger.error(
+          `[BatchEmbeddings] API error: ${response.status} - ${response.statusText}`,
+        );
         for (const item of batch) {
-          results[item.originalIndex] = createErrorVector(embeddingDimension, 0.4);
+          results[item.originalIndex] = createErrorVector(
+            embeddingDimension,
+            0.4,
+          );
         }
         continue;
       }
@@ -208,7 +245,10 @@ export async function handleBatchTextEmbedding(
       if (!data?.data || !Array.isArray(data.data)) {
         logger.error("[BatchEmbeddings] API returned invalid structure");
         for (const item of batch) {
-          results[item.originalIndex] = createErrorVector(embeddingDimension, 0.5);
+          results[item.originalIndex] = createErrorVector(
+            embeddingDimension,
+            0.5,
+          );
         }
         continue;
       }
@@ -224,17 +264,25 @@ export async function handleBatchTextEmbedding(
           outputTokens: 0,
           totalTokens: data.usage.total_tokens,
         };
-        emitModelUsageEvent(runtime, ModelType.TEXT_EMBEDDING, `batch:${batch.length}`, usage);
+        emitModelUsageEvent(
+          runtime,
+          ModelType.TEXT_EMBEDDING,
+          `batch:${batch.length}`,
+          usage,
+        );
       }
 
       logger.debug(
-        `[BatchEmbeddings] Got ${batch.length} embeddings (${embeddingDimension}d), remaining: ${rateLimitInfo.remainingRequests ?? "unknown"}`
+        `[BatchEmbeddings] Got ${batch.length} embeddings (${embeddingDimension}d), remaining: ${rateLimitInfo.remainingRequests ?? "unknown"}`,
       );
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       logger.error(`[BatchEmbeddings] Error: ${message}`);
       for (const item of batch) {
-        results[item.originalIndex] = createErrorVector(embeddingDimension, 0.6);
+        results[item.originalIndex] = createErrorVector(
+          embeddingDimension,
+          0.6,
+        );
       }
     }
   }

@@ -1,15 +1,23 @@
-import type { GenerateTextParams, IAgentRuntime, TextStreamResult } from "@elizaos/core";
+import type {
+  GenerateTextParams,
+  IAgentRuntime,
+  TextStreamResult,
+} from "@elizaos/core";
 import { logger, ModelType } from "@elizaos/core";
 import type { LanguageModel } from "ai";
 import { generateText, streamText } from "ai";
 import { createOpenAIClient } from "../providers/openai";
-import { getExperimentalTelemetry, getLargeModel, getSmallModel } from "../utils/config";
+import {
+  getExperimentalTelemetry,
+  getLargeModel,
+  getSmallModel,
+} from "../utils/config";
 import { emitModelUsageEvent } from "../utils/events";
 
 function buildGenerateParams(
   runtime: IAgentRuntime,
   modelType: typeof ModelType.TEXT_SMALL | typeof ModelType.TEXT_LARGE,
-  params: GenerateTextParams
+  params: GenerateTextParams,
 ) {
   const { prompt, stopSequences = [] } = params;
   const temperature = params.temperature ?? 0.7;
@@ -19,8 +27,11 @@ function buildGenerateParams(
 
   const openai = createOpenAIClient(runtime);
   const modelName =
-    modelType === ModelType.TEXT_SMALL ? getSmallModel(runtime) : getLargeModel(runtime);
-  const modelLabel = modelType === ModelType.TEXT_SMALL ? "TEXT_SMALL" : "TEXT_LARGE";
+    modelType === ModelType.TEXT_SMALL
+      ? getSmallModel(runtime)
+      : getLargeModel(runtime);
+  const modelLabel =
+    modelType === ModelType.TEXT_SMALL ? "TEXT_SMALL" : "TEXT_LARGE";
   const experimentalTelemetry = getExperimentalTelemetry(runtime);
 
   const model = openai.languageModel(modelName) as LanguageModel;
@@ -46,7 +57,7 @@ function handleStreamingGeneration(
   modelType: typeof ModelType.TEXT_SMALL | typeof ModelType.TEXT_LARGE,
   generateParams: Parameters<typeof streamText>[0],
   prompt: string,
-  modelLabel: string
+  modelLabel: string,
 ): TextStreamResult {
   logger.debug(`[ELIZAOS_CLOUD] Streaming text with ${modelLabel} model`);
 
@@ -68,25 +79,35 @@ function handleStreamingGeneration(
       }
       return undefined;
     }),
-    finishReason: Promise.resolve(streamResult.finishReason) as Promise<string | undefined>,
+    finishReason: Promise.resolve(streamResult.finishReason) as Promise<
+      string | undefined
+    >,
   };
 }
 
 async function generateTextWithModel(
   runtime: IAgentRuntime,
   modelType: typeof ModelType.TEXT_SMALL | typeof ModelType.TEXT_LARGE,
-  params: GenerateTextParams
+  params: GenerateTextParams,
 ): Promise<string | TextStreamResult> {
   const { generateParams, modelName, modelLabel, prompt } = buildGenerateParams(
     runtime,
     modelType,
-    params
+    params,
   );
 
-  logger.debug(`[ELIZAOS_CLOUD] Generating text with ${modelLabel} model: ${modelName}`);
+  logger.debug(
+    `[ELIZAOS_CLOUD] Generating text with ${modelLabel} model: ${modelName}`,
+  );
 
   if (params.stream) {
-    return handleStreamingGeneration(runtime, modelType, generateParams, prompt, modelLabel);
+    return handleStreamingGeneration(
+      runtime,
+      modelType,
+      generateParams,
+      prompt,
+      modelLabel,
+    );
   }
 
   logger.log(`[ELIZAOS_CLOUD] Using ${modelLabel} model: ${modelName}`);
@@ -103,14 +124,14 @@ async function generateTextWithModel(
 
 export async function handleTextSmall(
   runtime: IAgentRuntime,
-  params: GenerateTextParams
+  params: GenerateTextParams,
 ): Promise<string | TextStreamResult> {
   return generateTextWithModel(runtime, ModelType.TEXT_SMALL, params);
 }
 
 export async function handleTextLarge(
   runtime: IAgentRuntime,
-  params: GenerateTextParams
+  params: GenerateTextParams,
 ): Promise<string | TextStreamResult> {
   return generateTextWithModel(runtime, ModelType.TEXT_LARGE, params);
 }

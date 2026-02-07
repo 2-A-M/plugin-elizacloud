@@ -18,18 +18,26 @@ import type { CloudBackupService } from "../services/cloud-backup";
 import type { CloudBridgeService } from "../services/cloud-bridge";
 import type { CloudContainerService } from "../services/cloud-container";
 
-function getContainerId(message: Memory, options?: Record<string, unknown>): string | null {
+function getContainerId(
+  message: Memory,
+  options?: Record<string, unknown>,
+): string | null {
   if (options?.containerId) return String(options.containerId);
-  const meta = (message.metadata as Record<string, unknown> | undefined)?.actionParams as
-    | Record<string, unknown>
-    | undefined;
+  const meta = (message.metadata as Record<string, unknown> | undefined)
+    ?.actionParams as Record<string, unknown> | undefined;
   return meta?.containerId ? String(meta.containerId) : null;
 }
 
 export const freezeCloudAgentAction: Action = {
   name: "FREEZE_CLOUD_AGENT",
-  description: "Freeze a cloud agent: snapshot state, disconnect bridge, stop container.",
-  similes: ["freeze agent", "hibernate agent", "pause agent", "stop cloud agent"],
+  description:
+    "Freeze a cloud agent: snapshot state, disconnect bridge, stop container.",
+  similes: [
+    "freeze agent",
+    "hibernate agent",
+    "pause agent",
+    "stop cloud agent",
+  ],
   tags: ["cloud", "container", "backup"],
   parameters: [
     {
@@ -41,7 +49,9 @@ export const freezeCloudAgentAction: Action = {
   ],
 
   async validate(runtime: IAgentRuntime): Promise<boolean> {
-    return !!(runtime.getService("CLOUD_AUTH") as CloudAuthService | undefined)?.isAuthenticated();
+    return !!(
+      runtime.getService("CLOUD_AUTH") as CloudAuthService | undefined
+    )?.isAuthenticated();
   },
 
   async handler(
@@ -49,11 +59,17 @@ export const freezeCloudAgentAction: Action = {
     message: Memory,
     _state?: State,
     options?: Record<string, unknown>,
-    callback?: HandlerCallback
+    callback?: HandlerCallback,
   ): Promise<ActionResult> {
-    const containers = runtime.getService("CLOUD_CONTAINER") as CloudContainerService;
-    const bridge = runtime.getService("CLOUD_BRIDGE") as CloudBridgeService | undefined;
-    const backup = runtime.getService("CLOUD_BACKUP") as CloudBackupService | undefined;
+    const containers = runtime.getService(
+      "CLOUD_CONTAINER",
+    ) as CloudContainerService;
+    const bridge = runtime.getService("CLOUD_BRIDGE") as
+      | CloudBridgeService
+      | undefined;
+    const backup = runtime.getService("CLOUD_BACKUP") as
+      | CloudBackupService
+      | undefined;
 
     const containerId = getContainerId(message, options);
     if (!containerId) return { success: false, error: "Missing containerId" };
@@ -85,7 +101,9 @@ export const freezeCloudAgentAction: Action = {
     if (bridge) await bridge.disconnect(containerId);
     await containers.deleteContainer(containerId);
 
-    await notify(`"${container.name}" frozen.${snapshotId ? ` Snapshot: ${snapshotId}` : ""}`);
+    await notify(
+      `"${container.name}" frozen.${snapshotId ? ` Snapshot: ${snapshotId}` : ""}`,
+    );
 
     return {
       success: true,

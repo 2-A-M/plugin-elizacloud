@@ -6,7 +6,11 @@
  */
 
 import { logger } from "@elizaos/core";
-import { CloudApiError, type CloudApiErrorBody, InsufficientCreditsError } from "../types/cloud";
+import {
+  CloudApiError,
+  type CloudApiErrorBody,
+  InsufficientCreditsError,
+} from "../types/cloud";
 
 export class CloudApiClient {
   private baseUrl: string;
@@ -51,7 +55,10 @@ export class CloudApiClient {
    * POST without auth header — used for device-auth which doesn't
    * require a pre-existing API key.
    */
-  async postUnauthenticated<T>(path: string, body: Record<string, unknown>): Promise<T> {
+  async postUnauthenticated<T>(
+    path: string,
+    body: Record<string, unknown>,
+  ): Promise<T> {
     return this.request<T>("POST", path, body, true);
   }
 
@@ -61,7 +68,7 @@ export class CloudApiClient {
     method: string,
     path: string,
     body?: Record<string, unknown>,
-    skipAuth = false
+    skipAuth = false,
   ): Promise<T> {
     const url = `${this.baseUrl}${path}`;
     logger.debug(`[CloudAPI] ${method} ${url}`);

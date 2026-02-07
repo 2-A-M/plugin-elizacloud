@@ -1,4 +1,8 @@
-import type { IAgentRuntime, JsonValue, ObjectGenerationParams } from "@elizaos/core";
+import type {
+  IAgentRuntime,
+  JsonValue,
+  ObjectGenerationParams,
+} from "@elizaos/core";
 import { logger, ModelType } from "@elizaos/core";
 import type { LanguageModel } from "ai";
 import { generateObject, JSONParseError } from "ai";
@@ -11,7 +15,7 @@ async function generateObjectByModelType(
   runtime: IAgentRuntime,
   params: ObjectGenerationParams,
   modelType: string,
-  getModelFn: (runtime: IAgentRuntime) => string
+  getModelFn: (runtime: IAgentRuntime) => string,
 ): Promise<Record<string, JsonValue>> {
   const openai = createOpenAIClient(runtime);
   const modelName = getModelFn(runtime);
@@ -49,8 +53,12 @@ async function generateObjectByModelType(
           return repairedObject as unknown as Record<string, JsonValue>;
         } catch (repairParseError) {
           const message =
-            repairParseError instanceof Error ? repairParseError.message : String(repairParseError);
-          logger.error(`[generateObject] Failed to parse repaired JSON: ${message}`);
+            repairParseError instanceof Error
+              ? repairParseError.message
+              : String(repairParseError);
+          logger.error(
+            `[generateObject] Failed to parse repaired JSON: ${message}`,
+          );
           throw repairParseError;
         }
       } else {
@@ -67,14 +75,24 @@ async function generateObjectByModelType(
 
 export async function handleObjectSmall(
   runtime: IAgentRuntime,
-  params: ObjectGenerationParams
+  params: ObjectGenerationParams,
 ): Promise<Record<string, JsonValue>> {
-  return generateObjectByModelType(runtime, params, ModelType.OBJECT_SMALL, getSmallModel);
+  return generateObjectByModelType(
+    runtime,
+    params,
+    ModelType.OBJECT_SMALL,
+    getSmallModel,
+  );
 }
 
 export async function handleObjectLarge(
   runtime: IAgentRuntime,
-  params: ObjectGenerationParams
+  params: ObjectGenerationParams,
 ): Promise<Record<string, JsonValue>> {
-  return generateObjectByModelType(runtime, params, ModelType.OBJECT_LARGE, getLargeModel);
+  return generateObjectByModelType(
+    runtime,
+    params,
+    ModelType.OBJECT_LARGE,
+    getLargeModel,
+  );
 }

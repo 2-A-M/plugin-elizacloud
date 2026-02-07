@@ -75,7 +75,9 @@ export class CloudBridgeService extends Service {
     if (this.connections.has(containerId)) {
       const existing = this.connections.get(containerId)!;
       if (existing.state === "connected" || existing.state === "connecting") {
-        logger.debug(`[CloudBridge] Already connected/connecting to ${containerId}`);
+        logger.debug(
+          `[CloudBridge] Already connected/connecting to ${containerId}`,
+        );
         return;
       }
     }
@@ -97,7 +99,10 @@ export class CloudBridgeService extends Service {
     }
     conn.pendingRequests.clear();
 
-    if (conn.ws.readyState === WebSocket.OPEN || conn.ws.readyState === WebSocket.CONNECTING) {
+    if (
+      conn.ws.readyState === WebSocket.OPEN ||
+      conn.ws.readyState === WebSocket.CONNECTING
+    ) {
       conn.ws.close(1000, "Client disconnect");
     }
 
@@ -105,13 +110,18 @@ export class CloudBridgeService extends Service {
     logger.info(`[CloudBridge] Disconnected from ${containerId}`);
   }
 
-  private async establishConnection(containerId: string, reconnectAttempts: number): Promise<void> {
+  private async establishConnection(
+    containerId: string,
+    reconnectAttempts: number,
+  ): Promise<void> {
     const client = this.authService.getClient();
     const apiKey = this.authService.getApiKey();
     const wsUrl = client.buildWsUrl(`/agent-bridge/${containerId}`);
 
     // Append API key as query parameter for WebSocket auth
-    const authUrl = apiKey ? `${wsUrl}?token=${encodeURIComponent(apiKey)}` : wsUrl;
+    const authUrl = apiKey
+      ? `${wsUrl}?token=${encodeURIComponent(apiKey)}`
+      : wsUrl;
 
     const conn: ActiveConnection = {
       ws: new WebSocket(authUrl),
@@ -143,7 +153,11 @@ export class CloudBridgeService extends Service {
     conn.ws.addEventListener("message", (event) => {
       const raw = event.data;
       const data =
-        typeof raw === "string" ? raw : raw instanceof Buffer ? raw.toString("utf-8") : String(raw);
+        typeof raw === "string"
+          ? raw
+          : raw instanceof Buffer
+            ? raw.toString("utf-8")
+            : String(raw);
       const message = JSON.parse(data) as BridgeMessage;
 
       // Handle heartbeat responses
@@ -184,7 +198,7 @@ export class CloudBridgeService extends Service {
       }
 
       logger.warn(
-        `[CloudBridge] Connection lost to ${containerId} (code=${event.code}, reason=${event.reason})`
+        `[CloudBridge] Connection lost to ${containerId} (code=${event.code}, reason=${event.reason})`,
       );
       this.scheduleReconnect(containerId, conn.reconnectAttempts + 1);
     });
@@ -197,7 +211,7 @@ export class CloudBridgeService extends Service {
   private scheduleReconnect(containerId: string, attempt: number): void {
     if (attempt > this.bridgeConfig.maxReconnectAttempts) {
       logger.error(
-        `[CloudBridge] Max reconnect attempts (${this.bridgeConfig.maxReconnectAttempts}) reached for ${containerId}`
+        `[CloudBridge] Max reconnect attempts (${this.bridgeConfig.maxReconnectAttempts}) reached for ${containerId}`,
       );
       this.connections.delete(containerId);
       return;
@@ -209,7 +223,7 @@ export class CloudBridgeService extends Service {
     const jitter = Math.floor(Math.random() * 1000);
 
     logger.info(
-      `[CloudBridge] Reconnecting to ${containerId} in ${Math.round((delay + jitter) / 1000)}s (attempt ${attempt})`
+      `[CloudBridge] Reconnecting to ${containerId} in ${Math.round((delay + jitter) / 1000)}s (attempt ${attempt})`,
     );
 
     const conn = this.connections.get(containerId);
@@ -243,7 +257,7 @@ export class CloudBridgeService extends Service {
     containerId: string,
     method: string,
     params: Record<string, unknown>,
-    timeoutMs = 60_000
+    timeoutMs = 60_000,
   ): Promise<unknown> {
     const conn = this.connections.get(containerId);
     if (!conn || conn.state !== "connected") {
@@ -272,7 +286,11 @@ export class CloudBridgeService extends Service {
   /**
    * Send a one-way notification (no response expected).
    */
-  sendNotification(containerId: string, method: string, params: Record<string, unknown>): void {
+  sendNotification(
+    containerId: string,
+    method: string,
+    params: Record<string, unknown>,
+  ): void {
     const conn = this.connections.get(containerId);
     if (!conn || conn.state !== "connected") {
       throw new Error(`Not connected to container ${containerId}`);
@@ -294,7 +312,7 @@ export class CloudBridgeService extends Service {
     containerId: string,
     text: string,
     roomId?: string,
-    metadata?: Record<string, unknown>
+    metadata?: Record<string, unknown>,
   ): Promise<{ text: string; metadata?: Record<string, unknown> }> {
     const result = await this.sendRequest(containerId, "message.send", {
       text,
@@ -315,7 +333,10 @@ export class CloudBridgeService extends Service {
   /**
    * Update the cloud agent's configuration.
    */
-  async updateAgentConfig(containerId: string, config: Record<string, unknown>): Promise<void> {
+  async updateAgentConfig(
+    containerId: string,
+    config: Record<string, unknown>,
+  ): Promise<void> {
     await this.sendRequest(containerId, "config.update", config);
   }
 

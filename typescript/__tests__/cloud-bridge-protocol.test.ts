@@ -9,7 +9,11 @@
 import { describe, expect, it } from "vitest";
 import type { BridgeMessage } from "../types/cloud";
 
-function createRequest(id: number, method: string, params: Record<string, unknown>): BridgeMessage {
+function createRequest(
+  id: number,
+  method: string,
+  params: Record<string, unknown>,
+): BridgeMessage {
   return { jsonrpc: "2.0", id, method, params };
 }
 
@@ -17,11 +21,18 @@ function createResponse(id: number, result: unknown): BridgeMessage {
   return { jsonrpc: "2.0", id, result };
 }
 
-function createErrorResponse(id: number, code: number, message: string): BridgeMessage {
+function createErrorResponse(
+  id: number,
+  code: number,
+  message: string,
+): BridgeMessage {
   return { jsonrpc: "2.0", id, error: { code, message } };
 }
 
-function createNotification(method: string, params: Record<string, unknown>): BridgeMessage {
+function createNotification(
+  method: string,
+  params: Record<string, unknown>,
+): BridgeMessage {
   return { jsonrpc: "2.0", method, params };
 }
 
@@ -147,11 +158,13 @@ describe("heartbeat protocol", () => {
     const response = createResponse(5, "ok");
 
     // Notification: has method, no id
-    const isNotification = notification.method !== undefined && notification.id === undefined;
+    const isNotification =
+      notification.method !== undefined && notification.id === undefined;
     expect(isNotification).toBe(true);
 
     // Response: has id, no method
-    const isResponse = response.id !== undefined && response.method === undefined;
+    const isResponse =
+      response.id !== undefined && response.method === undefined;
     expect(isResponse).toBe(true);
   });
 });

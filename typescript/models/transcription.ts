@@ -6,9 +6,13 @@ import { detectAudioMimeType } from "../utils/helpers";
 
 export async function handleTranscription(
   runtime: IAgentRuntime,
-  input: Blob | File | Buffer | OpenAITranscriptionParams
+  input: Blob | File | Buffer | OpenAITranscriptionParams,
 ): Promise<string> {
-  let modelName = getSetting(runtime, "ELIZAOS_CLOUD_TRANSCRIPTION_MODEL", "gpt-5-mini-transcribe");
+  let modelName = getSetting(
+    runtime,
+    "ELIZAOS_CLOUD_TRANSCRIPTION_MODEL",
+    "gpt-5-mini-transcribe",
+  );
   logger.log(`[ELIZAOS_CLOUD] Using TRANSCRIPTION model: ${modelName}`);
 
   const baseURL = getBaseURL(runtime);
@@ -34,7 +38,9 @@ export async function handleTranscription(
       !(params.audio instanceof File) &&
       !Buffer.isBuffer(params.audio)
     ) {
-      throw new Error("TRANSCRIPTION param 'audio' must be a Blob/File/Buffer.");
+      throw new Error(
+        "TRANSCRIPTION param 'audio' must be a Blob/File/Buffer.",
+      );
     }
     if (Buffer.isBuffer(params.audio)) {
       let mimeType = params.mimeType;
@@ -54,7 +60,7 @@ export async function handleTranscription(
     }
   } else {
     throw new Error(
-      "TRANSCRIPTION expects a Blob/File/Buffer or an object { audio: Blob/File/Buffer, mimeType?, language?, response_format?, timestampGranularities?, prompt?, temperature?, model? }"
+      "TRANSCRIPTION expects a Blob/File/Buffer or an object { audio: Blob/File/Buffer, mimeType?, language?, response_format?, timestampGranularities?, prompt?, temperature?, model? }",
     );
   }
 
@@ -104,7 +110,9 @@ export async function handleTranscription(
     });
 
     if (!response.ok) {
-      throw new Error(`Failed to transcribe audio: ${response.status} ${response.statusText}`);
+      throw new Error(
+        `Failed to transcribe audio: ${response.status} ${response.statusText}`,
+      );
     }
 
     const data = (await response.json()) as { text: string };

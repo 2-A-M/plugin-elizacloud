@@ -1,4 +1,8 @@
-import { EventType, type IAgentRuntime, type ModelTypeName } from "@elizaos/core";
+import {
+  EventType,
+  type IAgentRuntime,
+  type ModelTypeName,
+} from "@elizaos/core";
 import type { LanguageModelUsage } from "ai";
 
 export function emitModelUsageEvent(
@@ -9,12 +13,12 @@ export function emitModelUsageEvent(
     inputTokens?: number;
     outputTokens?: number;
     totalTokens?: number;
-  }
+  },
 ) {
   const inputTokens = Number(usage.inputTokens || 0);
   const outputTokens = Number(usage.outputTokens || 0);
   const totalTokens = Number(
-    usage.totalTokens != null ? usage.totalTokens : inputTokens + outputTokens
+    usage.totalTokens != null ? usage.totalTokens : inputTokens + outputTokens,
   );
 
   runtime.emitEvent(EventType.MODEL_USED, {

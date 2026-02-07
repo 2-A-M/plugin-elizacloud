@@ -48,13 +48,15 @@ beforeAll(async () => {
           status: "healthy",
           uptime: process.uptime(),
           startedAt: state.startedAt,
-        })
+        }),
       );
       return;
     }
     if (req.method === "GET" && req.url === "/") {
       res.writeHead(200, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ service: "elizaos-cloud-agent", status: "running" }));
+      res.end(
+        JSON.stringify({ service: "elizaos-cloud-agent", status: "running" }),
+      );
       return;
     }
     res.writeHead(404);
@@ -73,7 +75,7 @@ beforeAll(async () => {
           config: state.config,
           workspaceFiles: state.workspaceFiles,
           timestamp: new Date().toISOString(),
-        })
+        }),
       );
       return;
     }
@@ -105,7 +107,7 @@ beforeAll(async () => {
             jsonrpc: "2.0",
             id: rpc.id,
             result: { text: `Echo: ${text}` },
-          })
+          }),
         );
         return;
       }
@@ -117,7 +119,7 @@ beforeAll(async () => {
             jsonrpc: "2.0",
             id: rpc.id,
             result: { status: "running", memoriesCount: state.memories.length },
-          })
+          }),
         );
         return;
       }
@@ -129,7 +131,7 @@ beforeAll(async () => {
             jsonrpc: "2.0",
             method: "heartbeat.ack",
             params: { timestamp: Date.now() },
-          })
+          }),
         );
         return;
       }
@@ -140,7 +142,7 @@ beforeAll(async () => {
           jsonrpc: "2.0",
           id: rpc.id,
           error: { code: -32601, message: `Unknown: ${rpc.method}` },
-        })
+        }),
       );
       return;
     }
@@ -154,13 +156,13 @@ beforeAll(async () => {
       healthServer.listen(0, "127.0.0.1", () => {
         healthUrl = `http://127.0.0.1:${(healthServer.address() as { port: number }).port}`;
         r();
-      })
+      }),
     ),
     new Promise<void>((r) =>
       bridgeServer.listen(0, "127.0.0.1", () => {
         bridgeUrl = `http://127.0.0.1:${(bridgeServer.address() as { port: number }).port}`;
         r();
-      })
+      }),
     ),
   ]);
 });
@@ -222,7 +224,9 @@ describe("bridge snapshot/restore", () => {
     const snap = await fetch(`${bridgeUrl}/api/snapshot`, { method: "POST" });
     const body = (await snap.json()) as AgentState;
     expect(body.memories).toHaveLength(1);
-    expect((body.memories[0] as Record<string, unknown>).text).toBe("restored message");
+    expect((body.memories[0] as Record<string, unknown>).text).toBe(
+      "restored message",
+    );
     expect(body.config).toEqual({ model: "test-model" });
   });
 });

@@ -29,7 +29,8 @@ interface TrackedContainer {
 
 export class CloudContainerService extends Service {
   static serviceType = "CLOUD_CONTAINER";
-  capabilityDescription = "ElizaCloud container provisioning and lifecycle management";
+  capabilityDescription =
+    "ElizaCloud container provisioning and lifecycle management";
 
   private authService!: CloudAuthService;
   private readonly containerDefaults = DEFAULT_CLOUD_CONFIG.container;
@@ -54,7 +55,7 @@ export class CloudContainerService extends Service {
     const auth = this.runtime.getService("CLOUD_AUTH");
     if (!auth) {
       logger.warn(
-        "[CloudContainer] CloudAuthService not available, container operations will fail"
+        "[CloudContainer] CloudAuthService not available, container operations will fail",
       );
       return;
     }
@@ -84,7 +85,9 @@ export class CloudContainerService extends Service {
           this.startHealthMonitoring(container.id);
         }
       }
-      logger.info(`[CloudContainer] Loaded ${containers.length} existing container(s)`);
+      logger.info(
+        `[CloudContainer] Loaded ${containers.length} existing container(s)`,
+      );
     }
   }
 
@@ -94,7 +97,9 @@ export class CloudContainerService extends Service {
 
   // ─── CRUD ───────────────────────────────────────────────────────────────
 
-  async createContainer(request: CreateContainerRequest): Promise<CreateContainerResponse> {
+  async createContainer(
+    request: CreateContainerRequest,
+  ): Promise<CreateContainerResponse> {
     const client = this.getClient();
     const defaults = this.containerDefaults;
 
@@ -114,7 +119,10 @@ export class CloudContainerService extends Service {
       architecture: request.architecture ?? defaults.defaultArchitecture,
     };
 
-    const response = await client.post<CreateContainerResponse>("/containers", payload);
+    const response = await client.post<CreateContainerResponse>(
+      "/containers",
+      payload,
+    );
 
     // Track the new container
     this.tracked.set(response.data.id, {
@@ -127,7 +135,7 @@ export class CloudContainerService extends Service {
     this.startPolling(response.data.id);
 
     logger.info(
-      `[CloudContainer] Created container "${request.name}" (id=${response.data.id}, stack=${response.stackName})`
+      `[CloudContainer] Created container "${request.name}" (id=${response.data.id}, stack=${response.stackName})`,
     );
 
     return response;
@@ -141,7 +149,9 @@ export class CloudContainerService extends Service {
 
   async getContainer(containerId: string): Promise<CloudContainer> {
     const client = this.getClient();
-    const response = await client.get<ContainerGetResponse>(`/containers/${containerId}`);
+    const response = await client.get<ContainerGetResponse>(
+      `/containers/${containerId}`,
+    );
 
     // Update local tracking
     const existing = this.tracked.get(containerId);
@@ -186,7 +196,7 @@ export class CloudContainerService extends Service {
       attempt++;
       if (attempt > maxAttempts) {
         logger.error(
-          `[CloudContainer] Polling timed out for container ${containerId} after ${maxAttempts} attempts`
+          `[CloudContainer] Polling timed out for container ${containerId} after ${maxAttempts} attempts`,
         );
         return;
       }
@@ -194,18 +204,26 @@ export class CloudContainerService extends Service {
       const container = await this.getContainer(containerId);
       const status = container.status;
 
-      logger.debug(`[CloudContainer] Poll #${attempt} for ${containerId}: status=${status}`);
+      logger.debug(
+        `[CloudContainer] Poll #${attempt} for ${containerId}: status=${status}`,
+      );
 
       if (status === "running") {
         logger.info(
-          `[CloudContainer] Container ${containerId} is now running at ${container.load_balancer_url}`
+          `[CloudContainer] Container ${containerId} is now running at ${container.load_balancer_url}`,
         );
         this.startHealthMonitoring(containerId);
         return;
       }
 
-      if (status === "failed" || status === "stopped" || status === "suspended") {
-        logger.warn(`[CloudContainer] Container ${containerId} reached terminal state: ${status}`);
+      if (
+        status === "failed" ||
+        status === "stopped" ||
+        status === "suspended"
+      ) {
+        logger.warn(
+          `[CloudContainer] Container ${containerId} reached terminal state: ${status}`,
+        );
         if (container.error_message) {
           logger.error(`[CloudContainer] Error: ${container.error_message}`);
         }
@@ -213,7 +231,10 @@ export class CloudContainerService extends Service {
       }
 
       // Schedule next poll with exponential backoff
-      const delay = Math.min(baseInterval * 2 ** Math.min(attempt - 1, 3), maxInterval);
+      const delay = Math.min(
+        baseInterval * 2 ** Math.min(attempt - 1, 3),
+        maxInterval,
+      );
       tracked.pollingTimer = setTimeout(poll, delay);
     };
 
@@ -224,7 +245,10 @@ export class CloudContainerService extends Service {
    * Wait for a container to reach "running" status. Returns the updated container.
    * This is the synchronous API for actions that need to block.
    */
-  async waitForDeployment(containerId: string, timeoutMs = 900_000): Promise<CloudContainer> {
+  async waitForDeployment(
+    containerId: string,
+    timeoutMs = 900_000,
+  ): Promise<CloudContainer> {
     const deadline = Date.now() + timeoutMs;
     let interval = 5_000;
     const maxInterval = 30_000;
@@ -235,18 +259,22 @@ export class CloudContainerService extends Service {
       if (container.status === "running") return container;
       if (container.status === "failed") {
         throw new Error(
-          `Container deployment failed: ${container.error_message ?? "unknown error"}`
+          `Container deployment failed: ${container.error_message ?? "unknown error"}`,
         );
       }
       if (container.status === "stopped" || container.status === "suspended") {
-        throw new Error(`Container reached terminal state: ${container.status}`);
+        throw new Error(
+          `Container reached terminal state: ${container.status}`,
+        );
       }
 
       await new Promise((resolve) => setTimeout(resolve, interval));
       interval = Math.min(interval * 1.5, maxInterval);
     }
 
-    throw new Error(`Container deployment timed out after ${Math.round(timeoutMs / 1000)}s`);
+    throw new Error(
+      `Container deployment timed out after ${Math.round(timeoutMs / 1000)}s`,
+    );
   }
 
   // ─── Health Monitoring ─────────────────────────────────────────────────
@@ -262,19 +290,25 @@ export class CloudContainerService extends Service {
         .then((health) => {
           if (!health.data.healthy) {
             logger.warn(
-              `[CloudContainer] Container ${containerId} unhealthy: ${health.data.status}`
+              `[CloudContainer] Container ${containerId} unhealthy: ${health.data.status}`,
             );
           }
         })
         .catch((err: Error) => {
-          logger.error(`[CloudContainer] Health check failed for ${containerId}: ${err.message}`);
+          logger.error(
+            `[CloudContainer] Health check failed for ${containerId}: ${err.message}`,
+          );
         });
     }, interval);
   }
 
-  async getContainerHealth(containerId: string): Promise<ContainerHealthResponse> {
+  async getContainerHealth(
+    containerId: string,
+  ): Promise<ContainerHealthResponse> {
     const client = this.getClient();
-    return client.get<ContainerHealthResponse>(`/containers/${containerId}/health`);
+    return client.get<ContainerHealthResponse>(
+      `/containers/${containerId}/health`,
+    );
   }
 
   // ─── Accessors ─────────────────────────────────────────────────────────
