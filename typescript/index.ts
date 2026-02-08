@@ -9,6 +9,7 @@ import { resumeCloudAgentAction } from "./actions/resume-agent";
 import { cloudStatusProvider } from "./cloud-providers/cloud-status";
 import { containerHealthProvider } from "./cloud-providers/container-health";
 import { creditBalanceProvider } from "./cloud-providers/credit-balance";
+import { modelRegistryProvider } from "./cloud-providers/model-registry";
 import { initializeOpenAI } from "./init";
 import {
   fetchTextToSpeech,
@@ -16,8 +17,11 @@ import {
   handleImageGeneration,
   handleObjectLarge,
   handleObjectSmall,
+  handleResearch,
   handleTextEmbedding,
   handleTextLarge,
+  handleTextReasoningLarge,
+  handleTextReasoningSmall,
   handleTextSmall,
 } from "./models";
 // Cloud services
@@ -25,6 +29,7 @@ import { CloudAuthService } from "./services/cloud-auth";
 import { CloudBackupService } from "./services/cloud-backup";
 import { CloudBridgeService } from "./services/cloud-bridge";
 import { CloudContainerService } from "./services/cloud-container";
+import { CloudModelRegistryService } from "./services/cloud-model-registry";
 import { getApiKey, getBaseURL } from "./utils/config";
 
 type ProcessEnvLike = Record<string, string | undefined>;
@@ -47,24 +52,42 @@ export const elizaOSCloudPlugin: Plugin = {
     ELIZAOS_CLOUD_API_KEY: env.ELIZAOS_CLOUD_API_KEY ?? null,
     ELIZAOS_CLOUD_BASE_URL: env.ELIZAOS_CLOUD_BASE_URL ?? null,
     ELIZAOS_CLOUD_ENABLED: env.ELIZAOS_CLOUD_ENABLED ?? null,
+    // Text models
     ELIZAOS_CLOUD_SMALL_MODEL: env.ELIZAOS_CLOUD_SMALL_MODEL ?? null,
     ELIZAOS_CLOUD_LARGE_MODEL: env.ELIZAOS_CLOUD_LARGE_MODEL ?? null,
     SMALL_MODEL: env.SMALL_MODEL ?? null,
     LARGE_MODEL: env.LARGE_MODEL ?? null,
+    // Reasoning models
+    ELIZAOS_CLOUD_REASONING_SMALL_MODEL:
+      env.ELIZAOS_CLOUD_REASONING_SMALL_MODEL ?? null,
+    ELIZAOS_CLOUD_REASONING_LARGE_MODEL:
+      env.ELIZAOS_CLOUD_REASONING_LARGE_MODEL ?? null,
+    REASONING_SMALL_MODEL: env.REASONING_SMALL_MODEL ?? null,
+    REASONING_LARGE_MODEL: env.REASONING_LARGE_MODEL ?? null,
+    // Research model
+    ELIZAOS_CLOUD_RESEARCH_MODEL: env.ELIZAOS_CLOUD_RESEARCH_MODEL ?? null,
+    RESEARCH_MODEL: env.RESEARCH_MODEL ?? null,
+    // Embedding
     ELIZAOS_CLOUD_EMBEDDING_MODEL: env.ELIZAOS_CLOUD_EMBEDDING_MODEL ?? null,
     ELIZAOS_CLOUD_EMBEDDING_API_KEY:
       env.ELIZAOS_CLOUD_EMBEDDING_API_KEY ?? null,
     ELIZAOS_CLOUD_EMBEDDING_URL: env.ELIZAOS_CLOUD_EMBEDDING_URL ?? null,
     ELIZAOS_CLOUD_EMBEDDING_DIMENSIONS:
       env.ELIZAOS_CLOUD_EMBEDDING_DIMENSIONS ?? null,
+    // Image
     ELIZAOS_CLOUD_IMAGE_DESCRIPTION_MODEL:
       env.ELIZAOS_CLOUD_IMAGE_DESCRIPTION_MODEL ?? null,
     ELIZAOS_CLOUD_IMAGE_DESCRIPTION_MAX_TOKENS:
       env.ELIZAOS_CLOUD_IMAGE_DESCRIPTION_MAX_TOKENS ?? null,
-    ELIZAOS_CLOUD_EXPERIMENTAL_TELEMETRY:
-      env.ELIZAOS_CLOUD_EXPERIMENTAL_TELEMETRY ?? null,
     ELIZAOS_CLOUD_IMAGE_GENERATION_MODEL:
       env.ELIZAOS_CLOUD_IMAGE_GENERATION_MODEL ?? null,
+    // Audio
+    ELIZAOS_CLOUD_TTS_MODEL: env.ELIZAOS_CLOUD_TTS_MODEL ?? null,
+    ELIZAOS_CLOUD_TRANSCRIPTION_MODEL:
+      env.ELIZAOS_CLOUD_TRANSCRIPTION_MODEL ?? null,
+    // Telemetry
+    ELIZAOS_CLOUD_EXPERIMENTAL_TELEMETRY:
+      env.ELIZAOS_CLOUD_EXPERIMENTAL_TELEMETRY ?? null,
   },
 
   async init(config, runtime) {
@@ -80,6 +103,7 @@ export const elizaOSCloudPlugin: Plugin = {
   //   4. CloudBackupService — needs auth for snapshot API calls
   services: [
     CloudAuthService,
+    CloudModelRegistryService,
     CloudContainerService,
     CloudBridgeService,
     CloudBackupService,
@@ -98,6 +122,7 @@ export const elizaOSCloudPlugin: Plugin = {
     cloudStatusProvider,
     creditBalanceProvider,
     containerHealthProvider,
+    modelRegistryProvider,
   ],
 
   // ─── Inference Model Handlers ────────────────────────────────────────
@@ -105,6 +130,9 @@ export const elizaOSCloudPlugin: Plugin = {
     [ModelType.TEXT_EMBEDDING]: handleTextEmbedding,
     [ModelType.TEXT_SMALL]: handleTextSmall,
     [ModelType.TEXT_LARGE]: handleTextLarge,
+    [ModelType.TEXT_REASONING_SMALL]: handleTextReasoningSmall,
+    [ModelType.TEXT_REASONING_LARGE]: handleTextReasoningLarge,
+    [ModelType.RESEARCH]: handleResearch,
     [ModelType.IMAGE]: handleImageGeneration,
     [ModelType.IMAGE_DESCRIPTION]: handleImageDescription,
     [ModelType.OBJECT_SMALL]: handleObjectSmall,

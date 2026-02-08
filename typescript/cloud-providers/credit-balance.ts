@@ -1,6 +1,4 @@
-/**
- * creditBalanceProvider — Credit balance in agent state (60s cache).
- */
+/** Credit balance in agent state (60s cache). */
 
 import type {
   IAgentRuntime,
@@ -13,7 +11,8 @@ import { logger } from "@elizaos/core";
 import type { CloudAuthService } from "../services/cloud-auth";
 import type { CreditBalanceResponse } from "../types/cloud";
 
-let cache: { value: number; at: number } | null = null;
+const TOP_UP_URL = "https://www.elizacloud.ai/dashboard/billing";
+const creditCaches = new WeakMap<IAgentRuntime, { value: number; at: number }>();
 const TTL = 60_000;
 
 export const creditBalanceProvider: Provider = {
@@ -32,16 +31,25 @@ export const creditBalanceProvider: Provider = {
       | undefined;
     if (!auth?.isAuthenticated()) return { text: "" };
 
-    if (cache && Date.now() - cache.at < TTL) return format(cache.value);
+    const cached = creditCaches.get(runtime);
+    if (cached && Date.now() - cached.at < TTL) return format(cached.value);
 
-    const { data } = await auth
-      .getClient()
-      .get<CreditBalanceResponse>("/credits/balance");
-    cache = { value: data.balance, at: Date.now() };
+    let balance: number;
+    try {
+      const { data } = await auth
+        .getClient()
+        .get<CreditBalanceResponse>("/credits/balance");
+      balance = data.balance;
+    } catch (err) {
+      logger.warn(`[CloudCredits] Failed to fetch balance: ${err instanceof Error ? err.message : err}`);
+      if (cached) return format(cached.value);
+      return { text: "" };
+    }
+    creditCaches.set(runtime, { value: balance, at: Date.now() });
 
-    if (data.balance < 1.0)
-      logger.warn(`[CloudCredits] Low balance: $${data.balance.toFixed(2)}`);
-    return format(data.balance);
+    if (balance < 1.0)
+      logger.warn(`[CloudCredits] Low balance: $${balance.toFixed(2)}`);
+    return format(balance);
   },
 };
 
@@ -49,14 +57,15 @@ function format(balance: number): ProviderResult {
   const low = balance < 2.0;
   const critical = balance < 0.5;
   let text = `ElizaCloud credits: $${balance.toFixed(2)}`;
-  if (critical) text += " (CRITICAL)";
-  else if (low) text += " (LOW)";
+  if (critical) text += ` (CRITICAL — top up at ${TOP_UP_URL})`;
+  else if (low) text += ` (LOW — top up at ${TOP_UP_URL})`;
   return {
     text,
     values: {
       cloudCredits: balance,
       cloudCreditsLow: low,
       cloudCreditsCritical: critical,
+      cloudTopUpUrl: TOP_UP_URL,
     },
   };
 }

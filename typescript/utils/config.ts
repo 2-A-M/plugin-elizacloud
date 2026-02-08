@@ -107,11 +107,7 @@ export function getLargeModel(runtime: IAgentRuntime): string {
 
 export function getImageDescriptionModel(runtime: IAgentRuntime): string {
   return (
-    getSetting(
-      runtime,
-      "ELIZAOS_CLOUD_IMAGE_DESCRIPTION_MODEL",
-      "gpt-5-mini",
-    ) ?? "gpt-5-mini"
+    getSetting(runtime, "ELIZAOS_CLOUD_IMAGE_DESCRIPTION_MODEL", "gpt-5-mini") as string
   );
 }
 
@@ -123,6 +119,35 @@ export function getImageGenerationModel(runtime: IAgentRuntime): string {
       "google/gemini-2.5-flash-image",
     ) ?? "google/gemini-2.5-flash-image"
   );
+}
+
+export function getReasoningSmallModel(runtime: IAgentRuntime): string {
+  return (
+    getSetting(runtime, "ELIZAOS_CLOUD_REASONING_SMALL_MODEL") ??
+    (getSetting(runtime, "REASONING_SMALL_MODEL", "deepseek/deepseek-r1") as string)
+  );
+}
+
+export function getReasoningLargeModel(runtime: IAgentRuntime): string {
+  return (
+    getSetting(runtime, "ELIZAOS_CLOUD_REASONING_LARGE_MODEL") ??
+    (getSetting(runtime, "REASONING_LARGE_MODEL", "anthropic/claude-opus-4.5") as string)
+  );
+}
+
+export function getResearchModel(runtime: IAgentRuntime): string {
+  return (
+    getSetting(runtime, "ELIZAOS_CLOUD_RESEARCH_MODEL") ??
+    (getSetting(runtime, "RESEARCH_MODEL", "o3-deep-research") as string)
+  );
+}
+
+export function getTTSModel(runtime: IAgentRuntime): string {
+  return getSetting(runtime, "ELIZAOS_CLOUD_TTS_MODEL", "gpt-5-mini-tts") as string;
+}
+
+export function getTranscriptionModel(runtime: IAgentRuntime): string {
+  return getSetting(runtime, "ELIZAOS_CLOUD_TRANSCRIPTION_MODEL", "gpt-5-mini-transcribe") as string;
 }
 
 export function getExperimentalTelemetry(runtime: IAgentRuntime): boolean {
