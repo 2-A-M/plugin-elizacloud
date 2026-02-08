@@ -1,6 +1,7 @@
 import type {
   GenerateTextParams,
   IAgentRuntime,
+  ModelTypeName,
   TextStreamResult,
 } from "@elizaos/core";
 import { logger, ModelType } from "@elizaos/core";
@@ -10,56 +11,91 @@ import { createOpenAIClient } from "../providers/openai";
 import {
   getExperimentalTelemetry,
   getLargeModel,
+  getReasoningLargeModel,
+  getReasoningSmallModel,
   getSmallModel,
 } from "../utils/config";
 import { emitModelUsageEvent } from "../utils/events";
 
+/**
+ * Models that are known to be reasoning-class and don't support temperature.
+ * These are models that use chain-of-thought internally and reject
+ * temperature/frequencyPenalty/presencePenalty params.
+ */
+const REASONING_MODEL_PATTERNS = [
+  "o1", "o3", "o4", "deepseek-r1", "deepseek-reasoner",
+  "claude-opus-4.5", "claude-opus-4",
+] as const;
+
+function isReasoningModel(modelName: string): boolean {
+  const lower = modelName.toLowerCase();
+  return REASONING_MODEL_PATTERNS.some((pattern) => lower.includes(pattern));
+}
+
+type TextModelType =
+  | typeof ModelType.TEXT_SMALL
+  | typeof ModelType.TEXT_LARGE
+  | typeof ModelType.TEXT_REASONING_SMALL
+  | typeof ModelType.TEXT_REASONING_LARGE;
+
+function getModelNameForType(runtime: IAgentRuntime, modelType: TextModelType): string {
+  switch (modelType) {
+    case ModelType.TEXT_SMALL:
+      return getSmallModel(runtime);
+    case ModelType.TEXT_LARGE:
+      return getLargeModel(runtime);
+    case ModelType.TEXT_REASONING_SMALL:
+      return getReasoningSmallModel(runtime);
+    case ModelType.TEXT_REASONING_LARGE:
+      return getReasoningLargeModel(runtime);
+    default:
+      return getLargeModel(runtime);
+  }
+}
+
 function buildGenerateParams(
   runtime: IAgentRuntime,
-  modelType: typeof ModelType.TEXT_SMALL | typeof ModelType.TEXT_LARGE,
+  modelType: TextModelType,
   params: GenerateTextParams,
 ) {
   const { prompt, stopSequences = [] } = params;
-  const temperature = params.temperature ?? 0.7;
-  const frequencyPenalty = params.frequencyPenalty ?? 0.7;
-  const presencePenalty = params.presencePenalty ?? 0.7;
   const maxTokens = params.maxTokens ?? 8192;
 
   const openai = createOpenAIClient(runtime);
-  const modelName =
-    modelType === ModelType.TEXT_SMALL
-      ? getSmallModel(runtime)
-      : getLargeModel(runtime);
-  const modelLabel =
-    modelType === ModelType.TEXT_SMALL ? "TEXT_SMALL" : "TEXT_LARGE";
+  const modelName = getModelNameForType(runtime, modelType);
   const experimentalTelemetry = getExperimentalTelemetry(runtime);
 
   const model = openai.languageModel(modelName) as LanguageModel;
+
+  // Reasoning models don't support temperature, frequency/presence penalties
+  const reasoning = isReasoningModel(modelName);
+
   const generateParams = {
     model,
     prompt: prompt,
     system: runtime.character.system ?? undefined,
-    temperature: temperature,
+    ...(reasoning ? {} : {
+      temperature: params.temperature ?? 0.7,
+      frequencyPenalty: params.frequencyPenalty ?? 0.7,
+      presencePenalty: params.presencePenalty ?? 0.7,
+    }),
     maxOutputTokens: maxTokens,
-    frequencyPenalty: frequencyPenalty,
-    presencePenalty: presencePenalty,
     stopSequences: stopSequences,
     experimental_telemetry: {
       isEnabled: experimentalTelemetry,
     },
   };
 
-  return { generateParams, modelName, modelLabel, prompt };
+  return { generateParams, modelName, modelType, prompt };
 }
 
 function handleStreamingGeneration(
   runtime: IAgentRuntime,
-  modelType: typeof ModelType.TEXT_SMALL | typeof ModelType.TEXT_LARGE,
+  modelType: ModelTypeName,
   generateParams: Parameters<typeof streamText>[0],
   prompt: string,
-  modelLabel: string,
 ): TextStreamResult {
-  logger.debug(`[ELIZAOS_CLOUD] Streaming text with ${modelLabel} model`);
+  logger.debug(`[ELIZAOS_CLOUD] Streaming text with ${modelType} model`);
 
   const streamResult = streamText(generateParams);
 
@@ -87,17 +123,17 @@ function handleStreamingGeneration(
 
 async function generateTextWithModel(
   runtime: IAgentRuntime,
-  modelType: typeof ModelType.TEXT_SMALL | typeof ModelType.TEXT_LARGE,
+  modelType: TextModelType,
   params: GenerateTextParams,
 ): Promise<string | TextStreamResult> {
-  const { generateParams, modelName, modelLabel, prompt } = buildGenerateParams(
+  const { generateParams, modelName, prompt } = buildGenerateParams(
     runtime,
     modelType,
     params,
   );
 
   logger.debug(
-    `[ELIZAOS_CLOUD] Generating text with ${modelLabel} model: ${modelName}`,
+    `[ELIZAOS_CLOUD] Generating text with ${modelType} model: ${modelName}`,
   );
 
   if (params.stream) {
@@ -106,11 +142,10 @@ async function generateTextWithModel(
       modelType,
       generateParams,
       prompt,
-      modelLabel,
     );
   }
 
-  logger.log(`[ELIZAOS_CLOUD] Using ${modelLabel} model: ${modelName}`);
+  logger.log(`[ELIZAOS_CLOUD] Using ${modelType} model: ${modelName}`);
   logger.log(prompt);
 
   const response = await generateText(generateParams);
@@ -134,4 +169,18 @@ export async function handleTextLarge(
   params: GenerateTextParams,
 ): Promise<string | TextStreamResult> {
   return generateTextWithModel(runtime, ModelType.TEXT_LARGE, params);
+}
+
+export async function handleTextReasoningSmall(
+  runtime: IAgentRuntime,
+  params: GenerateTextParams,
+): Promise<string | TextStreamResult> {
+  return generateTextWithModel(runtime, ModelType.TEXT_REASONING_SMALL, params);
+}
+
+export async function handleTextReasoningLarge(
+  runtime: IAgentRuntime,
+  params: GenerateTextParams,
+): Promise<string | TextStreamResult> {
+  return generateTextWithModel(runtime, ModelType.TEXT_REASONING_LARGE, params);
 }
