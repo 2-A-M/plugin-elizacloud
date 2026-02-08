@@ -1,85 +1,71 @@
-import type { IAgentRuntime } from "@elizaos/core";
+import type { IAgentRuntime, TranscriptionParams } from "@elizaos/core";
 import { logger } from "@elizaos/core";
-import { getSetting, getBaseURL, getAuthHeader } from "../utils/config";
+import { getBaseURL, getAuthHeader } from "../utils/config";
 import { detectAudioMimeType } from "../utils/helpers";
-import type { OpenAITranscriptionParams } from "../types";
 
 /**
- * TRANSCRIPTION model handler
+ * TRANSCRIPTION model handler for ElevenLabs STT
+ * Accepts: TranscriptionParams | Buffer | string (audioUrl)
  */
 export async function handleTranscription(
   runtime: IAgentRuntime,
-  input: Blob | File | Buffer | OpenAITranscriptionParams,
+  input: TranscriptionParams | Buffer | string,
 ): Promise<string> {
-  let modelName = getSetting(
-    runtime,
-    "ELIZAOS_CLOUD_TRANSCRIPTION_MODEL",
-    "gpt-4o-mini-transcribe",
-  );
-  logger.log(`[ELIZAOS_CLOUD] Using TRANSCRIPTION model: ${modelName}`);
+  logger.log("[ELIZAOS_CLOUD] Using TRANSCRIPTION via ElevenLabs STT");
 
   const baseURL = getBaseURL(runtime);
+  const sttURL = baseURL.replace("/v1", "") + "/elevenlabs/stt";
 
-  // Support Blob/File/Buffer directly, or an object with { audio: Blob/File/Buffer, ...options }
   let blob: Blob;
-  let extraParams: OpenAITranscriptionParams | null = null;
+  let languageCode: string | undefined;
 
-  if (input instanceof Blob || input instanceof File) {
-    blob = input as Blob;
+  // Handle different input types
+  if (typeof input === "string") {
+    // Input is an audioUrl - fetch the audio
+    logger.debug(`[ELIZAOS_CLOUD] Fetching audio from URL: ${input}`);
+    const response = await fetch(input);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch audio from URL: ${response.status}`);
+    }
+    const arrayBuffer = await response.arrayBuffer();
+    const uint8 = new Uint8Array(arrayBuffer);
+    const mimeType = detectAudioMimeType(Buffer.from(uint8));
+    blob = new Blob([uint8], { type: mimeType });
   } else if (Buffer.isBuffer(input)) {
-    // Convert Buffer to Blob for Node.js environments
-    // Auto-detect MIME type from buffer content
-    const detectedMimeType = detectAudioMimeType(input);
-    logger.debug(`Auto-detected audio MIME type: ${detectedMimeType}`);
-    // Cast to any to satisfy TypeScript's strict ArrayBufferLike typing
-    // Note: Blob constructor creates a copy of the buffer data
-    blob = new Blob([input] as never, { type: detectedMimeType });
-  } else if (
-    typeof input === "object" &&
-    input !== null &&
-    "audio" in input &&
-    input.audio != null
-  ) {
-    const params = input as OpenAITranscriptionParams;
-    if (
-      !(params.audio instanceof Blob) &&
-      !(params.audio instanceof File) &&
-      !Buffer.isBuffer(params.audio)
-    ) {
-      throw new Error(
-        "TRANSCRIPTION param 'audio' must be a Blob/File/Buffer.",
+    // Input is a Buffer - convert to Uint8Array for Blob compatibility
+    const mimeType = detectAudioMimeType(input);
+    logger.debug(`[ELIZAOS_CLOUD] Auto-detected audio MIME type: ${mimeType}`);
+    blob = new Blob([new Uint8Array(input)], { type: mimeType });
+  } else if (typeof input === "object" && input !== null) {
+    // Input is TranscriptionParams with audioUrl
+    const params = input as TranscriptionParams;
+    if (params.audioUrl) {
+      logger.debug(
+        `[ELIZAOS_CLOUD] Fetching audio from URL: ${params.audioUrl}`,
       );
-    }
-    // Convert Buffer to Blob if needed
-    if (Buffer.isBuffer(params.audio)) {
-      // Use provided mimeType or auto-detect from buffer
-      let mimeType = params.mimeType;
-      if (!mimeType) {
-        mimeType = detectAudioMimeType(params.audio);
-        logger.debug(`Auto-detected audio MIME type: ${mimeType}`);
-      } else {
-        logger.debug(`Using provided MIME type: ${mimeType}`);
+      const response = await fetch(params.audioUrl);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch audio from URL: ${response.status}`);
       }
-      // Cast to any to satisfy TypeScript's strict ArrayBufferLike typing
-      // Note: Blob constructor creates a copy of the buffer data
-      blob = new Blob([params.audio] as never, { type: mimeType });
+      const arrayBuffer = await response.arrayBuffer();
+      const uint8 = new Uint8Array(arrayBuffer);
+      const mimeType = detectAudioMimeType(Buffer.from(uint8));
+      blob = new Blob([uint8], { type: mimeType });
     } else {
-      blob = params.audio as Blob;
-    }
-    extraParams = params;
-    if (typeof params.model === "string" && params.model) {
-      modelName = params.model;
+      throw new Error(
+        "TRANSCRIPTION requires audioUrl in TranscriptionParams or a Buffer/string input",
+      );
     }
   } else {
     throw new Error(
-      "TRANSCRIPTION expects a Blob/File/Buffer or an object { audio: Blob/File/Buffer, mimeType?, language?, response_format?, timestampGranularities?, prompt?, temperature?, model? }",
+      "TRANSCRIPTION expects a string (audioUrl), Buffer, or TranscriptionParams { audioUrl, prompt? }",
     );
   }
 
-  const mime = (blob as File).type || "audio/webm";
+  // Determine filename from mime type
+  const mime = blob.type || "audio/webm";
   const filename =
-    (blob as File).name ||
-    (mime.includes("mp3") || mime.includes("mpeg")
+    mime.includes("mp3") || mime.includes("mpeg")
       ? "recording.mp3"
       : mime.includes("ogg")
         ? "recording.ogg"
@@ -87,33 +73,16 @@ export async function handleTranscription(
           ? "recording.wav"
           : mime.includes("webm")
             ? "recording.webm"
-            : "recording.bin");
-
-  const formData = new FormData();
-  formData.append("file", blob, filename);
-  formData.append("model", String(modelName));
-  if (extraParams) {
-    if (typeof extraParams.language === "string") {
-      formData.append("language", String(extraParams.language));
-    }
-    if (typeof extraParams.response_format === "string") {
-      formData.append("response_format", String(extraParams.response_format));
-    }
-    if (typeof extraParams.prompt === "string") {
-      formData.append("prompt", String(extraParams.prompt));
-    }
-    if (typeof extraParams.temperature === "number") {
-      formData.append("temperature", String(extraParams.temperature));
-    }
-    if (Array.isArray(extraParams.timestampGranularities)) {
-      for (const g of extraParams.timestampGranularities) {
-        formData.append("timestamp_granularities[]", String(g));
-      }
-    }
-  }
+            : "recording.bin";
 
   try {
-    const response = await fetch(`${baseURL}/audio/transcriptions`, {
+    const formData = new FormData();
+    formData.append("audio", blob, filename);
+    if (languageCode) {
+      formData.append("languageCode", languageCode);
+    }
+
+    const response = await fetch(sttURL, {
       method: "POST",
       headers: {
         ...getAuthHeader(runtime),
@@ -127,11 +96,14 @@ export async function handleTranscription(
       );
     }
 
-    const data = (await response.json()) as { text: string };
-    return data.text || "";
+    const data = (await response.json()) as {
+      transcript: string;
+      duration_ms: number;
+    };
+    return data.transcript || "";
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);
-    logger.error(`TRANSCRIPTION error: ${message}`);
+    logger.error(`[ELIZAOS_CLOUD] TRANSCRIPTION error: ${message}`);
     throw error;
   }
 }

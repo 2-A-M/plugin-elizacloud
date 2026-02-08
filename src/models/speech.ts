@@ -1,55 +1,50 @@
-import type { IAgentRuntime } from "@elizaos/core";
+import type { IAgentRuntime, TextToSpeechParams } from "@elizaos/core";
 import { logger } from "@elizaos/core";
-import {
-  getSetting,
-  getBaseURL,
-  getAuthHeader,
-  isBrowser,
-} from "../utils/config";
-import { webStreamToNodeStream } from "../utils/helpers";
-import type { OpenAITextToSpeechParams } from "../types";
-import type { Readable } from "node:stream";
+import { getSetting, getBaseURL, getAuthHeader } from "../utils/config";
 
 /**
- * function for text-to-speech
+ * TEXT_TO_SPEECH model handler for ElevenLabs TTS
+ * Accepts: TextToSpeechParams | string
+ * Returns: ArrayBuffer (audio/mpeg)
  */
-async function fetchTextToSpeech(
+export async function handleTextToSpeech(
   runtime: IAgentRuntime,
-  options: OpenAITextToSpeechParams,
-): Promise<ReadableStream<Uint8Array> | Readable> {
-  const defaultModel = getSetting(
+  input: TextToSpeechParams | string,
+): Promise<ArrayBuffer> {
+  const text = typeof input === "string" ? input : input.text;
+  const voice =
+    (typeof input === "object" ? input.voice : undefined) ||
+    (getSetting(
+      runtime,
+      "ELIZAOS_CLOUD_TTS_VOICE",
+      "JBFqnCBsd6RMkjVDRZzb",
+    ) as string);
+
+  const model = getSetting(
     runtime,
     "ELIZAOS_CLOUD_TTS_MODEL",
-    "gpt-4o-mini-tts",
-  );
-  const defaultVoice = getSetting(runtime, "ELIZAOS_CLOUD_TTS_VOICE", "nova");
-  const defaultInstructions = getSetting(
-    runtime,
-    "ELIZAOS_CLOUD_TTS_INSTRUCTIONS",
-    "",
-  );
-  const baseURL = getBaseURL(runtime);
+    "eleven_flash_v2_5",
+  ) as string;
 
-  const model = options.model || (defaultModel as string);
-  const voice = options.voice || (defaultVoice as string);
-  const instructions = options.instructions ?? (defaultInstructions as string);
-  const format = options.format || "mp3";
+  logger.log(
+    `[ELIZAOS_CLOUD] Using TEXT_TO_SPEECH: model=${model}, voice=${voice}`,
+  );
+
+  const baseURL = getBaseURL(runtime);
+  const ttsURL = baseURL.replace("/v1", "") + "/elevenlabs/tts";
 
   try {
-    const res = await fetch(`${baseURL}/audio/speech`, {
+    const res = await fetch(ttsURL, {
       method: "POST",
       headers: {
         ...getAuthHeader(runtime),
         "Content-Type": "application/json",
-        // Hint desired audio format in Accept when possible
-        ...(format === "mp3" ? { Accept: "audio/mpeg" } : {}),
+        Accept: "audio/mpeg",
       },
       body: JSON.stringify({
-        model,
-        voice,
-        input: options.text,
-        format,
-        ...(instructions && { instructions }),
+        text,
+        voiceId: voice,
+        modelId: model,
       }),
     });
 
@@ -58,49 +53,10 @@ async function fetchTextToSpeech(
       throw new Error(`ElizaOS Cloud TTS error ${res.status}: ${err}`);
     }
 
-    // Ensure response body exists
-    if (!res.body) {
-      throw new Error("ElizaOS Cloud TTS response body is null");
-    }
-
-    // In Node.js, convert Web ReadableStream to Node.js Readable
-    // In browser, return the Web ReadableStream directly
-    if (!isBrowser()) {
-      return await webStreamToNodeStream(res.body);
-    }
-
-    return res.body;
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : String(err);
-    throw new Error(`Failed to fetch speech from ElizaOS Cloud TTS: ${message}`);
-  }
-}
-
-/**
- * TEXT_TO_SPEECH model handler
- */
-export async function handleTextToSpeech(
-  runtime: IAgentRuntime,
-  input: string | OpenAITextToSpeechParams,
-): Promise<ReadableStream<Uint8Array> | Readable> {
-  // Normalize input into options with per-call overrides
-  const options: OpenAITextToSpeechParams =
-    typeof input === "string"
-      ? { text: input }
-      : (input as OpenAITextToSpeechParams);
-
-  const resolvedModel =
-    options.model ||
-    (getSetting(runtime, "ELIZAOS_CLOUD_TTS_MODEL", "gpt-4o-mini-tts") as string);
-  logger.log(`[ELIZAOS_CLOUD] Using TEXT_TO_SPEECH model: ${resolvedModel}`);
-  try {
-    const speechStream = await fetchTextToSpeech(runtime, options);
-    return speechStream;
+    return await res.arrayBuffer();
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);
-    logger.error(`Error in TEXT_TO_SPEECH: ${message}`);
+    logger.error(`[ELIZAOS_CLOUD] TEXT_TO_SPEECH error: ${message}`);
     throw error;
   }
 }
-
-export { fetchTextToSpeech };

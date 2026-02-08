@@ -4,5 +4,5 @@ export { handleTextEmbedding, handleBatchTextEmbedding } from "./embeddings";
 export type { BatchEmbeddingResult } from "./embeddings";
 export { handleImageGeneration, handleImageDescription } from "./image";
 export { handleTranscription } from "./transcription";
-export { handleTextToSpeech, fetchTextToSpeech } from "./speech";
+export { handleTextToSpeech } from "./speech";
 export { handleTokenizerEncode, handleTokenizerDecode } from "./tokenization";

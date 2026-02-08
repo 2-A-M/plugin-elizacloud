@@ -13,7 +13,6 @@ import {
   handleTextToSpeech,
   handleTokenizerEncode,
   handleTokenizerDecode,
-  fetchTextToSpeech,
 } from "./models";
 import { getApiKey, getBaseURL } from "./utils/config";
 
@@ -80,14 +79,14 @@ export const elizaOSCloudPlugin: Plugin = {
 
   models: {
     [ModelType.TEXT_EMBEDDING]: handleTextEmbedding,
-    // [ModelType.TEXT_TOKENIZER_ENCODE]: handleTokenizerEncode,
-    // [ModelType.TEXT_TOKENIZER_DECODE]: handleTokenizerDecode,
+    [ModelType.TEXT_TOKENIZER_ENCODE]: handleTokenizerEncode,
+    [ModelType.TEXT_TOKENIZER_DECODE]: handleTokenizerDecode,
     [ModelType.TEXT_SMALL]: handleTextSmall,
     [ModelType.TEXT_LARGE]: handleTextLarge,
     [ModelType.IMAGE]: handleImageGeneration,
     [ModelType.IMAGE_DESCRIPTION]: handleImageDescription,
-    // [ModelType.TRANSCRIPTION]: handleTranscription,
-    // [ModelType.TEXT_TO_SPEECH]: handleTextToSpeech,
+    [ModelType.TRANSCRIPTION]: handleTranscription,
+    [ModelType.TEXT_TO_SPEECH]: handleTextToSpeech,
     [ModelType.OBJECT_SMALL]: handleObjectSmall,
     [ModelType.OBJECT_LARGE]: handleObjectLarge,
   },
@@ -293,13 +292,16 @@ export const elizaOSCloudPlugin: Plugin = {
           name: "ELIZAOS_CLOUD_test_text_to_speech",
           fn: async (runtime: IAgentRuntime) => {
             try {
-              const response = await fetchTextToSpeech(runtime, {
+              const audio = await runtime.useModel(ModelType.TEXT_TO_SPEECH, {
                 text: "Hello, this is a test for text-to-speech.",
               });
-              if (!response) {
+              if (!audio || !(audio instanceof ArrayBuffer)) {
                 throw new Error("Failed to generate speech");
               }
-              logger.log("Generated speech successfully");
+              logger.log(
+                { byteLength: audio.byteLength },
+                "Generated speech successfully",
+              );
             } catch (error: unknown) {
               const message =
                 error instanceof Error ? error.message : String(error);
