@@ -6,5 +6,12 @@ export function createOpenAIClient(runtime: IAgentRuntime) {
   const baseURL = getBaseURL(runtime);
   const apiKey =
     getApiKey(runtime) ?? (isProxyMode(runtime) ? "eliza-proxy" : undefined);
-  return createOpenAI({ apiKey: (apiKey ?? "") as string, baseURL });
+  // NOTE: Callers must use openai.chat(modelName) instead of openai(modelName)
+  // to force the Chat Completions API.  The default openai(modelName) routes
+  // to the Responses API which does not support presencePenalty,
+  // frequencyPenalty, or stopSequences and emits noisy warnings.
+  return createOpenAI({
+    apiKey: (apiKey ?? "") as string,
+    baseURL,
+  });
 }

@@ -71,35 +71,58 @@ export class CloudAuthService extends Service {
     );
     this.client.setBaseUrl(baseUrl);
 
-    // Try existing API key first
+    // Try existing API key first.  If the key is present in settings
+    // (persisted via config file or character secrets in the DB), trust it
+    // immediately so the agent is functional even when the cloud API is
+    // temporarily unreachable.  A background validation fires to confirm
+    // the key — if it turns out to be revoked the next model call will
+    // surface the error, but the agent won't stall on startup.
     const existingKey = this.runtime.getSetting("ELIZAOS_CLOUD_API_KEY");
     if (existingKey) {
       const key = String(existingKey);
       this.client.setApiKey(key);
-      const valid = await this.validateApiKey(key);
-      if (valid) {
-        this.credentials = {
-          apiKey: key,
-          userId: String(
-            this.runtime.getSetting("ELIZAOS_CLOUD_USER_ID") ?? "",
-          ),
-          organizationId: String(
-            this.runtime.getSetting("ELIZAOS_CLOUD_ORG_ID") ?? "",
-          ),
-          authenticatedAt: Date.now(),
-        };
-        logger.info("[CloudAuth] Authenticated with existing API key");
-        return;
-      }
-      logger.warn(
-        "[CloudAuth] Existing API key invalid, attempting device auth",
-      );
+
+      // Accept the key optimistically — no blocking network call.
+      this.credentials = {
+        apiKey: key,
+        userId: String(
+          this.runtime.getSetting("ELIZAOS_CLOUD_USER_ID") ?? "",
+        ),
+        organizationId: String(
+          this.runtime.getSetting("ELIZAOS_CLOUD_ORG_ID") ?? "",
+        ),
+        authenticatedAt: Date.now(),
+      };
+      logger.info("[CloudAuth] Authenticated with saved API key");
+
+      // Non-blocking validation — if the key is invalid the next model
+      // call will surface the error; we just log a warning here.
+      this.validateApiKey(key).then((valid) => {
+        if (!valid) {
+          logger.warn(
+            "[CloudAuth] Saved API key could not be validated (cloud may be unreachable or key revoked) — model calls will use the key anyway",
+          );
+        }
+      }).catch(() => {
+        // Swallow — already logged inside validateApiKey
+      });
+      return;
     }
 
     // Device-based auto-signup when explicitly enabled
     const enabled = this.runtime.getSetting("ELIZAOS_CLOUD_ENABLED");
     if (enabled === "true" || enabled === "1") {
-      await this.authenticateWithDevice();
+      try {
+        await this.authenticateWithDevice();
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        logger.warn(
+          `[CloudAuth] Device auth failed (cloud may be unreachable): ${msg}`,
+        );
+        logger.info(
+          "[CloudAuth] Service will start unauthenticated — cloud features disabled until connectivity is restored",
+        );
+      }
     } else {
       logger.info(
         "[CloudAuth] Cloud not enabled (set ELIZAOS_CLOUD_ENABLED=true)",
@@ -108,10 +131,19 @@ export class CloudAuthService extends Service {
   }
 
   private async validateApiKey(key: string): Promise<boolean> {
-    const resp = await fetch(`${this.client.getBaseUrl()}/models`, {
-      headers: { Authorization: `Bearer ${key}` },
-    });
-    return resp.ok;
+    try {
+      const resp = await fetch(`${this.client.getBaseUrl()}/models`, {
+        headers: { Authorization: `Bearer ${key}` },
+        signal: AbortSignal.timeout(10_000),
+      });
+      return resp.ok;
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      logger.warn(
+        `[CloudAuth] Could not reach cloud API to validate key: ${msg}`,
+      );
+      return false;
+    }
   }
 
   async authenticateWithDevice(): Promise<CloudCredentials> {

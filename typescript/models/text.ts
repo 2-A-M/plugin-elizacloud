@@ -20,11 +20,11 @@ import { emitModelUsageEvent } from "../utils/events";
 /**
  * Models that are known to be reasoning-class and don't support temperature.
  * These are models that use chain-of-thought internally and reject
- * temperature/frequencyPenalty/presencePenalty params.
  */
 const REASONING_MODEL_PATTERNS = [
   "o1", "o3", "o4", "deepseek-r1", "deepseek-reasoner",
   "claude-opus-4.5", "claude-opus-4",
+  "gpt-5-mini", "gpt-5",
 ] as const;
 
 function isReasoningModel(modelName: string): boolean {
@@ -65,22 +65,28 @@ function buildGenerateParams(
   const modelName = getModelNameForType(runtime, modelType);
   const experimentalTelemetry = getExperimentalTelemetry(runtime);
 
-  const model = openai.languageModel(modelName) as LanguageModel;
+  // Use openai.chat() (Chat Completions API) instead of openai.languageModel()
+  // (Responses API). The Responses API unconditionally rejects presencePenalty,
+  // frequencyPenalty, and stopSequences for ALL models, emitting noisy warnings.
+  // The Chat Completions API supports these features natively and handles
+  // reasoning models gracefully when the params are omitted.
+  const model = openai.chat(modelName) as LanguageModel;
 
-  // Reasoning models don't support temperature, frequency/presence penalties
-  const reasoning = isReasoningModel(modelName);
+  // Reasoning models don't support temperature, frequency/presence penalties,
+  // or stopSequences. Detect via model name patterns OR explicit reasoning model types.
+  const reasoning =
+    isReasoningModel(modelName) ||
+    modelType === ModelType.TEXT_REASONING_SMALL ||
+    modelType === ModelType.TEXT_REASONING_LARGE;
 
   const generateParams = {
     model,
     prompt: prompt,
     system: runtime.character.system ?? undefined,
     ...(reasoning ? {} : {
-      temperature: params.temperature ?? 0.7,
-      frequencyPenalty: params.frequencyPenalty ?? 0.7,
-      presencePenalty: params.presencePenalty ?? 0.7,
+      stopSequences: stopSequences,
     }),
     maxOutputTokens: maxTokens,
-    stopSequences: stopSequences,
     experimental_telemetry: {
       isEnabled: experimentalTelemetry,
     },

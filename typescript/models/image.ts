@@ -119,17 +119,37 @@ export async function handleImageDescription(
       max_tokens: maxTokens,
     };
 
-    const response = await fetch(`${baseURL}/chat/completions`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...getAuthHeader(runtime),
-      },
-      body: JSON.stringify(requestBody),
-    });
+    // Retry with exponential backoff for transient errors (429 rate limit)
+    let response: Response | null = null;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      response = await fetch(`${baseURL}/chat/completions`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...getAuthHeader(runtime),
+        },
+        body: JSON.stringify(requestBody),
+      });
 
-    if (!response.ok) {
-      throw new Error(`ElizaOS Cloud API error: ${response.status}`);
+      if (response.status === 429 && attempt < 2) {
+        const wait = (attempt + 1) * 2000; // 2s, 4s
+        logger.warn(
+          `[ELIZAOS_CLOUD] Image analysis rate-limited (429), retrying in ${wait / 1000}s...`,
+        );
+        await new Promise((r) => setTimeout(r, wait));
+        continue;
+      }
+      break;
+    }
+
+    if (!response || !response.ok) {
+      const status = response?.status ?? 0;
+      if (status === 402) {
+        throw new Error(
+          "Eliza Cloud credits exhausted — top up at https://www.elizacloud.ai/dashboard/billing",
+        );
+      }
+      throw new Error(`ElizaOS Cloud API error: ${status}`);
     }
 
     type OpenAIResponseType = {

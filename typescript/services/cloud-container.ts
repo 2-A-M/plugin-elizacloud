@@ -54,7 +54,7 @@ export class CloudContainerService extends Service {
     // Get auth service reference
     const auth = this.runtime.getService("CLOUD_AUTH");
     if (!auth) {
-      logger.warn(
+      logger.debug(
         "[CloudContainer] CloudAuthService not available, container operations will fail",
       );
       return;

@@ -10,6 +10,8 @@ keywords = ["ai", "agent", "llm", "openai", "embeddings", "elizaos"]
 categories = ["science", "api-bindings", "web-programming"]
 readme = "README.md"
 
+include = ["src/**/*", "Cargo.toml", "README.md", "LICENSE"]
+
 [lib]
 crate-type = ["cdylib", "rlib"]
 

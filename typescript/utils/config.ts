@@ -94,14 +94,14 @@ export function getEmbeddingApiKey(runtime: IAgentRuntime): string | undefined {
 export function getSmallModel(runtime: IAgentRuntime): string {
   return (
     getSetting(runtime, "ELIZAOS_CLOUD_SMALL_MODEL") ??
-    (getSetting(runtime, "SMALL_MODEL", "gpt-5-mini") as string)
+    (getSetting(runtime, "SMALL_MODEL", "openai/gpt-5-mini") as string)
   );
 }
 
 export function getLargeModel(runtime: IAgentRuntime): string {
   return (
     getSetting(runtime, "ELIZAOS_CLOUD_LARGE_MODEL") ??
-    (getSetting(runtime, "LARGE_MODEL", "gpt-5") as string)
+    (getSetting(runtime, "LARGE_MODEL", "anthropic/claude-sonnet-4.5") as string)
   );
 }
 

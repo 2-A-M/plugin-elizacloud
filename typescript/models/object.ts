@@ -11,6 +11,20 @@ import { getLargeModel, getSmallModel } from "../utils/config";
 import { emitModelUsageEvent } from "../utils/events";
 import { getJsonRepairFunction } from "../utils/helpers";
 
+/**
+ * Models that are reasoning-class and don't support temperature.
+ */
+const REASONING_MODEL_PATTERNS = [
+  "o1", "o3", "o4", "deepseek-r1", "deepseek-reasoner",
+  "claude-opus-4.5", "claude-opus-4",
+  "gpt-5-mini", "gpt-5",
+] as const;
+
+function isReasoningModel(modelName: string): boolean {
+  const lower = modelName.toLowerCase();
+  return REASONING_MODEL_PATTERNS.some((pattern) => lower.includes(pattern));
+}
+
 async function generateObjectByModelType(
   runtime: IAgentRuntime,
   params: ObjectGenerationParams,
@@ -20,15 +34,19 @@ async function generateObjectByModelType(
   const openai = createOpenAIClient(runtime);
   const modelName = getModelFn(runtime);
   logger.log(`[ELIZAOS_CLOUD] Using ${modelType} model: ${modelName}`);
-  const temperature = params.temperature ?? 0;
+
+  // Reasoning models don't support temperature
+  const reasoning = isReasoningModel(modelName);
 
   try {
-    const model = openai.languageModel(modelName) as LanguageModel;
+    // Use Chat Completions API to avoid Responses API warnings
+    // about unsupported features (presencePenalty, frequencyPenalty, etc.)
+    const model = openai.chat(modelName) as LanguageModel;
     const { object, usage } = await generateObject({
       model,
       output: "no-schema",
       prompt: params.prompt,
-      temperature: temperature,
+      ...(reasoning ? {} : { temperature: params.temperature ?? 0 }),
       experimental_repairText: getJsonRepairFunction(),
     });
 
