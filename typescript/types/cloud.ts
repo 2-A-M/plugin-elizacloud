@@ -113,13 +113,7 @@ export interface ContainerHealthResponse {
 
 // ─── Auth Types ─────────────────────────────────────────────────────────────
 
-export type DevicePlatform =
-  | "ios"
-  | "android"
-  | "macos"
-  | "windows"
-  | "linux"
-  | "web";
+export type DevicePlatform = "ios" | "android" | "macos" | "windows" | "linux" | "web";
 
 export interface DeviceAuthRequest {
   deviceId: string;
@@ -176,11 +170,7 @@ export interface CreditTransaction {
 
 // ─── Bridge Types ───────────────────────────────────────────────────────────
 
-export type BridgeConnectionState =
-  | "disconnected"
-  | "connecting"
-  | "connected"
-  | "reconnecting";
+export type BridgeConnectionState = "disconnected" | "connecting" | "connected" | "reconnecting";
 
 export interface BridgeMessage {
   jsonrpc: "2.0";

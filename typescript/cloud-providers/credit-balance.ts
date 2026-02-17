@@ -1,17 +1,11 @@
 /** Credit balance in agent state (60s cache). */
 
-import type {
-  IAgentRuntime,
-  Memory,
-  Provider,
-  ProviderResult,
-  State,
-} from "@elizaos/core";
+import type { IAgentRuntime, Memory, Provider, ProviderResult, State } from "@elizaos/core";
 import { logger } from "@elizaos/core";
 import type { CloudAuthService } from "../services/cloud-auth";
 import type { CreditBalanceResponse } from "../types/cloud";
 
-const TOP_UP_URL = "https://www.elizacloud.ai/dashboard/billing";
+const TOP_UP_URL = "https://www.elizacloud.ai/dashboard/settings?tab=billing";
 const creditCaches = new WeakMap<IAgentRuntime, { value: number; at: number }>();
 const TTL = 60_000;
 
@@ -20,15 +14,8 @@ export const creditBalanceProvider: Provider = {
   description: "ElizaCloud credit balance",
   dynamic: true,
   position: 91,
-
-  async get(
-    runtime: IAgentRuntime,
-    _message: Memory,
-    _state: State,
-  ): Promise<ProviderResult> {
-    const auth = runtime.getService("CLOUD_AUTH") as
-      | CloudAuthService
-      | undefined;
+  async get(runtime: IAgentRuntime, _message: Memory, _state: State): Promise<ProviderResult> {
+    const auth = runtime.getService("CLOUD_AUTH") as CloudAuthService | undefined;
     if (!auth?.isAuthenticated()) return { text: "" };
 
     const cached = creditCaches.get(runtime);
@@ -36,19 +23,18 @@ export const creditBalanceProvider: Provider = {
 
     let balance: number;
     try {
-      const { data } = await auth
-        .getClient()
-        .get<CreditBalanceResponse>("/credits/balance");
+      const { data } = await auth.getClient().get<CreditBalanceResponse>("/credits/balance");
       balance = data.balance;
     } catch (err) {
-      logger.warn(`[CloudCredits] Failed to fetch balance: ${err instanceof Error ? err.message : err}`);
+      logger.warn(
+        `[CloudCredits] Failed to fetch balance: ${err instanceof Error ? err.message : err}`
+      );
       if (cached) return format(cached.value);
       return { text: "" };
     }
     creditCaches.set(runtime, { value: balance, at: Date.now() });
 
-    if (balance < 1.0)
-      logger.warn(`[CloudCredits] Low balance: $${balance.toFixed(2)}`);
+    if (balance < 1.0) logger.warn(`[CloudCredits] Low balance: $${balance.toFixed(2)}`);
     return format(balance);
   },
 };

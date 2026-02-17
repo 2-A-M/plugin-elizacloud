@@ -15,8 +15,7 @@ export function getJsonRepairFunction(): (params: {
       }
       return null;
     } catch (jsonError) {
-      const message =
-        jsonError instanceof Error ? jsonError.message : String(jsonError);
+      const message = jsonError instanceof Error ? jsonError.message : String(jsonError);
       logger.warn(`Failed to repair JSON text: ${message}`);
       return null;
     }
@@ -48,51 +47,27 @@ export function detectAudioMimeType(buffer: Buffer): string {
     return "audio/mpeg";
   }
 
-  if (
-    buffer[0] === 0x4f &&
-    buffer[1] === 0x67 &&
-    buffer[2] === 0x67 &&
-    buffer[3] === 0x53
-  ) {
+  if (buffer[0] === 0x4f && buffer[1] === 0x67 && buffer[2] === 0x67 && buffer[3] === 0x53) {
     return "audio/ogg";
   }
 
-  if (
-    buffer[0] === 0x66 &&
-    buffer[1] === 0x4c &&
-    buffer[2] === 0x61 &&
-    buffer[3] === 0x43
-  ) {
+  if (buffer[0] === 0x66 && buffer[1] === 0x4c && buffer[2] === 0x61 && buffer[3] === 0x43) {
     return "audio/flac";
   }
 
-  if (
-    buffer[4] === 0x66 &&
-    buffer[5] === 0x74 &&
-    buffer[6] === 0x79 &&
-    buffer[7] === 0x70
-  ) {
+  if (buffer[4] === 0x66 && buffer[5] === 0x74 && buffer[6] === 0x79 && buffer[7] === 0x70) {
     return "audio/mp4";
   }
 
-  if (
-    buffer[0] === 0x1a &&
-    buffer[1] === 0x45 &&
-    buffer[2] === 0xdf &&
-    buffer[3] === 0xa3
-  ) {
+  if (buffer[0] === 0x1a && buffer[1] === 0x45 && buffer[2] === 0xdf && buffer[3] === 0xa3) {
     return "audio/webm";
   }
 
-  logger.warn(
-    "Could not detect audio format from buffer, using generic binary type",
-  );
+  logger.warn("Could not detect audio format from buffer, using generic binary type");
   return "application/octet-stream";
 }
 
-export async function webStreamToNodeStream(
-  webStream: ReadableStream<Uint8Array>,
-) {
+export async function webStreamToNodeStream(webStream: ReadableStream<Uint8Array>) {
   try {
     const { Readable } = await import("node:stream");
     const reader = webStream.getReader();
@@ -118,19 +93,15 @@ export async function webStreamToNodeStream(
     const message = error instanceof Error ? error.message : String(error);
     logger.error(`Failed to load node:stream module: ${message}`);
     throw new Error(
-      `Cannot convert stream: node:stream module unavailable. This feature requires a Node.js environment.`,
+      `Cannot convert stream: node:stream module unavailable. This feature requires a Node.js environment.`
     );
   }
 }
 
-export function parseImageDescriptionResponse(
-  responseText: string,
-): ImageDescriptionResult {
+export function parseImageDescriptionResponse(responseText: string): ImageDescriptionResult {
   const titleMatch = responseText.match(/title[:\s]+(.+?)(?:\n|$)/i);
   const title = titleMatch?.[1]?.trim() || "Image Analysis";
-  const description = responseText
-    .replace(/title[:\s]+(.+?)(?:\n|$)/i, "")
-    .trim();
+  const description = responseText.replace(/title[:\s]+(.+?)(?:\n|$)/i, "").trim();
 
   return { title, description };
 }

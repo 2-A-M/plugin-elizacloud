@@ -22,14 +22,26 @@ import { emitModelUsageEvent } from "../utils/events";
  * These are models that use chain-of-thought internally and reject
  */
 const REASONING_MODEL_PATTERNS = [
-  "o1", "o3", "o4", "deepseek-r1", "deepseek-reasoner",
-  "claude-opus-4.5", "claude-opus-4",
-  "gpt-5-mini", "gpt-5",
+  "o1",
+  "o3",
+  "o4",
+  "deepseek-r1",
+  "deepseek-reasoner",
+  "claude-opus-4.5",
+  "claude-opus-4",
+  "gpt-5-mini",
+  "gpt-5",
 ] as const;
+const RESPONSES_ROUTED_PREFIXES = ["openai/", "anthropic/"] as const;
 
 function isReasoningModel(modelName: string): boolean {
   const lower = modelName.toLowerCase();
   return REASONING_MODEL_PATTERNS.some((pattern) => lower.includes(pattern));
+}
+
+function supportsStopSequences(modelName: string): boolean {
+  const lower = modelName.toLowerCase();
+  return !RESPONSES_ROUTED_PREFIXES.some((prefix) => lower.startsWith(prefix));
 }
 
 type TextModelType =
@@ -56,9 +68,9 @@ function getModelNameForType(runtime: IAgentRuntime, modelType: TextModelType): 
 function buildGenerateParams(
   runtime: IAgentRuntime,
   modelType: TextModelType,
-  params: GenerateTextParams,
+  params: GenerateTextParams
 ) {
-  const { prompt, stopSequences = [] } = params;
+  const { prompt } = params;
   const maxTokens = params.maxTokens ?? 8192;
 
   const openai = createOpenAIClient(runtime);
@@ -78,14 +90,19 @@ function buildGenerateParams(
     isReasoningModel(modelName) ||
     modelType === ModelType.TEXT_REASONING_SMALL ||
     modelType === ModelType.TEXT_REASONING_LARGE;
+  const stopSequences =
+    !reasoning &&
+    supportsStopSequences(modelName) &&
+    Array.isArray(params.stopSequences) &&
+    params.stopSequences.length > 0
+      ? params.stopSequences
+      : undefined;
 
   const generateParams = {
     model,
     prompt: prompt,
     system: runtime.character.system ?? undefined,
-    ...(reasoning ? {} : {
-      stopSequences: stopSequences,
-    }),
+    ...(stopSequences ? { stopSequences } : {}),
     maxOutputTokens: maxTokens,
     experimental_telemetry: {
       isEnabled: experimentalTelemetry,
@@ -99,7 +116,7 @@ function handleStreamingGeneration(
   runtime: IAgentRuntime,
   modelType: ModelTypeName,
   generateParams: Parameters<typeof streamText>[0],
-  prompt: string,
+  prompt: string
 ): TextStreamResult {
   logger.debug(`[ELIZAOS_CLOUD] Streaming text with ${modelType} model`);
 
@@ -121,34 +138,21 @@ function handleStreamingGeneration(
       }
       return undefined;
     }),
-    finishReason: Promise.resolve(streamResult.finishReason) as Promise<
-      string | undefined
-    >,
+    finishReason: Promise.resolve(streamResult.finishReason) as Promise<string | undefined>,
   };
 }
 
 async function generateTextWithModel(
   runtime: IAgentRuntime,
   modelType: TextModelType,
-  params: GenerateTextParams,
+  params: GenerateTextParams
 ): Promise<string | TextStreamResult> {
-  const { generateParams, modelName, prompt } = buildGenerateParams(
-    runtime,
-    modelType,
-    params,
-  );
+  const { generateParams, modelName, prompt } = buildGenerateParams(runtime, modelType, params);
 
-  logger.debug(
-    `[ELIZAOS_CLOUD] Generating text with ${modelType} model: ${modelName}`,
-  );
+  logger.debug(`[ELIZAOS_CLOUD] Generating text with ${modelType} model: ${modelName}`);
 
   if (params.stream) {
-    return handleStreamingGeneration(
-      runtime,
-      modelType,
-      generateParams,
-      prompt,
-    );
+    return handleStreamingGeneration(runtime, modelType, generateParams, prompt);
   }
 
   logger.log(`[ELIZAOS_CLOUD] Using ${modelType} model: ${modelName}`);
@@ -165,28 +169,28 @@ async function generateTextWithModel(
 
 export async function handleTextSmall(
   runtime: IAgentRuntime,
-  params: GenerateTextParams,
+  params: GenerateTextParams
 ): Promise<string | TextStreamResult> {
   return generateTextWithModel(runtime, ModelType.TEXT_SMALL, params);
 }
 
 export async function handleTextLarge(
   runtime: IAgentRuntime,
-  params: GenerateTextParams,
+  params: GenerateTextParams
 ): Promise<string | TextStreamResult> {
   return generateTextWithModel(runtime, ModelType.TEXT_LARGE, params);
 }
 
 export async function handleTextReasoningSmall(
   runtime: IAgentRuntime,
-  params: GenerateTextParams,
+  params: GenerateTextParams
 ): Promise<string | TextStreamResult> {
   return generateTextWithModel(runtime, ModelType.TEXT_REASONING_SMALL, params);
 }
 
 export async function handleTextReasoningLarge(
   runtime: IAgentRuntime,
-  params: GenerateTextParams,
+  params: GenerateTextParams
 ): Promise<string | TextStreamResult> {
   return generateTextWithModel(runtime, ModelType.TEXT_REASONING_LARGE, params);
 }

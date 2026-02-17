@@ -59,7 +59,7 @@ describe("Proxy billing: cost estimation", () => {
 
   it("1000 EVM RPC calls cost $0.30", () => {
     const totalCost = getProxyCost("evm-rpc") * 1000;
-    expect(totalCost).toBeCloseTo(0.30);
+    expect(totalCost).toBeCloseTo(0.3);
   });
 
   it("$5 of credits covers ~5000 Birdeye calls", () => {
@@ -155,12 +155,12 @@ describe("Proxy billing: floating point precision", () => {
     const birdeyeCost = getProxyCost("birdeye");
 
     // After 4999 calls: $5.00 - $4.999 = $0.001
-    const remaining = budget - (4999 * birdeyeCost);
+    const remaining = budget - 4999 * birdeyeCost;
     expect(remaining).toBeCloseTo(0.001, 6);
     expect(remaining >= getProxyCost("birdeye")).toBe(true);
 
     // After 5000 calls: $5.00 - $5.00 = $0.00
-    const remaining2 = budget - (5000 * birdeyeCost);
+    const remaining2 = budget - 5000 * birdeyeCost;
     expect(remaining2).toBeCloseTo(0, 6);
     expect(remaining2 >= getProxyCost("birdeye")).toBe(false);
   });

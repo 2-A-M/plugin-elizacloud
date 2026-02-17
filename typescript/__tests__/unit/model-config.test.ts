@@ -9,20 +9,18 @@
 import type { IAgentRuntime } from "@elizaos/core";
 import { describe, expect, it } from "vitest";
 import {
-  getSmallModel,
-  getLargeModel,
-  getReasoningSmallModel,
-  getReasoningLargeModel,
-  getResearchModel,
-  getTTSModel,
-  getTranscriptionModel,
   getImageDescriptionModel,
   getImageGenerationModel,
+  getLargeModel,
+  getReasoningLargeModel,
+  getReasoningSmallModel,
+  getResearchModel,
+  getSmallModel,
+  getTranscriptionModel,
+  getTTSModel,
 } from "../../utils/config";
 
-function mockRuntime(
-  settings: Record<string, string | undefined> = {},
-): IAgentRuntime {
+function mockRuntime(settings: Record<string, string | undefined> = {}): IAgentRuntime {
   return {
     getSetting(key: string): string | undefined {
       return settings[key];
@@ -41,15 +39,13 @@ describe("Model config: small model", () => {
       mockRuntime({
         ELIZAOS_CLOUD_SMALL_MODEL: "anthropic/claude-3-5-haiku",
         SMALL_MODEL: "gpt-4o-mini",
-      }),
+      })
     );
     expect(model).toBe("anthropic/claude-3-5-haiku");
   });
 
   it("SMALL_MODEL is used as fallback", () => {
-    const model = getSmallModel(
-      mockRuntime({ SMALL_MODEL: "google/gemini-2.0-flash" }),
-    );
+    const model = getSmallModel(mockRuntime({ SMALL_MODEL: "google/gemini-2.0-flash" }));
     expect(model).toBe("google/gemini-2.0-flash");
   });
 });
@@ -65,15 +61,13 @@ describe("Model config: large model", () => {
       mockRuntime({
         ELIZAOS_CLOUD_LARGE_MODEL: "anthropic/claude-sonnet-4",
         LARGE_MODEL: "gpt-4o",
-      }),
+      })
     );
     expect(model).toBe("anthropic/claude-sonnet-4");
   });
 
   it("LARGE_MODEL is used as fallback", () => {
-    const model = getLargeModel(
-      mockRuntime({ LARGE_MODEL: "google/gemini-1.5-pro" }),
-    );
+    const model = getLargeModel(mockRuntime({ LARGE_MODEL: "google/gemini-1.5-pro" }));
     expect(model).toBe("google/gemini-1.5-pro");
   });
 });
@@ -88,15 +82,13 @@ describe("Model config: reasoning small", () => {
     const model = getReasoningSmallModel(
       mockRuntime({
         ELIZAOS_CLOUD_REASONING_SMALL_MODEL: "openai/o4-mini",
-      }),
+      })
     );
     expect(model).toBe("openai/o4-mini");
   });
 
   it("REASONING_SMALL_MODEL is used as fallback", () => {
-    const model = getReasoningSmallModel(
-      mockRuntime({ REASONING_SMALL_MODEL: "openai/o3-mini" }),
-    );
+    const model = getReasoningSmallModel(mockRuntime({ REASONING_SMALL_MODEL: "openai/o3-mini" }));
     expect(model).toBe("openai/o3-mini");
   });
 });
@@ -111,7 +103,7 @@ describe("Model config: reasoning large", () => {
     const model = getReasoningLargeModel(
       mockRuntime({
         ELIZAOS_CLOUD_REASONING_LARGE_MODEL: "openai/o3",
-      }),
+      })
     );
     expect(model).toBe("openai/o3");
   });
@@ -127,7 +119,7 @@ describe("Model config: research model", () => {
     const model = getResearchModel(
       mockRuntime({
         ELIZAOS_CLOUD_RESEARCH_MODEL: "o4-mini-deep-research",
-      }),
+      })
     );
     expect(model).toBe("o4-mini-deep-research");
   });
@@ -140,9 +132,7 @@ describe("Model config: TTS model", () => {
   });
 
   it("ELIZAOS_CLOUD_TTS_MODEL takes priority", () => {
-    const model = getTTSModel(
-      mockRuntime({ ELIZAOS_CLOUD_TTS_MODEL: "elevenlabs/turbo-v2" }),
-    );
+    const model = getTTSModel(mockRuntime({ ELIZAOS_CLOUD_TTS_MODEL: "elevenlabs/turbo-v2" }));
     expect(model).toBe("elevenlabs/turbo-v2");
   });
 });
@@ -155,7 +145,7 @@ describe("Model config: transcription model", () => {
 
   it("ELIZAOS_CLOUD_TRANSCRIPTION_MODEL takes priority", () => {
     const model = getTranscriptionModel(
-      mockRuntime({ ELIZAOS_CLOUD_TRANSCRIPTION_MODEL: "whisper-1" }),
+      mockRuntime({ ELIZAOS_CLOUD_TRANSCRIPTION_MODEL: "whisper-1" })
     );
     expect(model).toBe("whisper-1");
   });
@@ -178,7 +168,7 @@ describe("Model config: image generation model", () => {
     const model = getImageGenerationModel(
       mockRuntime({
         ELIZAOS_CLOUD_IMAGE_GENERATION_MODEL: "dall-e-3",
-      }),
+      })
     );
     expect(model).toBe("dall-e-3");
   });
@@ -192,7 +182,7 @@ describe("Model config edge cases", () => {
       mockRuntime({
         ELIZAOS_CLOUD_SMALL_MODEL: "",
         SMALL_MODEL: "gpt-4o-mini",
-      }),
+      })
     );
     // getSetting returns empty string, which is not undefined/null,
     // so ?? does not trigger. This is intentional — empty string means
@@ -205,15 +195,13 @@ describe("Model config edge cases", () => {
       mockRuntime({
         ELIZAOS_CLOUD_SMALL_MODEL: undefined,
         SMALL_MODEL: "custom-model",
-      }),
+      })
     );
     expect(model).toBe("custom-model");
   });
 
   it("model with provider prefix works (openai/gpt-5)", () => {
-    const model = getSmallModel(
-      mockRuntime({ ELIZAOS_CLOUD_SMALL_MODEL: "openai/gpt-5" }),
-    );
+    const model = getSmallModel(mockRuntime({ ELIZAOS_CLOUD_SMALL_MODEL: "openai/gpt-5" }));
     expect(model).toBe("openai/gpt-5");
   });
 
@@ -250,14 +238,12 @@ describe("Model config edge cases", () => {
         mockRuntime({
           ELIZAOS_CLOUD_SMALL_MODEL: "cloud-model",
           SMALL_MODEL: "generic-model",
-        }),
-      ),
+        })
+      )
     ).toBe("cloud-model");
 
     // Only generic set — generic wins
-    expect(
-      getSmallModel(mockRuntime({ SMALL_MODEL: "generic-model" })),
-    ).toBe("generic-model");
+    expect(getSmallModel(mockRuntime({ SMALL_MODEL: "generic-model" }))).toBe("generic-model");
 
     // Nothing set — default wins
     expect(getSmallModel(mockRuntime())).toBe("gpt-5-mini");

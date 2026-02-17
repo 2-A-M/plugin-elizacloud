@@ -18,7 +18,7 @@ let baseUrl: string;
 
 type RouteHandler = (
   req: http.IncomingMessage,
-  body: string,
+  body: string
 ) => { status: number; body: Record<string, unknown> };
 const routes: Map<string, RouteHandler> = new Map();
 
@@ -127,9 +127,7 @@ describe("CloudApiClient with route-based server", () => {
     }));
 
     const client = new CloudApiClient(baseUrl, "eliza_test");
-    const result = await client.get<{ data: { balance: number } }>(
-      "/credits/balance",
-    );
+    const result = await client.get<{ data: { balance: number } }>("/credits/balance");
     expect(result.data.balance).toBeCloseTo(4.37);
   });
 
@@ -205,8 +203,7 @@ describe("container deployment polling simulation", () => {
           data: {
             id: "poll-test",
             status,
-            load_balancer_url:
-              status === "running" ? "http://lb.example.com" : null,
+            load_balancer_url: status === "running" ? "http://lb.example.com" : null,
           },
         },
       };
@@ -227,8 +224,7 @@ describe("container deployment polling simulation", () => {
         finalContainer = result.data;
         break;
       }
-      if (result.data.status === "failed")
-        throw new Error("Unexpected failure");
+      if (result.data.status === "failed") throw new Error("Unexpected failure");
       await new Promise((r) => setTimeout(r, interval));
       interval = Math.min(interval * 1.5, 500);
     }
@@ -282,9 +278,7 @@ describe("credit lifecycle", () => {
     const client = new CloudApiClient(baseUrl, "eliza_test");
 
     // Check balance first
-    const balance = await client.get<{ data: { balance: number } }>(
-      "/credits/balance",
-    );
+    const balance = await client.get<{ data: { balance: number } }>("/credits/balance");
     expect(balance.data.balance).toBe(2.0);
 
     // Attempt container creation — should throw InsufficientCreditsError
@@ -341,23 +335,18 @@ describe("snapshot lifecycle", () => {
     expect(snapshots).toHaveLength(2);
 
     // List
-    const listed = await client.get<{ data: typeof snapshots }>(
-      "/agent-state/c1/snapshots",
-    );
+    const listed = await client.get<{ data: typeof snapshots }>("/agent-state/c1/snapshots");
     expect(listed.data).toHaveLength(2);
 
     // Restore
-    const restored = await client.post<{ message: string }>(
-      "/agent-state/c1/restore",
-      { snapshotId: "snap-1" },
-    );
+    const restored = await client.post<{ message: string }>("/agent-state/c1/restore", {
+      snapshotId: "snap-1",
+    });
     expect(restored.message).toBe("Restored");
 
     // Delete
     await client.delete("/agent-state/c1/snapshots/snap-1");
-    const afterDelete = await client.get<{ data: typeof snapshots }>(
-      "/agent-state/c1/snapshots",
-    );
+    const afterDelete = await client.get<{ data: typeof snapshots }>("/agent-state/c1/snapshots");
     expect(afterDelete.data).toHaveLength(1);
     expect(afterDelete.data[0].id).toBe("snap-2");
   });

@@ -7,7 +7,7 @@
 
 import { describe, expect, it } from "vitest";
 
-const TOP_UP_URL = "https://www.elizacloud.ai/dashboard/billing";
+const TOP_UP_URL = "https://www.elizacloud.ai/dashboard/settings?tab=billing";
 
 // Inline the format logic from credit-balance.ts for isolated testing
 function formatCredits(balance: number): {

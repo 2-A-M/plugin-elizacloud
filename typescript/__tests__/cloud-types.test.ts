@@ -3,11 +3,7 @@
  */
 
 import { describe, expect, it } from "vitest";
-import {
-  CloudApiError,
-  DEFAULT_CLOUD_CONFIG,
-  InsufficientCreditsError,
-} from "../types/cloud";
+import { CloudApiError, DEFAULT_CLOUD_CONFIG, InsufficientCreditsError } from "../types/cloud";
 
 describe("CloudApiError", () => {
   it("captures status code and error body", () => {
@@ -73,9 +69,7 @@ describe("InsufficientCreditsError", () => {
 
 describe("DEFAULT_CLOUD_CONFIG", () => {
   it("has sane default baseUrl", () => {
-    expect(DEFAULT_CLOUD_CONFIG.baseUrl).toBe(
-      "https://www.elizacloud.ai/api/v1",
-    );
+    expect(DEFAULT_CLOUD_CONFIG.baseUrl).toBe("https://www.elizacloud.ai/api/v1");
   });
 
   it("is disabled by default", () => {
@@ -88,18 +82,12 @@ describe("DEFAULT_CLOUD_CONFIG", () => {
 
   it("has reasonable bridge settings", () => {
     expect(DEFAULT_CLOUD_CONFIG.bridge.reconnectIntervalMs).toBeGreaterThan(0);
-    expect(
-      DEFAULT_CLOUD_CONFIG.bridge.maxReconnectAttempts,
-    ).toBeGreaterThanOrEqual(1);
-    expect(
-      DEFAULT_CLOUD_CONFIG.bridge.heartbeatIntervalMs,
-    ).toBeGreaterThanOrEqual(5000);
+    expect(DEFAULT_CLOUD_CONFIG.bridge.maxReconnectAttempts).toBeGreaterThanOrEqual(1);
+    expect(DEFAULT_CLOUD_CONFIG.bridge.heartbeatIntervalMs).toBeGreaterThanOrEqual(5000);
   });
 
   it("has reasonable backup settings", () => {
-    expect(
-      DEFAULT_CLOUD_CONFIG.backup.autoBackupIntervalMs,
-    ).toBeGreaterThanOrEqual(60_000);
+    expect(DEFAULT_CLOUD_CONFIG.backup.autoBackupIntervalMs).toBeGreaterThanOrEqual(60_000);
     expect(DEFAULT_CLOUD_CONFIG.backup.maxSnapshots).toBeGreaterThanOrEqual(1);
   });
 
@@ -108,19 +96,11 @@ describe("DEFAULT_CLOUD_CONFIG", () => {
   });
 
   it("container defaults are within ECS limits", () => {
-    expect(DEFAULT_CLOUD_CONFIG.container.defaultCpu).toBeGreaterThanOrEqual(
-      256,
-    );
+    expect(DEFAULT_CLOUD_CONFIG.container.defaultCpu).toBeGreaterThanOrEqual(256);
     expect(DEFAULT_CLOUD_CONFIG.container.defaultCpu).toBeLessThanOrEqual(4096);
-    expect(DEFAULT_CLOUD_CONFIG.container.defaultMemory).toBeGreaterThanOrEqual(
-      256,
-    );
-    expect(DEFAULT_CLOUD_CONFIG.container.defaultMemory).toBeLessThanOrEqual(
-      4096,
-    );
+    expect(DEFAULT_CLOUD_CONFIG.container.defaultMemory).toBeGreaterThanOrEqual(256);
+    expect(DEFAULT_CLOUD_CONFIG.container.defaultMemory).toBeLessThanOrEqual(4096);
     expect(DEFAULT_CLOUD_CONFIG.container.defaultPort).toBeGreaterThan(0);
-    expect(DEFAULT_CLOUD_CONFIG.container.defaultPort).toBeLessThanOrEqual(
-      65535,
-    );
+    expect(DEFAULT_CLOUD_CONFIG.container.defaultPort).toBeLessThanOrEqual(65535);
   });
 });

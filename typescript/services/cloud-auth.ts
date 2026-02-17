@@ -7,11 +7,7 @@
  */
 
 import { type IAgentRuntime, logger, Service } from "@elizaos/core";
-import type {
-  CloudCredentials,
-  DeviceAuthResponse,
-  DevicePlatform,
-} from "../types/cloud";
+import type { CloudCredentials, DeviceAuthResponse, DevicePlatform } from "../types/cloud";
 import { DEFAULT_CLOUD_CONFIG } from "../types/cloud";
 import { CloudApiClient } from "../utils/cloud-api";
 
@@ -43,8 +39,7 @@ function detectPlatform(): DevicePlatform {
 
 export class CloudAuthService extends Service {
   static serviceType = "CLOUD_AUTH";
-  capabilityDescription =
-    "ElizaCloud device authentication and session management";
+  capabilityDescription = "ElizaCloud device authentication and session management";
 
   private client: CloudApiClient;
   private credentials: CloudCredentials | null = null;
@@ -66,8 +61,7 @@ export class CloudAuthService extends Service {
 
   private async initialize(): Promise<void> {
     const baseUrl = String(
-      this.runtime.getSetting("ELIZAOS_CLOUD_BASE_URL") ??
-        DEFAULT_CLOUD_CONFIG.baseUrl,
+      this.runtime.getSetting("ELIZAOS_CLOUD_BASE_URL") ?? DEFAULT_CLOUD_CONFIG.baseUrl
     );
     this.client.setBaseUrl(baseUrl);
 
@@ -85,27 +79,25 @@ export class CloudAuthService extends Service {
       // Accept the key optimistically — no blocking network call.
       this.credentials = {
         apiKey: key,
-        userId: String(
-          this.runtime.getSetting("ELIZAOS_CLOUD_USER_ID") ?? "",
-        ),
-        organizationId: String(
-          this.runtime.getSetting("ELIZAOS_CLOUD_ORG_ID") ?? "",
-        ),
+        userId: String(this.runtime.getSetting("ELIZAOS_CLOUD_USER_ID") ?? ""),
+        organizationId: String(this.runtime.getSetting("ELIZAOS_CLOUD_ORG_ID") ?? ""),
         authenticatedAt: Date.now(),
       };
       logger.info("[CloudAuth] Authenticated with saved API key");
 
       // Non-blocking validation — if the key is invalid the next model
       // call will surface the error; we just log a warning here.
-      this.validateApiKey(key).then((valid) => {
-        if (!valid) {
-          logger.warn(
-            "[CloudAuth] Saved API key could not be validated (cloud may be unreachable or key revoked) — model calls will use the key anyway",
-          );
-        }
-      }).catch(() => {
-        // Swallow — already logged inside validateApiKey
-      });
+      this.validateApiKey(key)
+        .then((valid) => {
+          if (!valid) {
+            logger.warn(
+              "[CloudAuth] Saved API key could not be validated (cloud may be unreachable or key revoked) — model calls will use the key anyway"
+            );
+          }
+        })
+        .catch(() => {
+          // Swallow — already logged inside validateApiKey
+        });
       return;
     }
 
@@ -116,17 +108,13 @@ export class CloudAuthService extends Service {
         await this.authenticateWithDevice();
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
-        logger.warn(
-          `[CloudAuth] Device auth failed (cloud may be unreachable): ${msg}`,
-        );
+        logger.warn(`[CloudAuth] Device auth failed (cloud may be unreachable): ${msg}`);
         logger.info(
-          "[CloudAuth] Service will start unauthenticated — cloud features disabled until connectivity is restored",
+          "[CloudAuth] Service will start unauthenticated — cloud features disabled until connectivity is restored"
         );
       }
     } else {
-      logger.info(
-        "[CloudAuth] Cloud not enabled (set ELIZAOS_CLOUD_ENABLED=true)",
-      );
+      logger.info("[CloudAuth] Cloud not enabled (set ELIZAOS_CLOUD_ENABLED=true)");
     }
   }
 
@@ -139,9 +127,7 @@ export class CloudAuthService extends Service {
       return resp.ok;
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
-      logger.warn(
-        `[CloudAuth] Could not reach cloud API to validate key: ${msg}`,
-      );
+      logger.warn(`[CloudAuth] Could not reach cloud API to validate key: ${msg}`);
       return false;
     }
   }
@@ -154,15 +140,12 @@ export class CloudAuthService extends Service {
 
     logger.info(`[CloudAuth] Authenticating device (platform=${platform})`);
 
-    const response = await this.client.postUnauthenticated<DeviceAuthResponse>(
-      "/device-auth",
-      {
-        deviceId,
-        platform,
-        appVersion,
-        deviceName: os.hostname(),
-      },
-    );
+    const response = await this.client.postUnauthenticated<DeviceAuthResponse>("/device-auth", {
+      deviceId,
+      platform,
+      appVersion,
+      deviceName: os.hostname(),
+    });
 
     this.credentials = {
       apiKey: response.data.apiKey,
@@ -172,12 +155,8 @@ export class CloudAuthService extends Service {
     };
     this.client.setApiKey(response.data.apiKey);
 
-    const action = response.data.isNew
-      ? "New account created"
-      : "Authenticated";
-    logger.info(
-      `[CloudAuth] ${action} (credits: $${response.data.credits.toFixed(2)})`,
-    );
+    const action = response.data.isNew ? "New account created" : "Authenticated";
+    logger.info(`[CloudAuth] ${action} (credits: $${response.data.credits.toFixed(2)})`);
 
     return this.credentials;
   }

@@ -9,8 +9,13 @@ import { describe, expect, it } from "vitest";
 
 // We test the isReasoningModel logic directly
 const REASONING_MODEL_PATTERNS = [
-  "o1", "o3", "o4", "deepseek-r1", "deepseek-reasoner",
-  "claude-opus-4.5", "claude-opus-4",
+  "o1",
+  "o3",
+  "o4",
+  "deepseek-r1",
+  "deepseek-reasoner",
+  "claude-opus-4.5",
+  "claude-opus-4",
 ] as const;
 
 function isReasoningModel(modelName: string): boolean {
@@ -71,11 +76,13 @@ describe("Parameter stripping for reasoning models", () => {
     const params = {
       model: modelName,
       prompt: "test",
-      ...(reasoning ? {} : {
-        temperature: 0.7,
-        frequencyPenalty: 0.7,
-        presencePenalty: 0.7,
-      }),
+      ...(reasoning
+        ? {}
+        : {
+            temperature: 0.7,
+            frequencyPenalty: 0.7,
+            presencePenalty: 0.7,
+          }),
       maxOutputTokens: 8192,
     };
 
@@ -93,11 +100,13 @@ describe("Parameter stripping for reasoning models", () => {
     const params = {
       model: modelName,
       prompt: "test",
-      ...(reasoning ? {} : {
-        temperature: 0.7,
-        frequencyPenalty: 0.7,
-        presencePenalty: 0.7,
-      }),
+      ...(reasoning
+        ? {}
+        : {
+            temperature: 0.7,
+            frequencyPenalty: 0.7,
+            presencePenalty: 0.7,
+          }),
       maxOutputTokens: 8192,
     };
 

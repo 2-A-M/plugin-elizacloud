@@ -23,7 +23,7 @@ import { collectEnvVars } from "../utils/forwarded-settings";
 
 function extractParams(
   message: Memory,
-  options?: Record<string, unknown>,
+  options?: Record<string, unknown>
 ): Record<string, unknown> {
   if (options && Object.keys(options).length > 0) return options;
   const meta = message.metadata as Record<string, unknown> | undefined;
@@ -31,9 +31,7 @@ function extractParams(
   // Regex fallback from free-text
   const text = (message.content as { text?: string })?.text ?? "";
   const name = text.match(/name[:\s]+["']?([^"',]+)["']?/i)?.[1]?.trim();
-  const project = text
-    .match(/project[:\s]+["']?([^"',\s]+)["']?/i)?.[1]
-    ?.trim();
+  const project = text.match(/project[:\s]+["']?([^"',\s]+)["']?/i)?.[1]?.trim();
   return { name, project_name: project };
 }
 
@@ -81,11 +79,38 @@ export const provisionCloudAgentAction: Action = {
     },
   ],
 
-  async validate(runtime: IAgentRuntime): Promise<boolean> {
-    const auth = runtime.getService("CLOUD_AUTH") as
-      | CloudAuthService
-      | undefined;
-    return !!auth?.isAuthenticated();
+  validate: async (runtime: any, message: any, state?: any, options?: any): Promise<boolean> => {
+    const __avTextRaw = typeof message?.content?.text === "string" ? message.content.text : "";
+    const __avText = __avTextRaw.toLowerCase();
+    const __avKeywords = ["provision", "cloud"];
+    const __avKeywordOk =
+      __avKeywords.length > 0 && __avKeywords.some((kw) => kw.length > 0 && __avText.includes(kw));
+    const __avRegex = /\b(?:provision|cloud)\b/i;
+    const __avRegexOk = Boolean(__avText.match(__avRegex));
+    const __avSource = String(message?.content?.source ?? message?.source ?? "");
+    const __avExpectedSource = "";
+    const __avSourceOk = __avExpectedSource
+      ? __avSource === __avExpectedSource
+      : Boolean(__avSource || state || runtime?.agentId || runtime?.getService);
+    const __avOptions = options && typeof options === "object" ? options : {};
+    const __avInputOk =
+      __avText.trim().length > 0 ||
+      Object.keys(__avOptions as Record<string, unknown>).length > 0 ||
+      Boolean(message?.content && typeof message.content === "object");
+
+    if (!(__avKeywordOk && __avRegexOk && __avSourceOk && __avInputOk)) {
+      return false;
+    }
+
+    const __avLegacyValidate = async (runtime: IAgentRuntime) => {
+      const auth = runtime.getService("CLOUD_AUTH") as CloudAuthService | undefined;
+      return !!auth?.isAuthenticated();
+    };
+    try {
+      return Boolean(await (__avLegacyValidate as any)(runtime, message, state, options));
+    } catch {
+      return false;
+    }
   },
 
   async handler(
@@ -93,18 +118,12 @@ export const provisionCloudAgentAction: Action = {
     message: Memory,
     _state?: State,
     options?: Record<string, unknown>,
-    callback?: HandlerCallback,
+    callback?: HandlerCallback
   ): Promise<ActionResult> {
     const auth = runtime.getService("CLOUD_AUTH") as CloudAuthService;
-    const containers = runtime.getService(
-      "CLOUD_CONTAINER",
-    ) as CloudContainerService;
-    const bridge = runtime.getService("CLOUD_BRIDGE") as
-      | CloudBridgeService
-      | undefined;
-    const backup = runtime.getService("CLOUD_BACKUP") as
-      | CloudBackupService
-      | undefined;
+    const containers = runtime.getService("CLOUD_CONTAINER") as CloudContainerService;
+    const bridge = runtime.getService("CLOUD_BRIDGE") as CloudBridgeService | undefined;
+    const backup = runtime.getService("CLOUD_BACKUP") as CloudBackupService | undefined;
 
     if (!auth?.isAuthenticated() || !containers) {
       return {
@@ -122,12 +141,9 @@ export const provisionCloudAgentAction: Action = {
     }
 
     const notify = async (text: string) => {
-      if (callback)
-        await callback({ text, actions: ["PROVISION_CLOUD_AGENT"] });
+      if (callback) await callback({ text, actions: ["PROVISION_CLOUD_AGENT"] });
     };
-    await notify(
-      `Provisioning cloud agent "${params.name}"... This typically takes 8-12 minutes.`,
-    );
+    await notify(`Provisioning cloud agent "${params.name}"... This typically takes 8-12 minutes.`);
 
     const defs = DEFAULT_CLOUD_CONFIG.container;
     const request: CreateContainerRequest = {
@@ -149,7 +165,7 @@ export const provisionCloudAgentAction: Action = {
     const created = await containers.createContainer(request);
     const id = created.data.id;
     await notify(
-      `Container created (id: ${id}). Credits: -$${created.creditsDeducted.toFixed(2)} ($${created.creditsRemaining.toFixed(2)} remaining).`,
+      `Container created (id: ${id}). Credits: -$${created.creditsDeducted.toFixed(2)} ($${created.creditsRemaining.toFixed(2)} remaining).`
     );
 
     const running = await containers.waitForDeployment(id);
@@ -163,9 +179,7 @@ export const provisionCloudAgentAction: Action = {
     const autoBackup = params.auto_backup !== false;
     if (autoBackup && backup) backup.scheduleAutoBackup(id);
 
-    await notify(
-      `Agent "${params.name}" deployed.${autoBackup ? " Auto-backup enabled." : ""}`,
-    );
+    await notify(`Agent "${params.name}" deployed.${autoBackup ? " Auto-backup enabled." : ""}`);
 
     return {
       success: true,

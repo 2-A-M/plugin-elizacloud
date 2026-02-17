@@ -32,9 +32,7 @@ async function build() {
     console.error(nodeResult.logs);
     throw new Error("Node build failed");
   }
-  console.log(
-    `✅ Node build complete in ${((Date.now() - nodeStart) / 1000).toFixed(2)}s`,
-  );
+  console.log(`✅ Node build complete in ${((Date.now() - nodeStart) / 1000).toFixed(2)}s`);
 
   const browserStart = Date.now();
   console.log("🌐 Building @elizaos/plugin-elizacloud for Browser...");
@@ -51,9 +49,7 @@ async function build() {
     console.error(browserResult.logs);
     throw new Error("Browser build failed");
   }
-  console.log(
-    `✅ Browser build complete in ${((Date.now() - browserStart) / 1000).toFixed(2)}s`,
-  );
+  console.log(`✅ Browser build complete in ${((Date.now() - browserStart) / 1000).toFixed(2)}s`);
 
   const cjsStart = Date.now();
   console.log("🧱 Building @elizaos/plugin-elizacloud for Node (CJS)...");
@@ -75,9 +71,7 @@ async function build() {
   } catch (e) {
     console.warn("CJS rename step warning:", e);
   }
-  console.log(
-    `✅ CJS build complete in ${((Date.now() - cjsStart) / 1000).toFixed(2)}s`,
-  );
+  console.log(`✅ CJS build complete in ${((Date.now() - cjsStart) / 1000).toFixed(2)}s`);
 
   const dtsStart = Date.now();
   console.log("📝 Generating TypeScript declarations...");
@@ -90,27 +84,23 @@ async function build() {
     "dist/node/index.d.ts",
     `export * from '../index';
 export { default } from '../index';
-`,
+`
   );
   await writeFile(
     "dist/browser/index.d.ts",
     `export * from '../index';
 export { default } from '../index';
-`,
+`
   );
   await writeFile(
     "dist/cjs/index.d.ts",
     `export * from '../index';
 export { default } from '../index';
-`,
+`
   );
-  console.log(
-    `✅ Declarations generated in ${((Date.now() - dtsStart) / 1000).toFixed(2)}s`,
-  );
+  console.log(`✅ Declarations generated in ${((Date.now() - dtsStart) / 1000).toFixed(2)}s`);
 
-  console.log(
-    `🎉 All builds finished in ${((Date.now() - totalStart) / 1000).toFixed(2)}s`,
-  );
+  console.log(`🎉 All builds finished in ${((Date.now() - totalStart) / 1000).toFixed(2)}s`);
 }
 
 build().catch((err) => {

@@ -58,10 +58,8 @@ export const elizaOSCloudPlugin: Plugin = {
     SMALL_MODEL: env.SMALL_MODEL ?? null,
     LARGE_MODEL: env.LARGE_MODEL ?? null,
     // Reasoning models
-    ELIZAOS_CLOUD_REASONING_SMALL_MODEL:
-      env.ELIZAOS_CLOUD_REASONING_SMALL_MODEL ?? null,
-    ELIZAOS_CLOUD_REASONING_LARGE_MODEL:
-      env.ELIZAOS_CLOUD_REASONING_LARGE_MODEL ?? null,
+    ELIZAOS_CLOUD_REASONING_SMALL_MODEL: env.ELIZAOS_CLOUD_REASONING_SMALL_MODEL ?? null,
+    ELIZAOS_CLOUD_REASONING_LARGE_MODEL: env.ELIZAOS_CLOUD_REASONING_LARGE_MODEL ?? null,
     REASONING_SMALL_MODEL: env.REASONING_SMALL_MODEL ?? null,
     REASONING_LARGE_MODEL: env.REASONING_LARGE_MODEL ?? null,
     // Research model
@@ -69,25 +67,19 @@ export const elizaOSCloudPlugin: Plugin = {
     RESEARCH_MODEL: env.RESEARCH_MODEL ?? null,
     // Embedding
     ELIZAOS_CLOUD_EMBEDDING_MODEL: env.ELIZAOS_CLOUD_EMBEDDING_MODEL ?? null,
-    ELIZAOS_CLOUD_EMBEDDING_API_KEY:
-      env.ELIZAOS_CLOUD_EMBEDDING_API_KEY ?? null,
+    ELIZAOS_CLOUD_EMBEDDING_API_KEY: env.ELIZAOS_CLOUD_EMBEDDING_API_KEY ?? null,
     ELIZAOS_CLOUD_EMBEDDING_URL: env.ELIZAOS_CLOUD_EMBEDDING_URL ?? null,
-    ELIZAOS_CLOUD_EMBEDDING_DIMENSIONS:
-      env.ELIZAOS_CLOUD_EMBEDDING_DIMENSIONS ?? null,
+    ELIZAOS_CLOUD_EMBEDDING_DIMENSIONS: env.ELIZAOS_CLOUD_EMBEDDING_DIMENSIONS ?? null,
     // Image
-    ELIZAOS_CLOUD_IMAGE_DESCRIPTION_MODEL:
-      env.ELIZAOS_CLOUD_IMAGE_DESCRIPTION_MODEL ?? null,
+    ELIZAOS_CLOUD_IMAGE_DESCRIPTION_MODEL: env.ELIZAOS_CLOUD_IMAGE_DESCRIPTION_MODEL ?? null,
     ELIZAOS_CLOUD_IMAGE_DESCRIPTION_MAX_TOKENS:
       env.ELIZAOS_CLOUD_IMAGE_DESCRIPTION_MAX_TOKENS ?? null,
-    ELIZAOS_CLOUD_IMAGE_GENERATION_MODEL:
-      env.ELIZAOS_CLOUD_IMAGE_GENERATION_MODEL ?? null,
+    ELIZAOS_CLOUD_IMAGE_GENERATION_MODEL: env.ELIZAOS_CLOUD_IMAGE_GENERATION_MODEL ?? null,
     // Audio
     ELIZAOS_CLOUD_TTS_MODEL: env.ELIZAOS_CLOUD_TTS_MODEL ?? null,
-    ELIZAOS_CLOUD_TRANSCRIPTION_MODEL:
-      env.ELIZAOS_CLOUD_TRANSCRIPTION_MODEL ?? null,
+    ELIZAOS_CLOUD_TRANSCRIPTION_MODEL: env.ELIZAOS_CLOUD_TRANSCRIPTION_MODEL ?? null,
     // Telemetry
-    ELIZAOS_CLOUD_EXPERIMENTAL_TELEMETRY:
-      env.ELIZAOS_CLOUD_EXPERIMENTAL_TELEMETRY ?? null,
+    ELIZAOS_CLOUD_EXPERIMENTAL_TELEMETRY: env.ELIZAOS_CLOUD_EXPERIMENTAL_TELEMETRY ?? null,
   },
 
   async init(config, runtime) {
@@ -155,16 +147,12 @@ export const elizaOSCloudPlugin: Plugin = {
             const data = await response.json();
             logger.log(
               {
-                data:
-                  (data as { data?: Array<Record<string, never>> })?.data
-                    ?.length ?? "N/A",
+                data: (data as { data?: Array<Record<string, never>> })?.data?.length ?? "N/A",
               },
-              "Models Available",
+              "Models Available"
             );
             if (!response.ok) {
-              throw new Error(
-                `Failed to validate OpenAI API key: ${response.statusText}`,
-              );
+              throw new Error(`Failed to validate OpenAI API key: ${response.statusText}`);
             }
           },
         },
@@ -219,7 +207,7 @@ export const elizaOSCloudPlugin: Plugin = {
             logger.log("ELIZAOS_CLOUD_test_image_description");
             const result = await runtime.useModel(
               ModelType.IMAGE_DESCRIPTION,
-              "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1c/Vitalik_Buterin_TechCrunch_London_2015_%28cropped%29.jpg/537px-Vitalik_Buterin_TechCrunch_London_2015_%28cropped%29.jpg",
+              "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1c/Vitalik_Buterin_TechCrunch_London_2015_%28cropped%29.jpg/537px-Vitalik_Buterin_TechCrunch_London_2015_%28cropped%29.jpg"
             );
 
             if (
@@ -230,9 +218,7 @@ export const elizaOSCloudPlugin: Plugin = {
             ) {
               logger.log({ result }, "Image description");
             } else {
-              logger.error(
-                `Invalid image description result format: ${JSON.stringify(result)}`,
-              );
+              logger.error(`Invalid image description result format: ${JSON.stringify(result)}`);
             }
           },
         },
@@ -241,12 +227,12 @@ export const elizaOSCloudPlugin: Plugin = {
           fn: async (runtime: IAgentRuntime) => {
             logger.log("ELIZAOS_CLOUD_test_transcription");
             const response = await fetch(
-              "https://upload.wikimedia.org/wikipedia/en/4/40/Chris_Benoit_Voice_Message.ogg",
+              "https://upload.wikimedia.org/wikipedia/en/4/40/Chris_Benoit_Voice_Message.ogg"
             );
             const arrayBuffer = await response.arrayBuffer();
             const transcription = await runtime.useModel(
               ModelType.TRANSCRIPTION,
-              Buffer.from(new Uint8Array(arrayBuffer)),
+              Buffer.from(new Uint8Array(arrayBuffer))
             );
             logger.log({ transcription }, "generated with test_transcription");
           },
@@ -255,17 +241,12 @@ export const elizaOSCloudPlugin: Plugin = {
           name: "ELIZAOS_CLOUD_test_text_tokenizer_encode",
           fn: async (runtime: IAgentRuntime) => {
             const prompt = "Hello tokenizer encode!";
-            const tokens = await runtime.useModel(
-              ModelType.TEXT_TOKENIZER_ENCODE,
-              {
-                prompt,
-                modelType: ModelType.TEXT_SMALL,
-              },
-            );
+            const tokens = await runtime.useModel(ModelType.TEXT_TOKENIZER_ENCODE, {
+              prompt,
+              modelType: ModelType.TEXT_SMALL,
+            });
             if (!Array.isArray(tokens) || tokens.length === 0) {
-              throw new Error(
-                "Failed to tokenize text: expected non-empty array of tokens",
-              );
+              throw new Error("Failed to tokenize text: expected non-empty array of tokens");
             }
             logger.log({ tokens }, "Tokenized output");
           },
@@ -274,23 +255,17 @@ export const elizaOSCloudPlugin: Plugin = {
           name: "ELIZAOS_CLOUD_test_text_tokenizer_decode",
           fn: async (runtime: IAgentRuntime) => {
             const prompt = "Hello tokenizer decode!";
-            const tokens = await runtime.useModel(
-              ModelType.TEXT_TOKENIZER_ENCODE,
-              {
-                prompt,
-                modelType: ModelType.TEXT_SMALL,
-              },
-            );
-            const decodedText = await runtime.useModel(
-              ModelType.TEXT_TOKENIZER_DECODE,
-              {
-                tokens,
-                modelType: ModelType.TEXT_SMALL,
-              },
-            );
+            const tokens = await runtime.useModel(ModelType.TEXT_TOKENIZER_ENCODE, {
+              prompt,
+              modelType: ModelType.TEXT_SMALL,
+            });
+            const decodedText = await runtime.useModel(ModelType.TEXT_TOKENIZER_DECODE, {
+              tokens,
+              modelType: ModelType.TEXT_SMALL,
+            });
             if (decodedText !== prompt) {
               throw new Error(
-                `Decoded text does not match original. Expected "${prompt}", got "${decodedText}"`,
+                `Decoded text does not match original. Expected "${prompt}", got "${decodedText}"`
               );
             }
             logger.log({ decodedText }, "Decoded text");

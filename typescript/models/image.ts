@@ -1,8 +1,4 @@
-import type {
-  IAgentRuntime,
-  ImageDescriptionParams,
-  ImageGenerationParams,
-} from "@elizaos/core";
+import type { IAgentRuntime, ImageDescriptionParams, ImageGenerationParams } from "@elizaos/core";
 import { logger, ModelType } from "@elizaos/core";
 import {
   getAuthHeader,
@@ -16,7 +12,7 @@ import { parseImageDescriptionResponse } from "../utils/helpers";
 
 export async function handleImageGeneration(
   runtime: IAgentRuntime,
-  params: ImageGenerationParams,
+  params: ImageGenerationParams
 ): Promise<{ url: string }[]> {
   const numImages = params.count || 1;
   const size = params.size || "1024x1024";
@@ -53,9 +49,7 @@ export async function handleImageGeneration(
 
     if (!response.ok) {
       const errorText = await response.text();
-      throw new Error(
-        `Failed to generate image: ${response.status} ${errorText}`,
-      );
+      throw new Error(`Failed to generate image: ${response.status} ${errorText}`);
     }
 
     const data = await response.json();
@@ -77,27 +71,24 @@ export async function handleImageGeneration(
 
 export async function handleImageDescription(
   runtime: IAgentRuntime,
-  params: ImageDescriptionParams | string,
+  params: ImageDescriptionParams | string
 ): Promise<{ title: string; description: string }> {
   let imageUrl: string;
   let promptText: string | undefined;
   const modelName = getImageDescriptionModel(runtime);
   logger.log(`[ELIZAOS_CLOUD] Using IMAGE_DESCRIPTION model: ${modelName}`);
   const maxTokens = Number.parseInt(
-    getSetting(runtime, "ELIZAOS_CLOUD_IMAGE_DESCRIPTION_MAX_TOKENS", "8192") ||
-      "8192",
-    10,
+    getSetting(runtime, "ELIZAOS_CLOUD_IMAGE_DESCRIPTION_MAX_TOKENS", "8192") || "8192",
+    10
   );
 
   if (typeof params === "string") {
     imageUrl = params;
-    promptText =
-      "Please analyze this image and provide a title and detailed description.";
+    promptText = "Please analyze this image and provide a title and detailed description.";
   } else {
     imageUrl = params.imageUrl;
     promptText =
-      params.prompt ||
-      "Please analyze this image and provide a title and detailed description.";
+      params.prompt || "Please analyze this image and provide a title and detailed description.";
   }
 
   const messages = [
@@ -134,7 +125,7 @@ export async function handleImageDescription(
       if (response.status === 429 && attempt < 2) {
         const wait = (attempt + 1) * 2000; // 2s, 4s
         logger.warn(
-          `[ELIZAOS_CLOUD] Image analysis rate-limited (429), retrying in ${wait / 1000}s...`,
+          `[ELIZAOS_CLOUD] Image analysis rate-limited (429), retrying in ${wait / 1000}s...`
         );
         await new Promise((r) => setTimeout(r, wait));
         continue;
@@ -146,7 +137,7 @@ export async function handleImageDescription(
       const status = response?.status ?? 0;
       if (status === 402) {
         throw new Error(
-          "Eliza Cloud credits exhausted — top up at https://www.elizacloud.ai/dashboard/billing",
+          "Eliza Cloud credits exhausted — top up at https://www.elizacloud.ai/dashboard/settings?tab=billing"
         );
       }
       throw new Error(`ElizaOS Cloud API error: ${status}`);
@@ -176,7 +167,7 @@ export async function handleImageDescription(
           inputTokens: typedResult.usage.prompt_tokens,
           outputTokens: typedResult.usage.completion_tokens,
           totalTokens: typedResult.usage.total_tokens,
-        },
+        }
       );
     }
 

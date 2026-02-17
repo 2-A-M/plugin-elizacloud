@@ -2,13 +2,7 @@
  * containerHealthProvider — Container health in agent state (private, on-demand).
  */
 
-import type {
-  IAgentRuntime,
-  Memory,
-  Provider,
-  ProviderResult,
-  State,
-} from "@elizaos/core";
+import type { IAgentRuntime, Memory, Provider, ProviderResult, State } from "@elizaos/core";
 import type { CloudAuthService } from "../services/cloud-auth";
 import type { CloudContainerService } from "../services/cloud-container";
 
@@ -18,22 +12,12 @@ export const containerHealthProvider: Provider = {
   dynamic: true,
   position: 92,
   private: true,
-
-  async get(
-    runtime: IAgentRuntime,
-    _message: Memory,
-    _state: State,
-  ): Promise<ProviderResult> {
-    const auth = runtime.getService("CLOUD_AUTH") as
-      | CloudAuthService
-      | undefined;
+  async get(runtime: IAgentRuntime, _message: Memory, _state: State): Promise<ProviderResult> {
+    const auth = runtime.getService("CLOUD_AUTH") as CloudAuthService | undefined;
     if (!auth?.isAuthenticated()) return { text: "" };
 
-    const svc = runtime.getService("CLOUD_CONTAINER") as
-      | CloudContainerService
-      | undefined;
-    const running =
-      svc?.getTrackedContainers().filter((c) => c.status === "running") ?? [];
+    const svc = runtime.getService("CLOUD_CONTAINER") as CloudContainerService | undefined;
+    const running = svc?.getTrackedContainers().filter((c) => c.status === "running") ?? [];
     if (running.length === 0)
       return {
         text: "No running containers.",
@@ -47,10 +31,7 @@ export const containerHealthProvider: Provider = {
     const reports = running.map((c) => ({
       id: c.id,
       name: c.name,
-      healthy:
-        c.status === "running" &&
-        c.billing_status === "active" &&
-        !c.error_message,
+      healthy: c.status === "running" && c.billing_status === "active" && !c.error_message,
       status: c.status,
       billing: c.billing_status,
     }));
@@ -60,7 +41,7 @@ export const containerHealthProvider: Provider = {
       `Health: ${healthy}/${reports.length} healthy`,
       ...reports.map(
         (r) =>
-          `  - ${r.name}: ${r.healthy ? "OK" : "UNHEALTHY"} (status=${r.status}, billing=${r.billing})`,
+          `  - ${r.name}: ${r.healthy ? "OK" : "UNHEALTHY"} (status=${r.status}, billing=${r.billing})`
       ),
     ].join("\n");
 

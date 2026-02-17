@@ -18,10 +18,7 @@ function getProcessEnv(): ProcessEnvLike {
 
 const env = getProcessEnv();
 
-async function tokenizeText(
-  model: ModelTypeName,
-  prompt: string,
-): Promise<number[]> {
+async function tokenizeText(model: ModelTypeName, prompt: string): Promise<number[]> {
   const modelName =
     model === ModelType.TEXT_SMALL
       ? (env.ELIZAOS_CLOUD_SMALL_MODEL ?? env.SMALL_MODEL ?? "gpt-5-nano")
@@ -30,10 +27,7 @@ async function tokenizeText(
   return tokens;
 }
 
-async function detokenizeText(
-  model: ModelTypeName,
-  tokens: number[],
-): Promise<string> {
+async function detokenizeText(model: ModelTypeName, tokens: number[]): Promise<string> {
   const modelName =
     model === ModelType.TEXT_SMALL
       ? (env.ELIZAOS_CLOUD_SMALL_MODEL ?? env.SMALL_MODEL ?? "gpt-5-nano")
@@ -43,14 +37,14 @@ async function detokenizeText(
 
 export async function handleTokenizerEncode(
   _runtime: IAgentRuntime,
-  { prompt, modelType = ModelType.TEXT_LARGE }: TokenizeTextParams,
+  { prompt, modelType = ModelType.TEXT_LARGE }: TokenizeTextParams
 ): Promise<number[]> {
   return await tokenizeText(modelType ?? ModelType.TEXT_LARGE, prompt);
 }
 
 export async function handleTokenizerDecode(
   _runtime: IAgentRuntime,
-  { tokens, modelType = ModelType.TEXT_LARGE }: DetokenizeTextParams,
+  { tokens, modelType = ModelType.TEXT_LARGE }: DetokenizeTextParams
 ): Promise<string> {
   return await detokenizeText(modelType ?? ModelType.TEXT_LARGE, tokens);
 }

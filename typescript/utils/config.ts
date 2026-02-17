@@ -12,7 +12,7 @@ function getEnvValue(key: string): string | undefined {
 export function getSetting(
   runtime: IAgentRuntime,
   key: string,
-  defaultValue?: string,
+  defaultValue?: string
 ): string | undefined {
   const value = runtime.getSetting(key);
   if (value !== undefined && value !== null) {
@@ -34,7 +34,7 @@ export function isProxyMode(runtime: IAgentRuntime): boolean {
 
 export function getAuthHeader(
   runtime: IAgentRuntime,
-  forEmbedding = false,
+  forEmbedding = false
 ): Record<string, string> {
   if (isBrowser()) return {};
   const key = forEmbedding ? getEmbeddingApiKey(runtime) : getApiKey(runtime);
@@ -46,11 +46,7 @@ export function getBaseURL(runtime: IAgentRuntime): string {
   const baseURL = (
     isBrowser() && browserURL
       ? browserURL
-      : getSetting(
-          runtime,
-          "ELIZAOS_CLOUD_BASE_URL",
-          "https://www.elizacloud.ai/api/v1",
-        )
+      : getSetting(runtime, "ELIZAOS_CLOUD_BASE_URL", "https://www.elizacloud.ai/api/v1")
   ) as string;
   return baseURL;
 }
@@ -61,14 +57,10 @@ export function getEmbeddingBaseURL(runtime: IAgentRuntime): string {
       getSetting(runtime, "ELIZAOS_CLOUD_BROWSER_BASE_URL")
     : getSetting(runtime, "ELIZAOS_CLOUD_EMBEDDING_URL");
   if (embeddingURL) {
-    logger.debug(
-      `[ELIZAOS_CLOUD] Using specific embedding base URL: ${embeddingURL}`,
-    );
+    logger.debug(`[ELIZAOS_CLOUD] Using specific embedding base URL: ${embeddingURL}`);
     return embeddingURL;
   }
-  logger.debug(
-    "[ELIZAOS_CLOUD] Falling back to general base URL for embeddings.",
-  );
+  logger.debug("[ELIZAOS_CLOUD] Falling back to general base URL for embeddings.");
   return getBaseURL(runtime);
 }
 
@@ -77,17 +69,12 @@ export function getApiKey(runtime: IAgentRuntime): string | undefined {
 }
 
 export function getEmbeddingApiKey(runtime: IAgentRuntime): string | undefined {
-  const embeddingApiKey = getSetting(
-    runtime,
-    "ELIZAOS_CLOUD_EMBEDDING_API_KEY",
-  );
+  const embeddingApiKey = getSetting(runtime, "ELIZAOS_CLOUD_EMBEDDING_API_KEY");
   if (embeddingApiKey) {
     logger.debug("[ELIZAOS_CLOUD] Using specific embedding API key (present)");
     return embeddingApiKey;
   }
-  logger.debug(
-    "[ELIZAOS_CLOUD] Falling back to general API key for embeddings.",
-  );
+  logger.debug("[ELIZAOS_CLOUD] Falling back to general API key for embeddings.");
   return getApiKey(runtime);
 }
 
@@ -106,18 +93,13 @@ export function getLargeModel(runtime: IAgentRuntime): string {
 }
 
 export function getImageDescriptionModel(runtime: IAgentRuntime): string {
-  return (
-    getSetting(runtime, "ELIZAOS_CLOUD_IMAGE_DESCRIPTION_MODEL", "gpt-5-mini") as string
-  );
+  return getSetting(runtime, "ELIZAOS_CLOUD_IMAGE_DESCRIPTION_MODEL", "gpt-5-mini") as string;
 }
 
 export function getImageGenerationModel(runtime: IAgentRuntime): string {
   return (
-    getSetting(
-      runtime,
-      "ELIZAOS_CLOUD_IMAGE_GENERATION_MODEL",
-      "google/gemini-2.5-flash-image",
-    ) ?? "google/gemini-2.5-flash-image"
+    getSetting(runtime, "ELIZAOS_CLOUD_IMAGE_GENERATION_MODEL", "google/gemini-2.5-flash-image") ??
+    "google/gemini-2.5-flash-image"
   );
 }
 
@@ -147,14 +129,14 @@ export function getTTSModel(runtime: IAgentRuntime): string {
 }
 
 export function getTranscriptionModel(runtime: IAgentRuntime): string {
-  return getSetting(runtime, "ELIZAOS_CLOUD_TRANSCRIPTION_MODEL", "gpt-5-mini-transcribe") as string;
+  return getSetting(
+    runtime,
+    "ELIZAOS_CLOUD_TRANSCRIPTION_MODEL",
+    "gpt-5-mini-transcribe"
+  ) as string;
 }
 
 export function getExperimentalTelemetry(runtime: IAgentRuntime): boolean {
-  const setting = getSetting(
-    runtime,
-    "ELIZAOS_CLOUD_EXPERIMENTAL_TELEMETRY",
-    "false",
-  );
+  const setting = getSetting(runtime, "ELIZAOS_CLOUD_EXPERIMENTAL_TELEMETRY", "false");
   return String(setting).toLowerCase() === "true";
 }

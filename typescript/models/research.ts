@@ -61,7 +61,7 @@ function parseAnnotations(
     title?: string;
     start_index?: number;
     end_index?: number;
-  }>,
+  }>
 ): ResearchAnnotation[] {
   return raw
     .filter((a) => a.url !== undefined)
@@ -73,9 +73,7 @@ function parseAnnotations(
     }));
 }
 
-function parseOutputItems(
-  raw: ResponsesAPIOutput["output"],
-): ResearchOutputItem[] {
+function parseOutputItems(raw: ResponsesAPIOutput["output"]): ResearchOutputItem[] {
   const items: ResearchOutputItem[] = [];
 
   for (const item of raw) {
@@ -147,7 +145,7 @@ function parseOutputItems(
 
 export async function handleResearch(
   runtime: IAgentRuntime,
-  params: ResearchParams,
+  params: ResearchParams
 ): Promise<ResearchResult> {
   const modelName = params.model ?? getResearchModel(runtime);
   logger.log(`[ELIZAOS_CLOUD] Using RESEARCH model: ${modelName}`);
@@ -186,9 +184,7 @@ export async function handleResearch(
 
   if (!response.ok) {
     const errorText = await response.text();
-    throw new Error(
-      `Research API error: ${response.status} ${errorText}`,
-    );
+    throw new Error(`Research API error: ${response.status} ${errorText}`);
   }
 
   const data = (await response.json()) as ResponsesAPIOutput;

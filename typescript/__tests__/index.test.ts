@@ -88,41 +88,30 @@ describe("ElizaOS Cloud Plugin", () => {
 
     it("includes CloudAuthService", () => {
       expect(
-        services.some(
-          (s) => (s as { serviceType?: string }).serviceType === "CLOUD_AUTH",
-        ),
+        services.some((s) => (s as { serviceType?: string }).serviceType === "CLOUD_AUTH")
       ).toBe(true);
     });
 
     it("includes CloudContainerService", () => {
       expect(
-        services.some(
-          (s) =>
-            (s as { serviceType?: string }).serviceType === "CLOUD_CONTAINER",
-        ),
+        services.some((s) => (s as { serviceType?: string }).serviceType === "CLOUD_CONTAINER")
       ).toBe(true);
     });
 
     it("includes CloudBridgeService", () => {
       expect(
-        services.some(
-          (s) => (s as { serviceType?: string }).serviceType === "CLOUD_BRIDGE",
-        ),
+        services.some((s) => (s as { serviceType?: string }).serviceType === "CLOUD_BRIDGE")
       ).toBe(true);
     });
 
     it("includes CloudBackupService", () => {
       expect(
-        services.some(
-          (s) => (s as { serviceType?: string }).serviceType === "CLOUD_BACKUP",
-        ),
+        services.some((s) => (s as { serviceType?: string }).serviceType === "CLOUD_BACKUP")
       ).toBe(true);
     });
 
     it("CloudAuthService is registered first (other services depend on it)", () => {
-      expect((services[0] as { serviceType?: string }).serviceType).toBe(
-        "CLOUD_AUTH",
-      );
+      expect((services[0] as { serviceType?: string }).serviceType).toBe("CLOUD_AUTH");
     });
   });
 
@@ -134,9 +123,7 @@ describe("ElizaOS Cloud Plugin", () => {
     });
 
     it("includes PROVISION_CLOUD_AGENT", () => {
-      expect(actions.some((a) => a.name === "PROVISION_CLOUD_AGENT")).toBe(
-        true,
-      );
+      expect(actions.some((a) => a.name === "PROVISION_CLOUD_AGENT")).toBe(true);
     });
 
     it("includes FREEZE_CLOUD_AGENT", () => {
@@ -214,9 +201,7 @@ describe("ElizaOS Cloud Plugin", () => {
     });
 
     it("has ELIZAOS_CLOUD_plugin_tests suite", () => {
-      const suite = elizaOSCloudPlugin.tests?.find(
-        (t) => t.name === "ELIZAOS_CLOUD_plugin_tests",
-      );
+      const suite = elizaOSCloudPlugin.tests?.find((t) => t.name === "ELIZAOS_CLOUD_plugin_tests");
       expect(suite).toBeDefined();
       expect(suite?.tests.length).toBeGreaterThan(5);
     });

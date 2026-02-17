@@ -29,10 +29,19 @@ export interface ModelsByProvider {
 const CACHE_TTL_MS = 30 * 60 * 1000; // 30 minutes
 
 const PROVIDER_PREFIXES: ReadonlyArray<[string, string]> = [
-  ["gpt-", "openai"], ["o1", "openai"], ["o3", "openai"], ["o4", "openai"],
-  ["dall-e", "openai"], ["whisper", "openai"], ["tts", "openai"],
-  ["claude-", "anthropic"], ["gemini-", "google"], ["llama", "meta"],
-  ["deepseek", "deepseek"], ["grok", "xai"], ["kimi", "moonshot"],
+  ["gpt-", "openai"],
+  ["o1", "openai"],
+  ["o3", "openai"],
+  ["o4", "openai"],
+  ["dall-e", "openai"],
+  ["whisper", "openai"],
+  ["tts", "openai"],
+  ["claude-", "anthropic"],
+  ["gemini-", "google"],
+  ["llama", "meta"],
+  ["deepseek", "deepseek"],
+  ["grok", "xai"],
+  ["kimi", "moonshot"],
 ];
 
 function extractProvider(modelId: string): string {
@@ -53,17 +62,12 @@ function stripProvider(modelId: string): string {
 
 export class CloudModelRegistryService extends Service {
   static serviceType = "CLOUD_MODEL_REGISTRY";
-  capabilityDescription =
-    "Discovers and caches available AI models from ElizaCloud";
+  capabilityDescription = "Discovers and caches available AI models from ElizaCloud";
 
   private models: AvailableModel[] = [];
   private byProvider: ModelsByProvider = {};
   private lastFetchedAt = 0;
   private fetchPromise: Promise<void> | null = null;
-
-  constructor(runtime?: IAgentRuntime) {
-    super(runtime);
-  }
 
   static async start(runtime: IAgentRuntime): Promise<Service> {
     const service = new CloudModelRegistryService(runtime);
@@ -78,14 +82,10 @@ export class CloudModelRegistryService extends Service {
   }
 
   private async initialize(): Promise<void> {
-    const auth = this.runtime.getService("CLOUD_AUTH") as
-      | CloudAuthService
-      | undefined;
+    const auth = this.runtime.getService("CLOUD_AUTH") as CloudAuthService | undefined;
 
     if (!auth?.isAuthenticated()) {
-      logger.info(
-        "[CloudModelRegistry] Auth not available, will fetch models on first access",
-      );
+      logger.info("[CloudModelRegistry] Auth not available, will fetch models on first access");
       return;
     }
 
@@ -105,9 +105,7 @@ export class CloudModelRegistryService extends Service {
   }
 
   private async doFetchModels(): Promise<void> {
-    const auth = this.runtime.getService("CLOUD_AUTH") as
-      | CloudAuthService
-      | undefined;
+    const auth = this.runtime.getService("CLOUD_AUTH") as CloudAuthService | undefined;
     if (!auth?.isAuthenticated()) return;
 
     const client = auth.getClient();
@@ -132,7 +130,7 @@ export class CloudModelRegistryService extends Service {
 
     this.lastFetchedAt = Date.now();
     logger.info(
-      `[CloudModelRegistry] Loaded ${this.models.length} models from ${Object.keys(this.byProvider).length} providers`,
+      `[CloudModelRegistry] Loaded ${this.models.length} models from ${Object.keys(this.byProvider).length} providers`
     );
   }
 
@@ -145,14 +143,29 @@ export class CloudModelRegistryService extends Service {
     const settingsToCheck = [
       { key: "ELIZAOS_CLOUD_SMALL_MODEL", label: "small model" },
       { key: "ELIZAOS_CLOUD_LARGE_MODEL", label: "large model" },
-      { key: "ELIZAOS_CLOUD_REASONING_SMALL_MODEL", label: "reasoning small model" },
-      { key: "ELIZAOS_CLOUD_REASONING_LARGE_MODEL", label: "reasoning large model" },
+      {
+        key: "ELIZAOS_CLOUD_REASONING_SMALL_MODEL",
+        label: "reasoning small model",
+      },
+      {
+        key: "ELIZAOS_CLOUD_REASONING_LARGE_MODEL",
+        label: "reasoning large model",
+      },
       { key: "ELIZAOS_CLOUD_RESEARCH_MODEL", label: "research model" },
       { key: "ELIZAOS_CLOUD_EMBEDDING_MODEL", label: "embedding model" },
-      { key: "ELIZAOS_CLOUD_IMAGE_DESCRIPTION_MODEL", label: "image description model" },
-      { key: "ELIZAOS_CLOUD_IMAGE_GENERATION_MODEL", label: "image generation model" },
+      {
+        key: "ELIZAOS_CLOUD_IMAGE_DESCRIPTION_MODEL",
+        label: "image description model",
+      },
+      {
+        key: "ELIZAOS_CLOUD_IMAGE_GENERATION_MODEL",
+        label: "image generation model",
+      },
       { key: "ELIZAOS_CLOUD_TTS_MODEL", label: "TTS model" },
-      { key: "ELIZAOS_CLOUD_TRANSCRIPTION_MODEL", label: "transcription model" },
+      {
+        key: "ELIZAOS_CLOUD_TRANSCRIPTION_MODEL",
+        label: "transcription model",
+      },
     ];
 
     for (const { key, label } of settingsToCheck) {
@@ -162,7 +175,7 @@ export class CloudModelRegistryService extends Service {
         if (!found) {
           logger.warn(
             `[CloudModelRegistry] Configured ${label} "${value}" not found in available models. ` +
-            "It may still work if the gateway supports it, but check your configuration.",
+              "It may still work if the gateway supports it, but check your configuration."
           );
         }
       }
@@ -182,5 +195,4 @@ export class CloudModelRegistryService extends Service {
     }
     return this.byProvider;
   }
-
 }
