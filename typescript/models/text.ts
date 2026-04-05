@@ -33,6 +33,38 @@ const REASONING_MODEL_PATTERNS = [
   "gpt-5",
 ] as const;
 const RESPONSES_ROUTED_PREFIXES = ["openai/", "anthropic/"] as const;
+type ChatAttachment = {
+  data: string | Uint8Array | URL;
+  mediaType: string;
+  filename?: string;
+};
+
+type GenerateTextParamsWithAttachments = GenerateTextParams & {
+  attachments?: ChatAttachment[];
+};
+
+function buildUserContent(params: GenerateTextParamsWithAttachments) {
+  const content: Array<
+    | { type: "text"; text: string }
+    | {
+        type: "file";
+        data: string | Uint8Array | URL;
+        mediaType: string;
+        filename?: string;
+      }
+  > = [{ type: "text", text: params.prompt }];
+
+  for (const attachment of params.attachments ?? []) {
+    content.push({
+      type: "file",
+      data: attachment.data,
+      mediaType: attachment.mediaType,
+      ...(attachment.filename ? { filename: attachment.filename } : {}),
+    });
+  }
+
+  return content;
+}
 
 function isReasoningModel(modelName: string): boolean {
   const lower = modelName.toLowerCase();
@@ -70,12 +102,17 @@ function buildGenerateParams(
   modelType: TextModelType,
   params: GenerateTextParams
 ) {
+  const paramsWithAttachments = params as GenerateTextParamsWithAttachments;
   const { prompt } = params;
   const maxTokens = params.maxTokens ?? 8192;
 
   const openai = createOpenAIClient(runtime);
   const modelName = getModelNameForType(runtime, modelType);
   const experimentalTelemetry = getExperimentalTelemetry(runtime);
+  const userContent =
+    (paramsWithAttachments.attachments?.length ?? 0) > 0
+      ? buildUserContent(paramsWithAttachments)
+      : undefined;
 
   // Use openai.chat() (Chat Completions API) instead of openai.languageModel()
   // (Responses API). The Responses API unconditionally rejects presencePenalty,
@@ -100,7 +137,9 @@ function buildGenerateParams(
 
   const generateParams = {
     model,
-    prompt: prompt,
+    ...(userContent
+      ? { messages: [{ role: "user" as const, content: userContent }] }
+      : { prompt: prompt }),
     system: runtime.character.system ?? undefined,
     ...(stopSequences ? { stopSequences } : {}),
     maxOutputTokens: maxTokens,
