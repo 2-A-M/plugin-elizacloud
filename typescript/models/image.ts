@@ -133,7 +133,7 @@ export async function handleImageDescription(
       break;
     }
 
-    if (!response || !response.ok) {
+    if (!response?.ok) {
       const status = response?.status ?? 0;
       if (status === 402) {
         throw new Error(
