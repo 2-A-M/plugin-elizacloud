@@ -100,7 +100,7 @@ describe("elizacloud responses-backed text/object models", () => {
         content: [{ type: "input_text", text: "Say hello" }],
       },
     ]);
-    expect(request.temperature).toBe(0.2);
+    expect(request.temperature).toBeUndefined();
     expect(lastRequestHeaders["x-eliza-llm-purpose"]).toBe("response");
     expect(lastRequestHeaders["x-eliza-model-type"]).toBe("TEXT_SMALL");
     expect(text).toBe("Hello from responses");
