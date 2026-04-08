@@ -54,12 +54,32 @@ describe("ElizaOS Cloud Plugin", () => {
       expect(typeof models.TEXT_EMBEDDING).toBe("function");
     });
 
+    it("registers TEXT_NANO handler", () => {
+      expect(typeof models.TEXT_NANO).toBe("function");
+    });
+
+    it("registers TEXT_MINI handler", () => {
+      expect(typeof models.TEXT_MINI).toBe("function");
+    });
+
     it("registers TEXT_SMALL handler", () => {
       expect(typeof models.TEXT_SMALL).toBe("function");
     });
 
     it("registers TEXT_LARGE handler", () => {
       expect(typeof models.TEXT_LARGE).toBe("function");
+    });
+
+    it("registers TEXT_MEGA handler", () => {
+      expect(typeof models.TEXT_MEGA).toBe("function");
+    });
+
+    it("registers RESPONSE_HANDLER handler", () => {
+      expect(typeof models.RESPONSE_HANDLER).toBe("function");
+    });
+
+    it("registers ACTION_PLANNER handler", () => {
+      expect(typeof models.ACTION_PLANNER).toBe("function");
     });
 
     it("registers IMAGE handler", () => {
@@ -82,8 +102,8 @@ describe("ElizaOS Cloud Plugin", () => {
   describe("Cloud services", () => {
     const services = elizaOSCloudPlugin.services ?? [];
 
-    it("registers 4 cloud services", () => {
-      expect(services).toHaveLength(4);
+    it("registers 5 cloud services", () => {
+      expect(services).toHaveLength(5);
     });
 
     it("includes CloudAuthService", () => {
@@ -101,6 +121,14 @@ describe("ElizaOS Cloud Plugin", () => {
     it("includes CloudBridgeService", () => {
       expect(
         services.some((s) => (s as { serviceType?: string }).serviceType === "CLOUD_BRIDGE")
+      ).toBe(true);
+    });
+
+    it("includes CloudModelRegistryService", () => {
+      expect(
+        services.some(
+          (s) => (s as { serviceType?: string }).serviceType === "CLOUD_MODEL_REGISTRY"
+        )
       ).toBe(true);
     });
 
@@ -162,8 +190,8 @@ describe("ElizaOS Cloud Plugin", () => {
   describe("Cloud providers", () => {
     const providers = elizaOSCloudPlugin.providers ?? [];
 
-    it("registers 3 cloud providers", () => {
-      expect(providers).toHaveLength(3);
+    it("registers 4 cloud providers", () => {
+      expect(providers).toHaveLength(4);
     });
 
     it("includes elizacloud_status", () => {
@@ -178,6 +206,10 @@ describe("ElizaOS Cloud Plugin", () => {
       const health = providers.find((p) => p.name === "elizacloud_health");
       expect(health).toBeDefined();
       expect(health?.private).toBe(true);
+    });
+
+    it("includes elizacloud_models", () => {
+      expect(providers.some((p) => p.name === "elizacloud_models")).toBe(true);
     });
 
     it("all providers have get functions", () => {

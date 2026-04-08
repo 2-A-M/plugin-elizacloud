@@ -9,13 +9,30 @@ import type { LanguageModel } from "ai";
 import { generateText, streamText } from "ai";
 import { createOpenAIClient } from "../providers/openai";
 import {
+  getActionPlannerModel,
   getExperimentalTelemetry,
   getLargeModel,
+  getMegaModel,
+  getMiniModel,
+  getNanoModel,
   getReasoningLargeModel,
   getReasoningSmallModel,
+  getResponseHandlerModel,
   getSmallModel,
 } from "../utils/config";
 import { emitModelUsageEvent } from "../utils/events";
+
+const TEXT_NANO_MODEL_TYPE = (ModelType.TEXT_NANO ?? "TEXT_NANO") as ModelTypeName;
+const TEXT_MINI_MODEL_TYPE = (ModelType.TEXT_MINI ?? "TEXT_MINI") as ModelTypeName;
+const TEXT_SMALL_MODEL_TYPE = ModelType.TEXT_SMALL;
+const TEXT_LARGE_MODEL_TYPE = ModelType.TEXT_LARGE;
+const TEXT_MEGA_MODEL_TYPE = (ModelType.TEXT_MEGA ?? "TEXT_MEGA") as ModelTypeName;
+const RESPONSE_HANDLER_MODEL_TYPE = (ModelType.RESPONSE_HANDLER ??
+  "RESPONSE_HANDLER") as ModelTypeName;
+const ACTION_PLANNER_MODEL_TYPE = (ModelType.ACTION_PLANNER ??
+  "ACTION_PLANNER") as ModelTypeName;
+const TEXT_REASONING_SMALL_MODEL_TYPE = ModelType.TEXT_REASONING_SMALL;
+const TEXT_REASONING_LARGE_MODEL_TYPE = ModelType.TEXT_REASONING_LARGE;
 
 /**
  * Models that are known to be reasoning-class and don't support temperature.
@@ -77,20 +94,35 @@ function supportsStopSequences(modelName: string): boolean {
 }
 
 type TextModelType =
-  | typeof ModelType.TEXT_SMALL
-  | typeof ModelType.TEXT_LARGE
-  | typeof ModelType.TEXT_REASONING_SMALL
-  | typeof ModelType.TEXT_REASONING_LARGE;
+  | typeof TEXT_NANO_MODEL_TYPE
+  | typeof TEXT_MINI_MODEL_TYPE
+  | typeof TEXT_SMALL_MODEL_TYPE
+  | typeof TEXT_LARGE_MODEL_TYPE
+  | typeof TEXT_MEGA_MODEL_TYPE
+  | typeof RESPONSE_HANDLER_MODEL_TYPE
+  | typeof ACTION_PLANNER_MODEL_TYPE
+  | typeof TEXT_REASONING_SMALL_MODEL_TYPE
+  | typeof TEXT_REASONING_LARGE_MODEL_TYPE;
 
 function getModelNameForType(runtime: IAgentRuntime, modelType: TextModelType): string {
   switch (modelType) {
-    case ModelType.TEXT_SMALL:
+    case TEXT_NANO_MODEL_TYPE:
+      return getNanoModel(runtime);
+    case TEXT_MINI_MODEL_TYPE:
+      return getMiniModel(runtime);
+    case TEXT_SMALL_MODEL_TYPE:
       return getSmallModel(runtime);
-    case ModelType.TEXT_LARGE:
+    case TEXT_LARGE_MODEL_TYPE:
       return getLargeModel(runtime);
-    case ModelType.TEXT_REASONING_SMALL:
+    case TEXT_MEGA_MODEL_TYPE:
+      return getMegaModel(runtime);
+    case RESPONSE_HANDLER_MODEL_TYPE:
+      return getResponseHandlerModel(runtime);
+    case ACTION_PLANNER_MODEL_TYPE:
+      return getActionPlannerModel(runtime);
+    case TEXT_REASONING_SMALL_MODEL_TYPE:
       return getReasoningSmallModel(runtime);
-    case ModelType.TEXT_REASONING_LARGE:
+    case TEXT_REASONING_LARGE_MODEL_TYPE:
       return getReasoningLargeModel(runtime);
     default:
       return getLargeModel(runtime);
@@ -125,8 +157,8 @@ function buildGenerateParams(
   // or stopSequences. Detect via model name patterns OR explicit reasoning model types.
   const reasoning =
     isReasoningModel(modelName) ||
-    modelType === ModelType.TEXT_REASONING_SMALL ||
-    modelType === ModelType.TEXT_REASONING_LARGE;
+    modelType === TEXT_REASONING_SMALL_MODEL_TYPE ||
+    modelType === TEXT_REASONING_LARGE_MODEL_TYPE;
   const stopSequences =
     !reasoning &&
     supportsStopSequences(modelName) &&
@@ -210,26 +242,61 @@ export async function handleTextSmall(
   runtime: IAgentRuntime,
   params: GenerateTextParams
 ): Promise<string | TextStreamResult> {
-  return generateTextWithModel(runtime, ModelType.TEXT_SMALL, params);
+  return generateTextWithModel(runtime, TEXT_SMALL_MODEL_TYPE, params);
+}
+
+export async function handleTextNano(
+  runtime: IAgentRuntime,
+  params: GenerateTextParams
+): Promise<string | TextStreamResult> {
+  return generateTextWithModel(runtime, TEXT_NANO_MODEL_TYPE, params);
+}
+
+export async function handleTextMini(
+  runtime: IAgentRuntime,
+  params: GenerateTextParams
+): Promise<string | TextStreamResult> {
+  return generateTextWithModel(runtime, TEXT_MINI_MODEL_TYPE, params);
 }
 
 export async function handleTextLarge(
   runtime: IAgentRuntime,
   params: GenerateTextParams
 ): Promise<string | TextStreamResult> {
-  return generateTextWithModel(runtime, ModelType.TEXT_LARGE, params);
+  return generateTextWithModel(runtime, TEXT_LARGE_MODEL_TYPE, params);
+}
+
+export async function handleTextMega(
+  runtime: IAgentRuntime,
+  params: GenerateTextParams
+): Promise<string | TextStreamResult> {
+  return generateTextWithModel(runtime, TEXT_MEGA_MODEL_TYPE, params);
+}
+
+export async function handleResponseHandler(
+  runtime: IAgentRuntime,
+  params: GenerateTextParams
+): Promise<string | TextStreamResult> {
+  return generateTextWithModel(runtime, RESPONSE_HANDLER_MODEL_TYPE, params);
+}
+
+export async function handleActionPlanner(
+  runtime: IAgentRuntime,
+  params: GenerateTextParams
+): Promise<string | TextStreamResult> {
+  return generateTextWithModel(runtime, ACTION_PLANNER_MODEL_TYPE, params);
 }
 
 export async function handleTextReasoningSmall(
   runtime: IAgentRuntime,
   params: GenerateTextParams
 ): Promise<string | TextStreamResult> {
-  return generateTextWithModel(runtime, ModelType.TEXT_REASONING_SMALL, params);
+  return generateTextWithModel(runtime, TEXT_REASONING_SMALL_MODEL_TYPE, params);
 }
 
 export async function handleTextReasoningLarge(
   runtime: IAgentRuntime,
   params: GenerateTextParams
 ): Promise<string | TextStreamResult> {
-  return generateTextWithModel(runtime, ModelType.TEXT_REASONING_LARGE, params);
+  return generateTextWithModel(runtime, TEXT_REASONING_LARGE_MODEL_TYPE, params);
 }

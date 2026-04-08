@@ -13,6 +13,7 @@ import { modelRegistryProvider } from "./cloud-providers/model-registry";
 import { initializeOpenAI } from "./init";
 import {
   fetchTextToSpeech,
+  handleActionPlanner,
   handleImageDescription,
   handleImageGeneration,
   handleObjectLarge,
@@ -20,8 +21,12 @@ import {
   handleResearch,
   handleTextEmbedding,
   handleTextLarge,
+  handleTextMega,
+  handleTextMini,
+  handleTextNano,
   handleTextReasoningLarge,
   handleTextReasoningSmall,
+  handleResponseHandler,
   handleTextSmall,
 } from "./models";
 // Cloud services
@@ -31,6 +36,14 @@ import { CloudBridgeService } from "./services/cloud-bridge";
 import { CloudContainerService } from "./services/cloud-container";
 import { CloudModelRegistryService } from "./services/cloud-model-registry";
 import { getApiKey, getBaseURL } from "./utils/config";
+
+const TEXT_NANO_MODEL_TYPE = (ModelType.TEXT_NANO ?? "TEXT_NANO") as string;
+const TEXT_MINI_MODEL_TYPE = (ModelType.TEXT_MINI ?? "TEXT_MINI") as string;
+const TEXT_MEGA_MODEL_TYPE = (ModelType.TEXT_MEGA ?? "TEXT_MEGA") as string;
+const RESPONSE_HANDLER_MODEL_TYPE = (ModelType.RESPONSE_HANDLER ??
+  "RESPONSE_HANDLER") as string;
+const ACTION_PLANNER_MODEL_TYPE = (ModelType.ACTION_PLANNER ??
+  "ACTION_PLANNER") as string;
 
 type ProcessEnvLike = Record<string, string | undefined>;
 
@@ -53,10 +66,26 @@ export const elizaOSCloudPlugin: Plugin = {
     ELIZAOS_CLOUD_BASE_URL: env.ELIZAOS_CLOUD_BASE_URL ?? null,
     ELIZAOS_CLOUD_ENABLED: env.ELIZAOS_CLOUD_ENABLED ?? null,
     // Text models
+    ELIZAOS_CLOUD_NANO_MODEL: env.ELIZAOS_CLOUD_NANO_MODEL ?? null,
+    ELIZAOS_CLOUD_MINI_MODEL: env.ELIZAOS_CLOUD_MINI_MODEL ?? null,
     ELIZAOS_CLOUD_SMALL_MODEL: env.ELIZAOS_CLOUD_SMALL_MODEL ?? null,
     ELIZAOS_CLOUD_LARGE_MODEL: env.ELIZAOS_CLOUD_LARGE_MODEL ?? null,
+    ELIZAOS_CLOUD_MEGA_MODEL: env.ELIZAOS_CLOUD_MEGA_MODEL ?? null,
+    ELIZAOS_CLOUD_RESPONSE_HANDLER_MODEL: env.ELIZAOS_CLOUD_RESPONSE_HANDLER_MODEL ?? null,
+    ELIZAOS_CLOUD_SHOULD_RESPOND_MODEL: env.ELIZAOS_CLOUD_SHOULD_RESPOND_MODEL ?? null,
+    ELIZAOS_CLOUD_ACTION_PLANNER_MODEL: env.ELIZAOS_CLOUD_ACTION_PLANNER_MODEL ?? null,
+    ELIZAOS_CLOUD_PLANNER_MODEL: env.ELIZAOS_CLOUD_PLANNER_MODEL ?? null,
+    ELIZAOS_CLOUD_RESPONSE_MODEL: env.ELIZAOS_CLOUD_RESPONSE_MODEL ?? null,
+    NANO_MODEL: env.NANO_MODEL ?? null,
+    MINI_MODEL: env.MINI_MODEL ?? null,
     SMALL_MODEL: env.SMALL_MODEL ?? null,
     LARGE_MODEL: env.LARGE_MODEL ?? null,
+    MEGA_MODEL: env.MEGA_MODEL ?? null,
+    RESPONSE_HANDLER_MODEL: env.RESPONSE_HANDLER_MODEL ?? null,
+    SHOULD_RESPOND_MODEL: env.SHOULD_RESPOND_MODEL ?? null,
+    ACTION_PLANNER_MODEL: env.ACTION_PLANNER_MODEL ?? null,
+    PLANNER_MODEL: env.PLANNER_MODEL ?? null,
+    RESPONSE_MODEL: env.RESPONSE_MODEL ?? null,
     // Reasoning models
     ELIZAOS_CLOUD_REASONING_SMALL_MODEL: env.ELIZAOS_CLOUD_REASONING_SMALL_MODEL ?? null,
     ELIZAOS_CLOUD_REASONING_LARGE_MODEL: env.ELIZAOS_CLOUD_REASONING_LARGE_MODEL ?? null,
@@ -120,8 +149,13 @@ export const elizaOSCloudPlugin: Plugin = {
   // ─── Inference Model Handlers ────────────────────────────────────────
   models: {
     [ModelType.TEXT_EMBEDDING]: handleTextEmbedding,
+    [TEXT_NANO_MODEL_TYPE]: handleTextNano,
+    [TEXT_MINI_MODEL_TYPE]: handleTextMini,
     [ModelType.TEXT_SMALL]: handleTextSmall,
     [ModelType.TEXT_LARGE]: handleTextLarge,
+    [TEXT_MEGA_MODEL_TYPE]: handleTextMega,
+    [RESPONSE_HANDLER_MODEL_TYPE]: handleResponseHandler,
+    [ACTION_PLANNER_MODEL_TYPE]: handleActionPlanner,
     [ModelType.TEXT_REASONING_SMALL]: handleTextReasoningSmall,
     [ModelType.TEXT_REASONING_LARGE]: handleTextReasoningLarge,
     [ModelType.RESEARCH]: handleResearch,

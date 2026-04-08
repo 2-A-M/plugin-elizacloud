@@ -54,6 +54,53 @@ interface ResponsesAPIOutput {
   };
 }
 
+type ResponsesAPIInput =
+  | string
+  | Array<{
+      role: "user" | "system" | "assistant";
+      content: Array<{
+        type: "input_text";
+        text: string;
+      }>;
+    }>;
+
+function normalizeInput(input: ResearchParams["input"]): ResponsesAPIInput {
+  if (typeof input !== "string") {
+    return input as ResponsesAPIInput;
+  }
+
+  return [
+    {
+      role: "user",
+      content: [
+        {
+          type: "input_text",
+          text: input,
+        },
+      ],
+    },
+  ];
+}
+
+function buildResearchApiError(status: number, errorText: string): Error {
+  try {
+    const parsed = JSON.parse(errorText) as {
+      error?: { message?: string; param?: string; code?: string };
+    };
+    const message = parsed.error?.message;
+    const param = parsed.error?.param;
+    if (param === "tools.0.type" && message?.includes('expected "function"')) {
+      return new Error(
+        `Research API error: ${status} Eliza Cloud /responses rejected deep-research tool types; the provider currently only accepts function tools on this route`,
+      );
+    }
+  } catch {
+    // Fall through to the raw error text.
+  }
+
+  return new Error(`Research API error: ${status} ${errorText}`);
+}
+
 function parseAnnotations(
   raw: Array<{
     type: string;
@@ -156,7 +203,7 @@ export async function handleResearch(
 
   const requestBody: Record<string, unknown> = {
     model: modelName,
-    input: params.input,
+    input: normalizeInput(params.input),
     tools: tools,
   };
 
@@ -184,7 +231,7 @@ export async function handleResearch(
 
   if (!response.ok) {
     const errorText = await response.text();
-    throw new Error(`Research API error: ${response.status} ${errorText}`);
+    throw buildResearchApiError(response.status, errorText);
   }
 
   const data = (await response.json()) as ResponsesAPIOutput;

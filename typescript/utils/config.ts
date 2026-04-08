@@ -85,10 +85,62 @@ export function getSmallModel(runtime: IAgentRuntime): string {
   );
 }
 
+export function getNanoModel(runtime: IAgentRuntime): string {
+  return (
+    getSetting(runtime, "ELIZAOS_CLOUD_NANO_MODEL") ??
+    getSetting(runtime, "NANO_MODEL") ??
+    getSmallModel(runtime)
+  );
+}
+
+export function getMiniModel(runtime: IAgentRuntime): string {
+  return (
+    getSetting(runtime, "ELIZAOS_CLOUD_MINI_MODEL") ??
+    getSetting(runtime, "MINI_MODEL") ??
+    getSmallModel(runtime)
+  );
+}
+
 export function getLargeModel(runtime: IAgentRuntime): string {
   return (
     getSetting(runtime, "ELIZAOS_CLOUD_LARGE_MODEL") ??
     (getSetting(runtime, "LARGE_MODEL", "anthropic/claude-sonnet-4.5") as string)
+  );
+}
+
+export function getMegaModel(runtime: IAgentRuntime): string {
+  return (
+    getSetting(runtime, "ELIZAOS_CLOUD_MEGA_MODEL") ??
+    getSetting(runtime, "MEGA_MODEL") ??
+    getLargeModel(runtime)
+  );
+}
+
+export function getResponseHandlerModel(runtime: IAgentRuntime): string {
+  return (
+    getSetting(runtime, "ELIZAOS_CLOUD_RESPONSE_HANDLER_MODEL") ??
+    getSetting(runtime, "ELIZAOS_CLOUD_SHOULD_RESPOND_MODEL") ??
+    getSetting(runtime, "RESPONSE_HANDLER_MODEL") ??
+    getSetting(runtime, "SHOULD_RESPOND_MODEL") ??
+    getMiniModel(runtime)
+  );
+}
+
+export function getActionPlannerModel(runtime: IAgentRuntime): string {
+  return (
+    getSetting(runtime, "ELIZAOS_CLOUD_ACTION_PLANNER_MODEL") ??
+    getSetting(runtime, "ELIZAOS_CLOUD_PLANNER_MODEL") ??
+    getSetting(runtime, "ACTION_PLANNER_MODEL") ??
+    getSetting(runtime, "PLANNER_MODEL") ??
+    getSmallModel(runtime)
+  );
+}
+
+export function getResponseModel(runtime: IAgentRuntime): string {
+  return (
+    getSetting(runtime, "ELIZAOS_CLOUD_RESPONSE_MODEL") ??
+    getSetting(runtime, "RESPONSE_MODEL") ??
+    getLargeModel(runtime)
   );
 }
 

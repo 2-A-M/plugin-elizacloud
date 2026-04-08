@@ -1,5 +1,7 @@
-import { EventType, type IAgentRuntime, type ModelTypeName } from "@elizaos/core";
+import type { IAgentRuntime, ModelTypeName } from "@elizaos/core";
 import type { LanguageModelUsage } from "ai";
+
+const MODEL_USED_EVENT = "MODEL_USED";
 
 export function emitModelUsageEvent(
   runtime: IAgentRuntime,
@@ -17,7 +19,7 @@ export function emitModelUsageEvent(
     usage.totalTokens != null ? usage.totalTokens : inputTokens + outputTokens
   );
 
-  runtime.emitEvent(EventType.MODEL_USED, {
+  runtime.emitEvent(MODEL_USED_EVENT, {
     runtime,
     source: "elizacloud",
     type,
