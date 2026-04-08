@@ -11,6 +11,8 @@ import { createOpenAIClient } from "../providers/openai";
 import {
   getActionPlannerModel,
   getExperimentalTelemetry,
+  getAuthHeader,
+  getBaseURL,
   getLargeModel,
   getMegaModel,
   getMiniModel,
@@ -218,24 +220,103 @@ async function generateTextWithModel(
   modelType: TextModelType,
   params: GenerateTextParams
 ): Promise<string | TextStreamResult> {
-  const { generateParams, modelName, prompt } = buildGenerateParams(runtime, modelType, params);
+  const { modelName, prompt } = buildGenerateParams(runtime, modelType, params);
 
   logger.debug(`[ELIZAOS_CLOUD] Generating text with ${modelType} model: ${modelName}`);
 
   if (params.stream) {
-    return handleStreamingGeneration(runtime, modelType, generateParams, prompt);
+    logger.warn(
+      "[ELIZAOS_CLOUD] Streaming text disabled for responses compatibility; falling back to buffered response."
+    );
   }
 
   logger.log(`[ELIZAOS_CLOUD] Using ${modelType} model: ${modelName}`);
   logger.log(prompt);
 
-  const response = await generateText(generateParams);
+  const reasoning =
+    isReasoningModel(modelName) ||
+    modelType === TEXT_REASONING_SMALL_MODEL_TYPE ||
+    modelType === TEXT_REASONING_LARGE_MODEL_TYPE;
+  const input: Array<{ role: "system" | "user"; content: Array<{ type: "input_text"; text: string }> }> = [];
+  if (runtime.character.system) {
+    input.push({
+      role: "system",
+      content: [{ type: "input_text", text: runtime.character.system }],
+    });
+  }
+  input.push({
+    role: "user",
+    content: [{ type: "input_text", text: prompt }],
+  });
 
-  if (response.usage) {
-    emitModelUsageEvent(runtime, modelType, prompt, response.usage);
+  const requestBody: Record<string, unknown> = {
+    model: modelName,
+    input,
+    max_output_tokens: params.maxTokens ?? 8192,
+  };
+  if (!reasoning && typeof params.temperature === "number") {
+    requestBody.temperature = params.temperature;
   }
 
-  return response.text;
+  const response = await fetch(`${getBaseURL(runtime)}/responses`, {
+    method: "POST",
+    headers: {
+      ...getAuthHeader(runtime),
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(requestBody),
+  });
+  const responseText = await response.text();
+  let data: Record<string, any> = {};
+  if (responseText) {
+    try {
+      data = JSON.parse(responseText) as Record<string, any>;
+    } catch (parseErr) {
+      logger.error(
+        `[ELIZAOS_CLOUD] Failed to parse responses JSON: ${
+          parseErr instanceof Error ? parseErr.message : String(parseErr)
+        }`
+      );
+    }
+  }
+
+  if (!response.ok) {
+    const errorBody = typeof data === "object" && data ? data.error : undefined;
+    const errorMessage =
+      typeof errorBody?.message === "string" && errorBody.message.trim()
+        ? errorBody.message.trim()
+        : `elizaOS Cloud error ${response.status}`;
+    const requestError = new Error(errorMessage) as Error & {
+      status?: number;
+      error?: unknown;
+    };
+    requestError.status = response.status;
+    if (errorBody) {
+      requestError.error = errorBody;
+    }
+    throw requestError;
+  }
+
+  if (data.usage) {
+    emitModelUsageEvent(runtime, modelType, prompt, {
+      inputTokens: data.usage.input_tokens ?? 0,
+      outputTokens: data.usage.output_tokens ?? 0,
+      totalTokens: data.usage.total_tokens ?? 0,
+    });
+  }
+
+  let text = typeof data.output_text === "string" ? data.output_text : "";
+  if (!text && Array.isArray(data.output)) {
+    text = data.output
+      .flatMap((item: any) => (Array.isArray(item?.content) ? item.content : []))
+      .map((part: any) => (typeof part?.text === "string" ? part.text : ""))
+      .join("");
+  }
+  if (!text.trim()) {
+    throw new Error("elizaOS Cloud returned no text response");
+  }
+
+  return text;
 }
 
 export async function handleTextSmall(

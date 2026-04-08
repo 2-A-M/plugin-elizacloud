@@ -1,9 +1,7 @@
 import type { IAgentRuntime, JsonValue, ObjectGenerationParams } from "@elizaos/core";
 import { logger, ModelType } from "@elizaos/core";
-import type { LanguageModel } from "ai";
-import { generateObject, JSONParseError } from "ai";
-import { createOpenAIClient } from "../providers/openai";
 import { getLargeModel, getSmallModel } from "../utils/config";
+import { getAuthHeader, getBaseURL } from "../utils/config";
 import { emitModelUsageEvent } from "../utils/events";
 import { getJsonRepairFunction } from "../utils/helpers";
 
@@ -33,59 +31,114 @@ async function generateObjectByModelType(
   modelType: string,
   getModelFn: (runtime: IAgentRuntime) => string
 ): Promise<Record<string, JsonValue>> {
-  const openai = createOpenAIClient(runtime);
   const modelName = getModelFn(runtime);
   logger.log(`[ELIZAOS_CLOUD] Using ${modelType} model: ${modelName}`);
 
-  // Reasoning models don't support temperature
   const reasoning = isReasoningModel(modelName);
+  const input: Array<{ role: "system" | "user"; content: Array<{ type: "input_text"; text: string }> }> = [];
+  if (runtime.character.system) {
+    input.push({
+      role: "system",
+      content: [{ type: "input_text", text: runtime.character.system }],
+    });
+  }
+  input.push({
+    role: "user",
+    content: [{ type: "input_text", text: params.prompt }],
+  });
+
+  const requestBody: Record<string, unknown> = {
+    model: modelName,
+    input,
+    max_output_tokens: params.maxTokens ?? 8192,
+  };
+  if (!reasoning && typeof params.temperature === "number") {
+    requestBody.temperature = params.temperature;
+  }
+
+  const response = await fetch(`${getBaseURL(runtime)}/responses`, {
+    method: "POST",
+    headers: {
+      ...getAuthHeader(runtime),
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(requestBody),
+  });
+  const responseText = await response.text();
+  let data: Record<string, any> = {};
+  if (responseText) {
+    try {
+      data = JSON.parse(responseText) as Record<string, any>;
+    } catch (parseErr) {
+      logger.error(
+        `[generateObject] Failed to parse Eliza Cloud JSON: ${
+          parseErr instanceof Error ? parseErr.message : String(parseErr)
+        }`
+      );
+    }
+  }
+
+  if (!response.ok) {
+    const errorBody = typeof data === "object" && data ? data.error : undefined;
+    const errorMessage =
+      typeof errorBody?.message === "string" && errorBody.message.trim()
+        ? errorBody.message.trim()
+        : `elizaOS Cloud error ${response.status}`;
+    const requestError = new Error(errorMessage) as Error & {
+      status?: number;
+      error?: unknown;
+    };
+    requestError.status = response.status;
+    if (errorBody) {
+      requestError.error = errorBody;
+    }
+    throw requestError;
+  }
+
+  if (data.usage) {
+    emitModelUsageEvent(runtime, modelType as never, params.prompt, {
+      inputTokens: data.usage.input_tokens ?? 0,
+      outputTokens: data.usage.output_tokens ?? 0,
+      totalTokens: data.usage.total_tokens ?? 0,
+    });
+  }
+
+  let jsonText = typeof data.output_text === "string" ? data.output_text : "";
+  if (!jsonText && Array.isArray(data.output)) {
+    jsonText = data.output
+      .flatMap((item: any) => (Array.isArray(item?.content) ? item.content : []))
+      .map((part: any) => (typeof part?.text === "string" ? part.text : ""))
+      .join("");
+  }
+  if (!jsonText.trim()) {
+    throw new Error("Object generation returned empty response");
+  }
 
   try {
-    // Use Chat Completions API to avoid Responses API warnings
-    // about unsupported features (presencePenalty, frequencyPenalty, etc.)
-    const model = openai.chat(modelName) as LanguageModel;
-    const { object, usage } = await generateObject({
-      model,
-      output: "no-schema",
-      prompt: params.prompt,
-      ...(reasoning ? {} : { temperature: params.temperature ?? 0 }),
-      experimental_repairText: getJsonRepairFunction(),
+    return JSON.parse(jsonText) as Record<string, JsonValue>;
+  } catch (error) {
+    const repairFunction = getJsonRepairFunction();
+    const repairedJsonString = await repairFunction({
+      text: jsonText,
+      error,
     });
 
-    if (usage) {
-      emitModelUsageEvent(runtime, modelType as never, params.prompt, usage);
-    }
-    return object as Record<string, JsonValue>;
-  } catch (error) {
-    if (error instanceof JSONParseError) {
-      logger.error(`[generateObject] Failed to parse JSON: ${error.message}`);
-
-      const repairFunction = getJsonRepairFunction();
-      const repairedJsonString = await repairFunction({
-        text: error.text,
-        error,
-      });
-
-      if (repairedJsonString) {
-        try {
-          const repairedObject = JSON.parse(repairedJsonString);
-          logger.info("[generateObject] Successfully repaired JSON.");
-          return repairedObject as unknown as Record<string, JsonValue>;
-        } catch (repairParseError) {
-          const message =
-            repairParseError instanceof Error ? repairParseError.message : String(repairParseError);
-          logger.error(`[generateObject] Failed to parse repaired JSON: ${message}`);
-          throw repairParseError;
-        }
-      } else {
-        logger.error("[generateObject] JSON repair failed.");
-        throw error;
+    if (repairedJsonString) {
+      try {
+        const repairedObject = JSON.parse(repairedJsonString);
+        logger.info("[generateObject] Successfully repaired JSON.");
+        return repairedObject as Record<string, JsonValue>;
+      } catch (repairParseError) {
+        const message =
+          repairParseError instanceof Error ? repairParseError.message : String(repairParseError);
+        logger.error(`[generateObject] Failed to parse repaired JSON: ${message}`);
+        throw repairParseError;
       }
-    } else {
-      const message = error instanceof Error ? error.message : String(error);
-      logger.error(`[generateObject] Error: ${message}`);
-      throw error;
     }
+
+    const message = error instanceof Error ? error.message : String(error);
+    logger.error(`[generateObject] Failed to parse JSON: ${message}`);
+    throw error;
   }
 }
 
