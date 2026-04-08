@@ -6,6 +6,7 @@ import { handleTextSmall } from "../../models/text";
 let server: http.Server;
 let baseUrl: string;
 let lastRequestBody = "";
+let lastRequestHeaders: http.IncomingHttpHeaders = {};
 let nextStatus = 200;
 let nextBody = "{}";
 
@@ -39,6 +40,7 @@ beforeAll(async () => {
     req.on("data", (chunk: Buffer) => chunks.push(chunk));
     req.on("end", () => {
       lastRequestBody = Buffer.concat(chunks).toString("utf8");
+      lastRequestHeaders = req.headers;
       res.writeHead(nextStatus, { "Content-Type": "application/json" });
       res.end(nextBody);
     });
@@ -59,6 +61,7 @@ afterAll(() => {
 
 beforeEach(() => {
   lastRequestBody = "";
+  lastRequestHeaders = {};
   nextStatus = 200;
   nextBody = "{}";
 });
@@ -98,6 +101,8 @@ describe("elizacloud responses-backed text/object models", () => {
       },
     ]);
     expect(request.temperature).toBe(0.2);
+    expect(lastRequestHeaders["x-eliza-llm-purpose"]).toBe("response");
+    expect(lastRequestHeaders["x-eliza-model-type"]).toBe("TEXT_SMALL");
     expect(text).toBe("Hello from responses");
   });
 

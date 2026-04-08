@@ -106,6 +106,25 @@ type TextModelType =
   | typeof TEXT_REASONING_SMALL_MODEL_TYPE
   | typeof TEXT_REASONING_LARGE_MODEL_TYPE;
 
+function getPurposeForModelType(modelType: TextModelType): string {
+  switch (modelType) {
+    case RESPONSE_HANDLER_MODEL_TYPE:
+      return "should_respond";
+    case ACTION_PLANNER_MODEL_TYPE:
+      return "action_planner";
+    case TEXT_REASONING_SMALL_MODEL_TYPE:
+    case TEXT_REASONING_LARGE_MODEL_TYPE:
+      return "reasoning";
+    case TEXT_NANO_MODEL_TYPE:
+    case TEXT_MINI_MODEL_TYPE:
+    case TEXT_SMALL_MODEL_TYPE:
+    case TEXT_LARGE_MODEL_TYPE:
+    case TEXT_MEGA_MODEL_TYPE:
+    default:
+      return "response";
+  }
+}
+
 function getModelNameForType(runtime: IAgentRuntime, modelType: TextModelType): string {
   switch (modelType) {
     case TEXT_NANO_MODEL_TYPE:
@@ -263,6 +282,8 @@ async function generateTextWithModel(
     headers: {
       ...getAuthHeader(runtime),
       "Content-Type": "application/json",
+      "X-Eliza-Llm-Purpose": getPurposeForModelType(modelType),
+      "X-Eliza-Model-Type": modelType,
     },
     body: JSON.stringify(requestBody),
   });
