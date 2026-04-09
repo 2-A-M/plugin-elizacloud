@@ -244,7 +244,7 @@ async function generateTextWithModel(
   logger.debug(`[ELIZAOS_CLOUD] Generating text with ${modelType} model: ${modelName}`);
 
   if (params.stream) {
-    logger.warn(
+    logger.debug(
       "[ELIZAOS_CLOUD] Streaming text disabled for responses compatibility; falling back to buffered response."
     );
   }
