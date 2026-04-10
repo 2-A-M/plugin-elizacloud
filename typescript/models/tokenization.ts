@@ -21,8 +21,8 @@ const env = getProcessEnv();
 async function tokenizeText(model: ModelTypeName, prompt: string): Promise<number[]> {
   const modelName =
     model === ModelType.TEXT_SMALL
-      ? (env.ELIZAOS_CLOUD_SMALL_MODEL ?? env.SMALL_MODEL ?? "gpt-5-nano")
-      : (env.LARGE_MODEL ?? "gpt-5-mini");
+      ? (env.ELIZAOS_CLOUD_SMALL_MODEL ?? env.SMALL_MODEL ?? "gpt-5.4-nano")
+      : (env.LARGE_MODEL ?? "gpt-5.4-mini");
   const tokens = encodingForModel(modelName as TiktokenModel).encode(prompt);
   return tokens;
 }
@@ -30,8 +30,8 @@ async function tokenizeText(model: ModelTypeName, prompt: string): Promise<numbe
 async function detokenizeText(model: ModelTypeName, tokens: number[]): Promise<string> {
   const modelName =
     model === ModelType.TEXT_SMALL
-      ? (env.ELIZAOS_CLOUD_SMALL_MODEL ?? env.SMALL_MODEL ?? "gpt-5-nano")
-      : (env.ELIZAOS_CLOUD_LARGE_MODEL ?? env.LARGE_MODEL ?? "gpt-5-mini");
+      ? (env.ELIZAOS_CLOUD_SMALL_MODEL ?? env.SMALL_MODEL ?? "gpt-5.4-nano")
+      : (env.ELIZAOS_CLOUD_LARGE_MODEL ?? env.LARGE_MODEL ?? "gpt-5.4-mini");
   return encodingForModel(modelName as TiktokenModel).decode(tokens);
 }
 

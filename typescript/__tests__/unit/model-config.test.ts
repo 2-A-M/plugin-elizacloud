@@ -318,9 +318,9 @@ describe("Model config edge cases", () => {
     expect(model).toBe("custom-model");
   });
 
-  it("model with provider prefix works (openai/gpt-5)", () => {
-    const model = getSmallModel(mockRuntime({ ELIZAOS_CLOUD_SMALL_MODEL: "openai/gpt-5" }));
-    expect(model).toBe("openai/gpt-5");
+  it("model with provider prefix works (openai/gpt-5.4)", () => {
+    const model = getSmallModel(mockRuntime({ ELIZAOS_CLOUD_SMALL_MODEL: "openai/gpt-5.4" }));
+    expect(model).toBe("openai/gpt-5.4");
   });
 
   it("all model slots return strings, never undefined", () => {

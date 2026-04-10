@@ -180,7 +180,7 @@ class TestSnapshotTypes:
             snapshot_type="manual",
             storage_url="s3://bucket/snap-1.tar.gz",
             size_bytes=1048576,
-            agent_config={"model": "gpt-5"},
+            agent_config={"model": "gpt-5.4"},
             metadata={"trigger": "user"},
             created_at="2025-01-01T00:00:00Z",
         )

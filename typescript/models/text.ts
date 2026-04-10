@@ -23,6 +23,7 @@ import {
   getSmallModel,
 } from "../utils/config";
 import { emitModelUsageEvent } from "../utils/events";
+import { extractResponsesOutputText } from "../utils/responses-output";
 
 const TEXT_NANO_MODEL_TYPE = (ModelType.TEXT_NANO ?? "TEXT_NANO") as ModelTypeName;
 const TEXT_MINI_MODEL_TYPE = (ModelType.TEXT_MINI ?? "TEXT_MINI") as ModelTypeName;
@@ -48,7 +49,6 @@ const REASONING_MODEL_PATTERNS = [
   "deepseek-reasoner",
   "claude-opus-4.6",
   "claude-opus-4",
-  "gpt-5-mini",
   "gpt-5",
 ] as const;
 const RESPONSES_ROUTED_PREFIXES = ["openai/", "anthropic/"] as const;
@@ -326,13 +326,7 @@ async function generateTextWithModel(
     });
   }
 
-  let text = typeof data.output_text === "string" ? data.output_text : "";
-  if (!text && Array.isArray(data.output)) {
-    text = data.output
-      .flatMap((item: any) => (Array.isArray(item?.content) ? item.content : []))
-      .map((part: any) => (typeof part?.text === "string" ? part.text : ""))
-      .join("");
-  }
+  const text = extractResponsesOutputText(data);
   if (!text.trim()) {
     throw new Error("elizaOS Cloud returned no text response");
   }

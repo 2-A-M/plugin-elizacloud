@@ -4,6 +4,7 @@ import { getLargeModel, getSmallModel } from "../utils/config";
 import { getAuthHeader, getBaseURL } from "../utils/config";
 import { emitModelUsageEvent } from "../utils/events";
 import { getJsonRepairFunction } from "../utils/helpers";
+import { extractResponsesOutputText } from "../utils/responses-output";
 
 /**
  * Models that are reasoning-class and don't support temperature.
@@ -16,7 +17,6 @@ const REASONING_MODEL_PATTERNS = [
   "deepseek-reasoner",
   "claude-opus-4.6",
   "claude-opus-4",
-  "gpt-5-mini",
   "gpt-5",
 ] as const;
 
@@ -103,13 +103,7 @@ async function generateObjectByModelType(
     });
   }
 
-  let jsonText = typeof data.output_text === "string" ? data.output_text : "";
-  if (!jsonText && Array.isArray(data.output)) {
-    jsonText = data.output
-      .flatMap((item: any) => (Array.isArray(item?.content) ? item.content : []))
-      .map((part: any) => (typeof part?.text === "string" ? part.text : ""))
-      .join("");
-  }
+  const jsonText = extractResponsesOutputText(data);
   if (!jsonText.trim()) {
     throw new Error("Object generation returned empty response");
   }

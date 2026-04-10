@@ -106,6 +106,47 @@ describe("elizacloud responses-backed text/object models", () => {
     expect(text).toBe("Hello from responses");
   });
 
+  it("recovers text from structured message output when output_text is omitted", async () => {
+    nextBody = JSON.stringify({
+      output: [
+        {
+          type: "message",
+          content: [
+            {
+              type: "output_text",
+              text: "Hello from structured output",
+            },
+          ],
+        },
+      ],
+    });
+
+    const text = await handleTextSmall(createRuntime() as never, {
+      prompt: "Say hello",
+      temperature: 0.2,
+    } as never);
+
+    expect(text).toBe("Hello from structured output");
+  });
+
+  it("recovers text from top-level output_text items", async () => {
+    nextBody = JSON.stringify({
+      output: [
+        {
+          type: "output_text",
+          text: "Hello from top-level output item",
+        },
+      ],
+    });
+
+    const text = await handleTextSmall(createRuntime() as never, {
+      prompt: "Say hello",
+      temperature: 0.2,
+    } as never);
+
+    expect(text).toBe("Hello from top-level output item");
+  });
+
   it("parses object generation responses from output_text JSON", async () => {
     nextBody = JSON.stringify({
       output_text: "{\"status\":\"ok\",\"count\":2}",
@@ -132,5 +173,28 @@ describe("elizacloud responses-backed text/object models", () => {
       },
     ]);
     expect(result).toEqual({ status: "ok", count: 2 });
+  });
+
+  it("parses object generation responses from structured message output", async () => {
+    nextBody = JSON.stringify({
+      output: [
+        {
+          type: "message",
+          content: [
+            {
+              type: "output_text",
+              text: "{\"status\":\"ok\",\"count\":3}",
+            },
+          ],
+        },
+      ],
+    });
+
+    const result = await handleObjectSmall(createRuntime() as never, {
+      prompt: "Return a JSON object",
+      temperature: 0,
+    } as never);
+
+    expect(result).toEqual({ status: "ok", count: 3 });
   });
 });
