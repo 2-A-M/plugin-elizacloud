@@ -141,8 +141,20 @@ export class CloudModelRegistryService extends Service {
     const nameSet = new Set(this.models.map((m) => m.name));
 
     const settingsToCheck = [
+      { key: "ELIZAOS_CLOUD_NANO_MODEL", label: "nano model" },
+      { key: "ELIZAOS_CLOUD_MEDIUM_MODEL", label: "medium model" },
       { key: "ELIZAOS_CLOUD_SMALL_MODEL", label: "small model" },
       { key: "ELIZAOS_CLOUD_LARGE_MODEL", label: "large model" },
+      { key: "ELIZAOS_CLOUD_MEGA_MODEL", label: "mega model" },
+      {
+        key: "ELIZAOS_CLOUD_RESPONSE_HANDLER_MODEL",
+        label: "response handler model",
+      },
+      {
+        key: "ELIZAOS_CLOUD_ACTION_PLANNER_MODEL",
+        label: "action planner model",
+      },
+      { key: "ELIZAOS_CLOUD_RESPONSE_MODEL", label: "response model" },
       { key: "ELIZAOS_CLOUD_RESEARCH_MODEL", label: "research model" },
       { key: "ELIZAOS_CLOUD_EMBEDDING_MODEL", label: "embedding model" },
       {

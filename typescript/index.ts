@@ -22,8 +22,8 @@ import {
   handleResponseHandler,
   handleTextEmbedding,
   handleTextLarge,
-  handleTextMega,
   handleTextMedium,
+  handleTextMega,
   handleTextNano,
   handleTextSmall,
 } from "./models";

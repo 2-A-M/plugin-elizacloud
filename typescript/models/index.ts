@@ -8,8 +8,8 @@ export {
   handleActionPlanner,
   handleResponseHandler,
   handleTextLarge,
-  handleTextMega,
   handleTextMedium,
+  handleTextMega,
   handleTextNano,
   handleTextSmall,
 } from "./text";
