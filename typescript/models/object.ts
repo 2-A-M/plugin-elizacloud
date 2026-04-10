@@ -1,7 +1,6 @@
 import type { IAgentRuntime, JsonValue, ObjectGenerationParams } from "@elizaos/core";
 import { logger, ModelType } from "@elizaos/core";
-import { getLargeModel, getSmallModel } from "../utils/config";
-import { getAuthHeader, getBaseURL } from "../utils/config";
+import { getAuthHeader, getBaseURL, getLargeModel, getSmallModel } from "../utils/config";
 import { emitModelUsageEvent } from "../utils/events";
 import { getJsonRepairFunction } from "../utils/helpers";
 import { extractResponsesOutputText } from "../utils/responses-output";
@@ -20,6 +19,17 @@ const REASONING_MODEL_PATTERNS = [
   "gpt-5",
 ] as const;
 
+type ResponsesApiResponse = Record<string, unknown> & {
+  error?: {
+    message?: string;
+  };
+  usage?: {
+    input_tokens?: number;
+    output_tokens?: number;
+    total_tokens?: number;
+  };
+};
+
 function isReasoningModel(modelName: string): boolean {
   const lower = modelName.toLowerCase();
   return REASONING_MODEL_PATTERNS.some((pattern) => lower.includes(pattern));
@@ -35,7 +45,10 @@ async function generateObjectByModelType(
   logger.log(`[ELIZAOS_CLOUD] Using ${modelType} model: ${modelName}`);
 
   const reasoning = isReasoningModel(modelName);
-  const input: Array<{ role: "system" | "user"; content: Array<{ type: "input_text"; text: string }> }> = [];
+  const input: Array<{
+    role: "system" | "user";
+    content: Array<{ type: "input_text"; text: string }>;
+  }> = [];
   if (runtime.character.system) {
     input.push({
       role: "system",
@@ -65,10 +78,10 @@ async function generateObjectByModelType(
     body: JSON.stringify(requestBody),
   });
   const responseText = await response.text();
-  let data: Record<string, any> = {};
+  let data: ResponsesApiResponse = {};
   if (responseText) {
     try {
-      data = JSON.parse(responseText) as Record<string, any>;
+      data = JSON.parse(responseText) as ResponsesApiResponse;
     } catch (parseErr) {
       logger.error(
         `[generateObject] Failed to parse Eliza Cloud JSON: ${

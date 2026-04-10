@@ -45,9 +45,7 @@ function extractTextFromOutputItem(value: unknown): string[] {
 
   const nestedMessage = asRecord(record.message);
   if (nestedMessage) {
-    return normalizeContentItems(nestedMessage.content).flatMap(
-      extractTextFromContentItem,
-    );
+    return normalizeContentItems(nestedMessage.content).flatMap(extractTextFromContentItem);
   }
 
   const type = typeof record.type === "string" ? record.type : undefined;

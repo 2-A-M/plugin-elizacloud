@@ -155,20 +155,6 @@ export function getImageGenerationModel(runtime: IAgentRuntime): string {
   );
 }
 
-export function getReasoningSmallModel(runtime: IAgentRuntime): string {
-  return (
-    getSetting(runtime, "ELIZAOS_CLOUD_REASONING_SMALL_MODEL") ??
-    (getSetting(runtime, "REASONING_SMALL_MODEL", "deepseek/deepseek-r1") as string)
-  );
-}
-
-export function getReasoningLargeModel(runtime: IAgentRuntime): string {
-  return (
-    getSetting(runtime, "ELIZAOS_CLOUD_REASONING_LARGE_MODEL") ??
-    (getSetting(runtime, "REASONING_LARGE_MODEL", "anthropic/claude-opus-4.6") as string)
-  );
-}
-
 export function getResearchModel(runtime: IAgentRuntime): string {
   return (
     getSetting(runtime, "ELIZAOS_CLOUD_RESEARCH_MODEL") ??

@@ -6,13 +6,11 @@ export { handleResearch } from "./research";
 export { fetchTextToSpeech, handleTextToSpeech } from "./speech";
 export {
   handleActionPlanner,
+  handleResponseHandler,
   handleTextLarge,
   handleTextMega,
   handleTextMini,
   handleTextNano,
-  handleTextReasoningLarge,
-  handleTextReasoningSmall,
-  handleResponseHandler,
   handleTextSmall,
 } from "./text";
 export { handleTokenizerDecode, handleTokenizerEncode } from "./tokenization";

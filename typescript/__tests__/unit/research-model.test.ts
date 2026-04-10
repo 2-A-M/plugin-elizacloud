@@ -129,9 +129,9 @@ describe("handleResearch", () => {
       handleResearch(createRuntime() as never, {
         input: "Research Playwright browser support.",
         tools: [{ type: "web_search_preview" }],
-      }),
+      })
     ).rejects.toThrow(
-      "Eliza Cloud /responses rejected deep-research tool types; the provider currently only accepts function tools on this route",
+      "Eliza Cloud /responses rejected deep-research tool types; the provider currently only accepts function tools on this route"
     );
   });
 });

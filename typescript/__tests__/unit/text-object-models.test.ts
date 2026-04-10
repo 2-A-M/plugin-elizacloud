@@ -121,10 +121,13 @@ describe("elizacloud responses-backed text/object models", () => {
       ],
     });
 
-    const text = await handleTextSmall(createRuntime() as never, {
-      prompt: "Say hello",
-      temperature: 0.2,
-    } as never);
+    const text = await handleTextSmall(
+      createRuntime() as never,
+      {
+        prompt: "Say hello",
+        temperature: 0.2,
+      } as never
+    );
 
     expect(text).toBe("Hello from structured output");
   });
@@ -139,17 +142,20 @@ describe("elizacloud responses-backed text/object models", () => {
       ],
     });
 
-    const text = await handleTextSmall(createRuntime() as never, {
-      prompt: "Say hello",
-      temperature: 0.2,
-    } as never);
+    const text = await handleTextSmall(
+      createRuntime() as never,
+      {
+        prompt: "Say hello",
+        temperature: 0.2,
+      } as never
+    );
 
     expect(text).toBe("Hello from top-level output item");
   });
 
   it("parses object generation responses from output_text JSON", async () => {
     nextBody = JSON.stringify({
-      output_text: "{\"status\":\"ok\",\"count\":2}",
+      output_text: '{"status":"ok","count":2}',
       usage: {
         input_tokens: 9,
         output_tokens: 6,
@@ -157,10 +163,13 @@ describe("elizacloud responses-backed text/object models", () => {
       },
     });
 
-    const result = await handleObjectSmall(createRuntime() as never, {
-      prompt: "Return a JSON object",
-      temperature: 0,
-    } as never);
+    const result = await handleObjectSmall(
+      createRuntime() as never,
+      {
+        prompt: "Return a JSON object",
+        temperature: 0,
+      } as never
+    );
 
     const request = JSON.parse(lastRequestBody) as {
       input: Array<{ role: string; content: Array<{ type: string; text: string }> }>;
@@ -183,17 +192,20 @@ describe("elizacloud responses-backed text/object models", () => {
           content: [
             {
               type: "output_text",
-              text: "{\"status\":\"ok\",\"count\":3}",
+              text: '{"status":"ok","count":3}',
             },
           ],
         },
       ],
     });
 
-    const result = await handleObjectSmall(createRuntime() as never, {
-      prompt: "Return a JSON object",
-      temperature: 0,
-    } as never);
+    const result = await handleObjectSmall(
+      createRuntime() as never,
+      {
+        prompt: "Return a JSON object",
+        temperature: 0,
+      } as never
+    );
 
     expect(result).toEqual({ status: "ok", count: 3 });
   });

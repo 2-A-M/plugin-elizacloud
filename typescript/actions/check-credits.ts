@@ -6,6 +6,7 @@ import type {
   Action,
   ActionResult,
   HandlerCallback,
+  HandlerOptions,
   IAgentRuntime,
   Memory,
   State,
@@ -30,7 +31,12 @@ export const checkCloudCreditsAction: Action = {
     },
   ],
 
-  validate: async (runtime: any, message: any, state?: any, options?: any): Promise<boolean> => {
+  validate: async (
+    runtime: IAgentRuntime,
+    message: Memory,
+    state?: State,
+    options?: HandlerOptions
+  ): Promise<boolean> => {
     const __avTextRaw = typeof message?.content?.text === "string" ? message.content.text : "";
     const __avText = __avTextRaw.toLowerCase();
     const __avKeywords = ["check", "cloud", "credits"];
@@ -38,7 +44,7 @@ export const checkCloudCreditsAction: Action = {
       __avKeywords.length > 0 && __avKeywords.some((kw) => kw.length > 0 && __avText.includes(kw));
     const __avRegex = /\b(?:check|cloud|credits)\b/i;
     const __avRegexOk = Boolean(__avText.match(__avRegex));
-    const __avSource = String(message?.content?.source ?? message?.source ?? "");
+    const __avSource = String(message?.content?.source ?? "");
     const __avExpectedSource = "";
     const __avSourceOk = __avExpectedSource
       ? __avSource === __avExpectedSource
@@ -59,7 +65,7 @@ export const checkCloudCreditsAction: Action = {
       )?.isAuthenticated();
     };
     try {
-      return Boolean(await (__avLegacyValidate as any)(runtime, message, state, options));
+      return Boolean(await __avLegacyValidate(runtime));
     } catch {
       return false;
     }

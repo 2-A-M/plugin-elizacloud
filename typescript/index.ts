@@ -25,8 +25,6 @@ import {
   handleTextMega,
   handleTextMini,
   handleTextNano,
-  handleTextReasoningLarge,
-  handleTextReasoningSmall,
   handleTextSmall,
 } from "./models";
 // Cloud services
@@ -39,7 +37,7 @@ import { CloudModelRegistryService } from "./services/cloud-model-registry";
 import { getApiKey, getBaseURL } from "./utils/config";
 
 const TEXT_NANO_MODEL_TYPE = (ModelType.TEXT_NANO ?? "TEXT_NANO") as string;
-const TEXT_MINI_MODEL_TYPE = (ModelType.TEXT_MINI ?? "TEXT_MINI") as string;
+const TEXT_MINI_MODEL_TYPE = (ModelType.TEXT_NANO ?? "TEXT_MINI") as string;
 const TEXT_MEGA_MODEL_TYPE = (ModelType.TEXT_MEGA ?? "TEXT_MEGA") as string;
 const RESPONSE_HANDLER_MODEL_TYPE = (ModelType.RESPONSE_HANDLER ?? "RESPONSE_HANDLER") as string;
 const ACTION_PLANNER_MODEL_TYPE = (ModelType.ACTION_PLANNER ?? "ACTION_PLANNER") as string;
@@ -85,11 +83,6 @@ export const elizaOSCloudPlugin: Plugin = {
     ACTION_PLANNER_MODEL: env.ACTION_PLANNER_MODEL ?? null,
     PLANNER_MODEL: env.PLANNER_MODEL ?? null,
     RESPONSE_MODEL: env.RESPONSE_MODEL ?? null,
-    // Reasoning models
-    ELIZAOS_CLOUD_REASONING_SMALL_MODEL: env.ELIZAOS_CLOUD_REASONING_SMALL_MODEL ?? null,
-    ELIZAOS_CLOUD_REASONING_LARGE_MODEL: env.ELIZAOS_CLOUD_REASONING_LARGE_MODEL ?? null,
-    REASONING_SMALL_MODEL: env.REASONING_SMALL_MODEL ?? null,
-    REASONING_LARGE_MODEL: env.REASONING_LARGE_MODEL ?? null,
     // Research model
     ELIZAOS_CLOUD_RESEARCH_MODEL: env.ELIZAOS_CLOUD_RESEARCH_MODEL ?? null,
     RESEARCH_MODEL: env.RESEARCH_MODEL ?? null,
@@ -157,8 +150,6 @@ export const elizaOSCloudPlugin: Plugin = {
     [TEXT_MEGA_MODEL_TYPE]: handleTextMega,
     [RESPONSE_HANDLER_MODEL_TYPE]: handleResponseHandler,
     [ACTION_PLANNER_MODEL_TYPE]: handleActionPlanner,
-    [ModelType.TEXT_REASONING_SMALL]: handleTextReasoningSmall,
-    [ModelType.TEXT_REASONING_LARGE]: handleTextReasoningLarge,
     [ModelType.RESEARCH]: handleResearch,
     [ModelType.IMAGE]: handleImageGeneration,
     [ModelType.IMAGE_DESCRIPTION]: handleImageDescription,

@@ -143,14 +143,6 @@ export class CloudModelRegistryService extends Service {
     const settingsToCheck = [
       { key: "ELIZAOS_CLOUD_SMALL_MODEL", label: "small model" },
       { key: "ELIZAOS_CLOUD_LARGE_MODEL", label: "large model" },
-      {
-        key: "ELIZAOS_CLOUD_REASONING_SMALL_MODEL",
-        label: "reasoning small model",
-      },
-      {
-        key: "ELIZAOS_CLOUD_REASONING_LARGE_MODEL",
-        label: "reasoning large model",
-      },
       { key: "ELIZAOS_CLOUD_RESEARCH_MODEL", label: "research model" },
       { key: "ELIZAOS_CLOUD_EMBEDDING_MODEL", label: "embedding model" },
       {

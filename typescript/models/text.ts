@@ -6,19 +6,16 @@ import type {
 } from "@elizaos/core";
 import { logger, ModelType } from "@elizaos/core";
 import type { LanguageModel } from "ai";
-import { generateText, streamText } from "ai";
 import { createOpenAIClient } from "../providers/openai";
 import {
   getActionPlannerModel,
-  getExperimentalTelemetry,
   getAuthHeader,
   getBaseURL,
+  getExperimentalTelemetry,
   getLargeModel,
   getMegaModel,
   getMiniModel,
   getNanoModel,
-  getReasoningLargeModel,
-  getReasoningSmallModel,
   getResponseHandlerModel,
   getSmallModel,
 } from "../utils/config";
@@ -26,16 +23,24 @@ import { emitModelUsageEvent } from "../utils/events";
 import { extractResponsesOutputText } from "../utils/responses-output";
 
 const TEXT_NANO_MODEL_TYPE = (ModelType.TEXT_NANO ?? "TEXT_NANO") as ModelTypeName;
-const TEXT_MINI_MODEL_TYPE = (ModelType.TEXT_MINI ?? "TEXT_MINI") as ModelTypeName;
+const TEXT_MINI_MODEL_TYPE = (ModelType.TEXT_NANO ?? "TEXT_MINI") as ModelTypeName;
 const TEXT_SMALL_MODEL_TYPE = ModelType.TEXT_SMALL;
 const TEXT_LARGE_MODEL_TYPE = ModelType.TEXT_LARGE;
 const TEXT_MEGA_MODEL_TYPE = (ModelType.TEXT_MEGA ?? "TEXT_MEGA") as ModelTypeName;
 const RESPONSE_HANDLER_MODEL_TYPE = (ModelType.RESPONSE_HANDLER ??
   "RESPONSE_HANDLER") as ModelTypeName;
-const ACTION_PLANNER_MODEL_TYPE = (ModelType.ACTION_PLANNER ??
-  "ACTION_PLANNER") as ModelTypeName;
-const TEXT_REASONING_SMALL_MODEL_TYPE = ModelType.TEXT_REASONING_SMALL;
-const TEXT_REASONING_LARGE_MODEL_TYPE = ModelType.TEXT_REASONING_LARGE;
+const ACTION_PLANNER_MODEL_TYPE = (ModelType.ACTION_PLANNER ?? "ACTION_PLANNER") as ModelTypeName;
+
+type ResponsesApiResponse = Record<string, unknown> & {
+  error?: {
+    message?: string;
+  };
+  usage?: {
+    input_tokens?: number;
+    output_tokens?: number;
+    total_tokens?: number;
+  };
+};
 
 /**
  * Models that are known to be reasoning-class and don't support temperature.
@@ -102,9 +107,7 @@ type TextModelType =
   | typeof TEXT_LARGE_MODEL_TYPE
   | typeof TEXT_MEGA_MODEL_TYPE
   | typeof RESPONSE_HANDLER_MODEL_TYPE
-  | typeof ACTION_PLANNER_MODEL_TYPE
-  | typeof TEXT_REASONING_SMALL_MODEL_TYPE
-  | typeof TEXT_REASONING_LARGE_MODEL_TYPE;
+  | typeof ACTION_PLANNER_MODEL_TYPE;
 
 function getPurposeForModelType(modelType: TextModelType): string {
   switch (modelType) {
@@ -112,14 +115,6 @@ function getPurposeForModelType(modelType: TextModelType): string {
       return "should_respond";
     case ACTION_PLANNER_MODEL_TYPE:
       return "action_planner";
-    case TEXT_REASONING_SMALL_MODEL_TYPE:
-    case TEXT_REASONING_LARGE_MODEL_TYPE:
-      return "reasoning";
-    case TEXT_NANO_MODEL_TYPE:
-    case TEXT_MINI_MODEL_TYPE:
-    case TEXT_SMALL_MODEL_TYPE:
-    case TEXT_LARGE_MODEL_TYPE:
-    case TEXT_MEGA_MODEL_TYPE:
     default:
       return "response";
   }
@@ -141,10 +136,6 @@ function getModelNameForType(runtime: IAgentRuntime, modelType: TextModelType): 
       return getResponseHandlerModel(runtime);
     case ACTION_PLANNER_MODEL_TYPE:
       return getActionPlannerModel(runtime);
-    case TEXT_REASONING_SMALL_MODEL_TYPE:
-      return getReasoningSmallModel(runtime);
-    case TEXT_REASONING_LARGE_MODEL_TYPE:
-      return getReasoningLargeModel(runtime);
     default:
       return getLargeModel(runtime);
   }
@@ -175,11 +166,8 @@ function buildGenerateParams(
   const model = openai.chat(modelName) as LanguageModel;
 
   // Reasoning models don't support temperature, frequency/presence penalties,
-  // or stopSequences. Detect via model name patterns OR explicit reasoning model types.
-  const reasoning =
-    isReasoningModel(modelName) ||
-    modelType === TEXT_REASONING_SMALL_MODEL_TYPE ||
-    modelType === TEXT_REASONING_LARGE_MODEL_TYPE;
+  // or stopSequences. Detect via model name patterns.
+  const reasoning = isReasoningModel(modelName);
   const stopSequences =
     !reasoning &&
     supportsStopSequences(modelName) &&
@@ -204,36 +192,6 @@ function buildGenerateParams(
   return { generateParams, modelName, modelType, prompt };
 }
 
-function handleStreamingGeneration(
-  runtime: IAgentRuntime,
-  modelType: ModelTypeName,
-  generateParams: Parameters<typeof streamText>[0],
-  prompt: string
-): TextStreamResult {
-  logger.debug(`[ELIZAOS_CLOUD] Streaming text with ${modelType} model`);
-
-  const streamResult = streamText(generateParams);
-
-  return {
-    textStream: streamResult.textStream,
-    text: Promise.resolve(streamResult.text),
-    usage: Promise.resolve(streamResult.usage).then((usage) => {
-      if (usage) {
-        emitModelUsageEvent(runtime, modelType, prompt, usage);
-        const inputTokens = usage.inputTokens ?? 0;
-        const outputTokens = usage.outputTokens ?? 0;
-        return {
-          promptTokens: inputTokens,
-          completionTokens: outputTokens,
-          totalTokens: inputTokens + outputTokens,
-        };
-      }
-      return undefined;
-    }),
-    finishReason: Promise.resolve(streamResult.finishReason) as Promise<string | undefined>,
-  };
-}
-
 async function generateTextWithModel(
   runtime: IAgentRuntime,
   modelType: TextModelType,
@@ -252,11 +210,11 @@ async function generateTextWithModel(
   logger.log(`[ELIZAOS_CLOUD] Using ${modelType} model: ${modelName}`);
   logger.log(prompt);
 
-  const reasoning =
-    isReasoningModel(modelName) ||
-    modelType === TEXT_REASONING_SMALL_MODEL_TYPE ||
-    modelType === TEXT_REASONING_LARGE_MODEL_TYPE;
-  const input: Array<{ role: "system" | "user"; content: Array<{ type: "input_text"; text: string }> }> = [];
+  const reasoning = isReasoningModel(modelName);
+  const input: Array<{
+    role: "system" | "user";
+    content: Array<{ type: "input_text"; text: string }>;
+  }> = [];
   if (runtime.character.system) {
     input.push({
       role: "system",
@@ -288,10 +246,10 @@ async function generateTextWithModel(
     body: JSON.stringify(requestBody),
   });
   const responseText = await response.text();
-  let data: Record<string, any> = {};
+  let data: ResponsesApiResponse = {};
   if (responseText) {
     try {
-      data = JSON.parse(responseText) as Record<string, any>;
+      data = JSON.parse(responseText) as ResponsesApiResponse;
     } catch (parseErr) {
       logger.error(
         `[ELIZAOS_CLOUD] Failed to parse responses JSON: ${
@@ -381,18 +339,4 @@ export async function handleActionPlanner(
   params: GenerateTextParams
 ): Promise<string | TextStreamResult> {
   return generateTextWithModel(runtime, ACTION_PLANNER_MODEL_TYPE, params);
-}
-
-export async function handleTextReasoningSmall(
-  runtime: IAgentRuntime,
-  params: GenerateTextParams
-): Promise<string | TextStreamResult> {
-  return generateTextWithModel(runtime, TEXT_REASONING_SMALL_MODEL_TYPE, params);
-}
-
-export async function handleTextReasoningLarge(
-  runtime: IAgentRuntime,
-  params: GenerateTextParams
-): Promise<string | TextStreamResult> {
-  return generateTextWithModel(runtime, TEXT_REASONING_LARGE_MODEL_TYPE, params);
 }

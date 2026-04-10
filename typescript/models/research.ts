@@ -91,7 +91,7 @@ function buildResearchApiError(status: number, errorText: string): Error {
     const param = parsed.error?.param;
     if (param === "tools.0.type" && message?.includes('expected "function"')) {
       return new Error(
-        `Research API error: ${status} Eliza Cloud /responses rejected deep-research tool types; the provider currently only accepts function tools on this route`,
+        `Research API error: ${status} Eliza Cloud /responses rejected deep-research tool types; the provider currently only accepts function tools on this route`
       );
     }
   } catch {

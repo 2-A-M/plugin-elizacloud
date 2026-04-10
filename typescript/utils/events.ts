@@ -1,4 +1,9 @@
-import { EventType, type IAgentRuntime, type ModelEventPayload, type ModelTypeName } from "@elizaos/core";
+import {
+  EventType,
+  type IAgentRuntime,
+  type ModelEventPayload,
+  type ModelTypeName,
+} from "@elizaos/core";
 import type { LanguageModelUsage } from "ai";
 
 export function emitModelUsageEvent(

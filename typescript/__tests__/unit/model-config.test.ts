@@ -1,7 +1,7 @@
 /**
  * Unit tests for ElizaCloud model configuration resolution.
  *
- * Verifies that all model slots (small, large, reasoning, research, TTS,
+ * Verifies that all model slots (small, large, research, TTS,
  * transcription, image, embedding) resolve correctly through the
  * priority chain: plugin env var > generic env var > default.
  */
@@ -16,11 +16,9 @@ import {
   getMegaModel,
   getMiniModel,
   getNanoModel,
-  getReasoningLargeModel,
-  getReasoningSmallModel,
+  getResearchModel,
   getResponseHandlerModel,
   getResponseModel,
-  getResearchModel,
   getSmallModel,
   getTranscriptionModel,
   getTTSModel,
@@ -190,43 +188,6 @@ describe("Model config: response model", () => {
   });
 });
 
-describe("Model config: reasoning small", () => {
-  it("returns default deepseek-r1", () => {
-    const model = getReasoningSmallModel(mockRuntime());
-    expect(model).toBe("deepseek/deepseek-r1");
-  });
-
-  it("ELIZAOS_CLOUD_REASONING_SMALL_MODEL takes priority", () => {
-    const model = getReasoningSmallModel(
-      mockRuntime({
-        ELIZAOS_CLOUD_REASONING_SMALL_MODEL: "openai/o4-mini",
-      })
-    );
-    expect(model).toBe("openai/o4-mini");
-  });
-
-  it("REASONING_SMALL_MODEL is used as fallback", () => {
-    const model = getReasoningSmallModel(mockRuntime({ REASONING_SMALL_MODEL: "openai/o3-mini" }));
-    expect(model).toBe("openai/o3-mini");
-  });
-});
-
-describe("Model config: reasoning large", () => {
-  it("returns default claude-opus-4.6", () => {
-    const model = getReasoningLargeModel(mockRuntime());
-    expect(model).toBe("anthropic/claude-opus-4.6");
-  });
-
-  it("ELIZAOS_CLOUD_REASONING_LARGE_MODEL takes priority", () => {
-    const model = getReasoningLargeModel(
-      mockRuntime({
-        ELIZAOS_CLOUD_REASONING_LARGE_MODEL: "openai/o3",
-      })
-    );
-    expect(model).toBe("openai/o3");
-  });
-});
-
 describe("Model config: research model", () => {
   it("returns default o3-deep-research", () => {
     const model = getResearchModel(mockRuntime());
@@ -327,8 +288,6 @@ describe("Model config edge cases", () => {
     const rt = mockRuntime();
     expect(typeof getSmallModel(rt)).toBe("string");
     expect(typeof getLargeModel(rt)).toBe("string");
-    expect(typeof getReasoningSmallModel(rt)).toBe("string");
-    expect(typeof getReasoningLargeModel(rt)).toBe("string");
     expect(typeof getResearchModel(rt)).toBe("string");
     expect(typeof getTTSModel(rt)).toBe("string");
     expect(typeof getTranscriptionModel(rt)).toBe("string");
@@ -340,8 +299,6 @@ describe("Model config edge cases", () => {
     const rt = mockRuntime();
     expect(getSmallModel(rt).length).toBeGreaterThan(0);
     expect(getLargeModel(rt).length).toBeGreaterThan(0);
-    expect(getReasoningSmallModel(rt).length).toBeGreaterThan(0);
-    expect(getReasoningLargeModel(rt).length).toBeGreaterThan(0);
     expect(getResearchModel(rt).length).toBeGreaterThan(0);
     expect(getTTSModel(rt).length).toBeGreaterThan(0);
     expect(getTranscriptionModel(rt).length).toBeGreaterThan(0);

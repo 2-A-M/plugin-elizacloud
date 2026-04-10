@@ -72,8 +72,8 @@ export class CloudBridgeService extends Service {
   // ─── Connection Management ─────────────────────────────────────────────
 
   async connect(containerId: string): Promise<void> {
-    if (this.connections.has(containerId)) {
-      const existing = this.connections.get(containerId)!;
+    const existing = this.connections.get(containerId);
+    if (existing) {
       if (existing.state === "connected" || existing.state === "connecting") {
         logger.debug(`[CloudBridge] Already connected/connecting to ${containerId}`);
         return;
