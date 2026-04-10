@@ -19,6 +19,7 @@ import {
   handleObjectLarge,
   handleObjectSmall,
   handleResearch,
+  handleResponseHandler,
   handleTextEmbedding,
   handleTextLarge,
   handleTextMega,
@@ -26,7 +27,6 @@ import {
   handleTextNano,
   handleTextReasoningLarge,
   handleTextReasoningSmall,
-  handleResponseHandler,
   handleTextSmall,
 } from "./models";
 // Cloud services
@@ -34,16 +34,15 @@ import { CloudAuthService } from "./services/cloud-auth";
 import { CloudBackupService } from "./services/cloud-backup";
 import { CloudBridgeService } from "./services/cloud-bridge";
 import { CloudContainerService } from "./services/cloud-container";
+import { CloudManagedGatewayRelayService } from "./services/cloud-managed-gateway-relay";
 import { CloudModelRegistryService } from "./services/cloud-model-registry";
 import { getApiKey, getBaseURL } from "./utils/config";
 
 const TEXT_NANO_MODEL_TYPE = (ModelType.TEXT_NANO ?? "TEXT_NANO") as string;
 const TEXT_MINI_MODEL_TYPE = (ModelType.TEXT_MINI ?? "TEXT_MINI") as string;
 const TEXT_MEGA_MODEL_TYPE = (ModelType.TEXT_MEGA ?? "TEXT_MEGA") as string;
-const RESPONSE_HANDLER_MODEL_TYPE = (ModelType.RESPONSE_HANDLER ??
-  "RESPONSE_HANDLER") as string;
-const ACTION_PLANNER_MODEL_TYPE = (ModelType.ACTION_PLANNER ??
-  "ACTION_PLANNER") as string;
+const RESPONSE_HANDLER_MODEL_TYPE = (ModelType.RESPONSE_HANDLER ?? "RESPONSE_HANDLER") as string;
+const ACTION_PLANNER_MODEL_TYPE = (ModelType.ACTION_PLANNER ?? "ACTION_PLANNER") as string;
 
 type ProcessEnvLike = Record<string, string | undefined>;
 
@@ -119,11 +118,13 @@ export const elizaOSCloudPlugin: Plugin = {
   // ─── Cloud Services ──────────────────────────────────────────────────
   // Services are registered in dependency order:
   //   1. CloudAuthService — must start first (other services depend on it)
-  //   2. CloudContainerService — needs auth to list/create containers
-  //   3. CloudBridgeService — needs auth for WebSocket connections
-  //   4. CloudBackupService — needs auth for snapshot API calls
+  //   2. CloudManagedGatewayRelayService — optional local-runtime relay via shared cloud ingress
+  //   3. CloudContainerService — needs auth to list/create containers
+  //   4. CloudBridgeService — needs auth for WebSocket connections
+  //   5. CloudBackupService — needs auth for snapshot API calls
   services: [
     CloudAuthService,
+    CloudManagedGatewayRelayService,
     CloudModelRegistryService,
     CloudContainerService,
     CloudBridgeService,

@@ -197,6 +197,53 @@ export interface BridgeConnection {
   reconnectAttempts: number;
 }
 
+// ─── Managed Gateway Relay Types ───────────────────────────────────────────
+
+export interface GatewayRelaySession {
+  id: string;
+  organizationId: string;
+  userId: string;
+  runtimeAgentId: string;
+  agentName: string | null;
+  platform: "local-runtime";
+  createdAt: string;
+  lastSeenAt: string;
+}
+
+export interface GatewayRelayRequest {
+  jsonrpc: "2.0";
+  id?: string | number;
+  method: string;
+  params?: Record<string, unknown>;
+}
+
+export interface GatewayRelayResponse {
+  jsonrpc: "2.0";
+  id?: string | number;
+  result?: Record<string, unknown>;
+  error?: BridgeError;
+}
+
+export interface GatewayRelayRequestEnvelope {
+  requestId: string;
+  rpc: GatewayRelayRequest;
+  queuedAt: string;
+}
+
+export interface RegisterGatewayRelaySessionResponse {
+  success: boolean;
+  data: {
+    session: GatewayRelaySession;
+  };
+}
+
+export interface PollGatewayRelayResponse {
+  success: boolean;
+  data: {
+    request: GatewayRelayRequestEnvelope | null;
+  };
+}
+
 // ─── Snapshot / Backup Types ────────────────────────────────────────────────
 
 export type SnapshotType = "manual" | "auto" | "pre-eviction";

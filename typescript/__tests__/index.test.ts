@@ -102,8 +102,8 @@ describe("ElizaOS Cloud Plugin", () => {
   describe("Cloud services", () => {
     const services = elizaOSCloudPlugin.services ?? [];
 
-    it("registers 5 cloud services", () => {
-      expect(services).toHaveLength(5);
+    it("registers 6 cloud services", () => {
+      expect(services).toHaveLength(6);
     });
 
     it("includes CloudAuthService", () => {
@@ -118,6 +118,14 @@ describe("ElizaOS Cloud Plugin", () => {
       ).toBe(true);
     });
 
+    it("includes CloudManagedGatewayRelayService", () => {
+      expect(
+        services.some(
+          (s) => (s as { serviceType?: string }).serviceType === "CLOUD_MANAGED_GATEWAY_RELAY"
+        )
+      ).toBe(true);
+    });
+
     it("includes CloudBridgeService", () => {
       expect(
         services.some((s) => (s as { serviceType?: string }).serviceType === "CLOUD_BRIDGE")
@@ -126,9 +134,7 @@ describe("ElizaOS Cloud Plugin", () => {
 
     it("includes CloudModelRegistryService", () => {
       expect(
-        services.some(
-          (s) => (s as { serviceType?: string }).serviceType === "CLOUD_MODEL_REGISTRY"
-        )
+        services.some((s) => (s as { serviceType?: string }).serviceType === "CLOUD_MODEL_REGISTRY")
       ).toBe(true);
     });
 
