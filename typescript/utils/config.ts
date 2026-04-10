@@ -93,10 +93,10 @@ export function getNanoModel(runtime: IAgentRuntime): string {
   );
 }
 
-export function getMiniModel(runtime: IAgentRuntime): string {
+export function getMediumModel(runtime: IAgentRuntime): string {
   return (
-    getSetting(runtime, "ELIZAOS_CLOUD_MINI_MODEL") ??
-    getSetting(runtime, "MINI_MODEL") ??
+    getSetting(runtime, "ELIZAOS_CLOUD_MEDIUM_MODEL") ??
+    getSetting(runtime, "MEDIUM_MODEL") ??
     getSmallModel(runtime)
   );
 }
@@ -122,7 +122,7 @@ export function getResponseHandlerModel(runtime: IAgentRuntime): string {
     getSetting(runtime, "ELIZAOS_CLOUD_SHOULD_RESPOND_MODEL") ??
     getSetting(runtime, "RESPONSE_HANDLER_MODEL") ??
     getSetting(runtime, "SHOULD_RESPOND_MODEL") ??
-    getMiniModel(runtime)
+    getNanoModel(runtime)
   );
 }
 
@@ -132,7 +132,7 @@ export function getActionPlannerModel(runtime: IAgentRuntime): string {
     getSetting(runtime, "ELIZAOS_CLOUD_PLANNER_MODEL") ??
     getSetting(runtime, "ACTION_PLANNER_MODEL") ??
     getSetting(runtime, "PLANNER_MODEL") ??
-    getSmallModel(runtime)
+    getMediumModel(runtime)
   );
 }
 

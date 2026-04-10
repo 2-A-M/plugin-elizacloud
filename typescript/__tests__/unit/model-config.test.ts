@@ -13,8 +13,8 @@ import {
   getImageDescriptionModel,
   getImageGenerationModel,
   getLargeModel,
+  getMediumModel,
   getMegaModel,
-  getMiniModel,
   getNanoModel,
   getResearchModel,
   getResponseHandlerModel,
@@ -94,21 +94,21 @@ describe("Model config: nano model", () => {
   });
 });
 
-describe("Model config: mini model", () => {
+describe("Model config: medium model", () => {
   it("falls back to small model by default", () => {
-    expect(getMiniModel(mockRuntime())).toBe("openai/gpt-5.4-mini");
+    expect(getMediumModel(mockRuntime())).toBe("openai/gpt-5.4-mini");
   });
 
-  it("prefers explicit mini model over generic and fallback slots", () => {
+  it("prefers explicit medium model over generic and fallback slots", () => {
     expect(
-      getMiniModel(
+      getMediumModel(
         mockRuntime({
-          ELIZAOS_CLOUD_MINI_MODEL: "google/gemini-2.5-flash-lite-mini-ft",
-          MINI_MODEL: "generic-mini",
+          ELIZAOS_CLOUD_MEDIUM_MODEL: "google/gemini-2.5-flash-ft-medium",
+          MEDIUM_MODEL: "generic-medium",
           ELIZAOS_CLOUD_SMALL_MODEL: "cloud-small",
         })
       )
-    ).toBe("google/gemini-2.5-flash-lite-mini-ft");
+    ).toBe("google/gemini-2.5-flash-ft-medium");
   });
 });
 
@@ -131,7 +131,7 @@ describe("Model config: mega model", () => {
 });
 
 describe("Model config: response handler model", () => {
-  it("falls back to mini then small by default", () => {
+  it("falls back to nano then small by default", () => {
     expect(getResponseHandlerModel(mockRuntime())).toBe("openai/gpt-5.4-mini");
   });
 
@@ -143,7 +143,7 @@ describe("Model config: response handler model", () => {
           ELIZAOS_CLOUD_SHOULD_RESPOND_MODEL: "cloud-should",
           RESPONSE_HANDLER_MODEL: "generic-response-handler",
           SHOULD_RESPOND_MODEL: "generic-should",
-          ELIZAOS_CLOUD_MINI_MODEL: "cloud-mini",
+          ELIZAOS_CLOUD_NANO_MODEL: "cloud-nano",
         })
       )
     ).toBe("google/gemini-2.5-flash-lite-ft-should");
@@ -151,7 +151,7 @@ describe("Model config: response handler model", () => {
 });
 
 describe("Model config: action planner model", () => {
-  it("falls back to small by default", () => {
+  it("falls back to medium then small by default", () => {
     expect(getActionPlannerModel(mockRuntime())).toBe("openai/gpt-5.4-mini");
   });
 
@@ -163,7 +163,7 @@ describe("Model config: action planner model", () => {
           ELIZAOS_CLOUD_PLANNER_MODEL: "cloud-planner",
           ACTION_PLANNER_MODEL: "generic-action-planner",
           PLANNER_MODEL: "generic-planner",
-          ELIZAOS_CLOUD_SMALL_MODEL: "cloud-small",
+          ELIZAOS_CLOUD_MEDIUM_MODEL: "cloud-medium",
         })
       )
     ).toBe("google/gemini-2.5-flash-ft-plan");

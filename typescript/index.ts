@@ -23,7 +23,7 @@ import {
   handleTextEmbedding,
   handleTextLarge,
   handleTextMega,
-  handleTextMini,
+  handleTextMedium,
   handleTextNano,
   handleTextSmall,
 } from "./models";
@@ -37,7 +37,7 @@ import { CloudModelRegistryService } from "./services/cloud-model-registry";
 import { getApiKey, getBaseURL } from "./utils/config";
 
 const TEXT_NANO_MODEL_TYPE = (ModelType.TEXT_NANO ?? "TEXT_NANO") as string;
-const TEXT_MINI_MODEL_TYPE = (ModelType.TEXT_NANO ?? "TEXT_MINI") as string;
+const TEXT_MEDIUM_MODEL_TYPE = (ModelType.TEXT_MEDIUM ?? "TEXT_MEDIUM") as string;
 const TEXT_MEGA_MODEL_TYPE = (ModelType.TEXT_MEGA ?? "TEXT_MEGA") as string;
 const RESPONSE_HANDLER_MODEL_TYPE = (ModelType.RESPONSE_HANDLER ?? "RESPONSE_HANDLER") as string;
 const ACTION_PLANNER_MODEL_TYPE = (ModelType.ACTION_PLANNER ?? "ACTION_PLANNER") as string;
@@ -64,7 +64,7 @@ export const elizaOSCloudPlugin: Plugin = {
     ELIZAOS_CLOUD_ENABLED: env.ELIZAOS_CLOUD_ENABLED ?? null,
     // Text models
     ELIZAOS_CLOUD_NANO_MODEL: env.ELIZAOS_CLOUD_NANO_MODEL ?? null,
-    ELIZAOS_CLOUD_MINI_MODEL: env.ELIZAOS_CLOUD_MINI_MODEL ?? null,
+    ELIZAOS_CLOUD_MEDIUM_MODEL: env.ELIZAOS_CLOUD_MEDIUM_MODEL ?? null,
     ELIZAOS_CLOUD_SMALL_MODEL: env.ELIZAOS_CLOUD_SMALL_MODEL ?? null,
     ELIZAOS_CLOUD_LARGE_MODEL: env.ELIZAOS_CLOUD_LARGE_MODEL ?? null,
     ELIZAOS_CLOUD_MEGA_MODEL: env.ELIZAOS_CLOUD_MEGA_MODEL ?? null,
@@ -74,7 +74,7 @@ export const elizaOSCloudPlugin: Plugin = {
     ELIZAOS_CLOUD_PLANNER_MODEL: env.ELIZAOS_CLOUD_PLANNER_MODEL ?? null,
     ELIZAOS_CLOUD_RESPONSE_MODEL: env.ELIZAOS_CLOUD_RESPONSE_MODEL ?? null,
     NANO_MODEL: env.NANO_MODEL ?? null,
-    MINI_MODEL: env.MINI_MODEL ?? null,
+    MEDIUM_MODEL: env.MEDIUM_MODEL ?? null,
     SMALL_MODEL: env.SMALL_MODEL ?? null,
     LARGE_MODEL: env.LARGE_MODEL ?? null,
     MEGA_MODEL: env.MEGA_MODEL ?? null,
@@ -144,7 +144,7 @@ export const elizaOSCloudPlugin: Plugin = {
   models: {
     [ModelType.TEXT_EMBEDDING]: handleTextEmbedding,
     [TEXT_NANO_MODEL_TYPE]: handleTextNano,
-    [TEXT_MINI_MODEL_TYPE]: handleTextMini,
+    [TEXT_MEDIUM_MODEL_TYPE]: handleTextMedium,
     [ModelType.TEXT_SMALL]: handleTextSmall,
     [ModelType.TEXT_LARGE]: handleTextLarge,
     [TEXT_MEGA_MODEL_TYPE]: handleTextMega,

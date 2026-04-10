@@ -13,8 +13,8 @@ import {
   getBaseURL,
   getExperimentalTelemetry,
   getLargeModel,
+  getMediumModel,
   getMegaModel,
-  getMiniModel,
   getNanoModel,
   getResponseHandlerModel,
   getSmallModel,
@@ -23,7 +23,7 @@ import { emitModelUsageEvent } from "../utils/events";
 import { extractResponsesOutputText } from "../utils/responses-output";
 
 const TEXT_NANO_MODEL_TYPE = (ModelType.TEXT_NANO ?? "TEXT_NANO") as ModelTypeName;
-const TEXT_MINI_MODEL_TYPE = (ModelType.TEXT_NANO ?? "TEXT_MINI") as ModelTypeName;
+const TEXT_MEDIUM_MODEL_TYPE = (ModelType.TEXT_MEDIUM ?? "TEXT_MEDIUM") as ModelTypeName;
 const TEXT_SMALL_MODEL_TYPE = ModelType.TEXT_SMALL;
 const TEXT_LARGE_MODEL_TYPE = ModelType.TEXT_LARGE;
 const TEXT_MEGA_MODEL_TYPE = (ModelType.TEXT_MEGA ?? "TEXT_MEGA") as ModelTypeName;
@@ -102,7 +102,7 @@ function supportsStopSequences(modelName: string): boolean {
 
 type TextModelType =
   | typeof TEXT_NANO_MODEL_TYPE
-  | typeof TEXT_MINI_MODEL_TYPE
+  | typeof TEXT_MEDIUM_MODEL_TYPE
   | typeof TEXT_SMALL_MODEL_TYPE
   | typeof TEXT_LARGE_MODEL_TYPE
   | typeof TEXT_MEGA_MODEL_TYPE
@@ -124,8 +124,8 @@ function getModelNameForType(runtime: IAgentRuntime, modelType: TextModelType): 
   switch (modelType) {
     case TEXT_NANO_MODEL_TYPE:
       return getNanoModel(runtime);
-    case TEXT_MINI_MODEL_TYPE:
-      return getMiniModel(runtime);
+    case TEXT_MEDIUM_MODEL_TYPE:
+      return getMediumModel(runtime);
     case TEXT_SMALL_MODEL_TYPE:
       return getSmallModel(runtime);
     case TEXT_LARGE_MODEL_TYPE:
@@ -306,11 +306,11 @@ export async function handleTextNano(
   return generateTextWithModel(runtime, TEXT_NANO_MODEL_TYPE, params);
 }
 
-export async function handleTextMini(
+export async function handleTextMedium(
   runtime: IAgentRuntime,
   params: GenerateTextParams
 ): Promise<string | TextStreamResult> {
-  return generateTextWithModel(runtime, TEXT_MINI_MODEL_TYPE, params);
+  return generateTextWithModel(runtime, TEXT_MEDIUM_MODEL_TYPE, params);
 }
 
 export async function handleTextLarge(

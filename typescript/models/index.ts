@@ -9,7 +9,7 @@ export {
   handleResponseHandler,
   handleTextLarge,
   handleTextMega,
-  handleTextMini,
+  handleTextMedium,
   handleTextNano,
   handleTextSmall,
 } from "./text";

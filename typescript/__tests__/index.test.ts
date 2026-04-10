@@ -58,8 +58,8 @@ describe("ElizaOS Cloud Plugin", () => {
       expect(typeof models.TEXT_NANO).toBe("function");
     });
 
-    it("registers TEXT_MINI handler", () => {
-      expect(typeof models.TEXT_NANO).toBe("function");
+    it("registers TEXT_MEDIUM handler", () => {
+      expect(typeof models.TEXT_MEDIUM).toBe("function");
     });
 
     it("registers TEXT_SMALL handler", () => {
