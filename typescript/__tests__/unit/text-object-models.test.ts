@@ -26,7 +26,7 @@ function createRuntime(overrides: Record<string, string> = {}) {
         return baseUrl;
       }
       if (key === "SMALL_MODEL") {
-        return "openai/gpt-5-mini";
+        return "openai/gpt-5.4-mini";
       }
       return undefined;
     },

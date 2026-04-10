@@ -81,7 +81,7 @@ export function getEmbeddingApiKey(runtime: IAgentRuntime): string | undefined {
 export function getSmallModel(runtime: IAgentRuntime): string {
   return (
     getSetting(runtime, "ELIZAOS_CLOUD_SMALL_MODEL") ??
-    (getSetting(runtime, "SMALL_MODEL", "openai/gpt-5-mini") as string)
+    (getSetting(runtime, "SMALL_MODEL", "openai/gpt-5.4-mini") as string)
   );
 }
 
@@ -104,7 +104,7 @@ export function getMiniModel(runtime: IAgentRuntime): string {
 export function getLargeModel(runtime: IAgentRuntime): string {
   return (
     getSetting(runtime, "ELIZAOS_CLOUD_LARGE_MODEL") ??
-    (getSetting(runtime, "LARGE_MODEL", "anthropic/claude-sonnet-4.5") as string)
+    (getSetting(runtime, "LARGE_MODEL", "anthropic/claude-sonnet-4.6") as string)
   );
 }
 
@@ -145,7 +145,7 @@ export function getResponseModel(runtime: IAgentRuntime): string {
 }
 
 export function getImageDescriptionModel(runtime: IAgentRuntime): string {
-  return getSetting(runtime, "ELIZAOS_CLOUD_IMAGE_DESCRIPTION_MODEL", "gpt-5-mini") as string;
+  return getSetting(runtime, "ELIZAOS_CLOUD_IMAGE_DESCRIPTION_MODEL", "gpt-5.4-mini") as string;
 }
 
 export function getImageGenerationModel(runtime: IAgentRuntime): string {
@@ -165,7 +165,7 @@ export function getReasoningSmallModel(runtime: IAgentRuntime): string {
 export function getReasoningLargeModel(runtime: IAgentRuntime): string {
   return (
     getSetting(runtime, "ELIZAOS_CLOUD_REASONING_LARGE_MODEL") ??
-    (getSetting(runtime, "REASONING_LARGE_MODEL", "anthropic/claude-opus-4.5") as string)
+    (getSetting(runtime, "REASONING_LARGE_MODEL", "anthropic/claude-opus-4.6") as string)
   );
 }
 

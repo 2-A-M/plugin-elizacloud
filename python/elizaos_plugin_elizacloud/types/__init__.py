@@ -48,13 +48,13 @@ from elizaos_plugin_elizacloud.types.cloud import (
 class ElizaCloudConfig:
     api_key: str
     base_url: str = "https://www.elizacloud.ai/api/v1"
-    small_model: str = "gpt-5-mini"
-    large_model: str = "gpt-5"
+    small_model: str = "gpt-5.4-mini"
+    large_model: str = "claude-sonnet-4.6"
     embedding_model: str = "text-embedding-3-small"
     embedding_dimensions: int = 1536
     embedding_api_key: str | None = None
     embedding_url: str | None = None
-    image_description_model: str = "gpt-5-mini"
+    image_description_model: str = "gpt-5.4-mini"
     image_description_max_tokens: int = 8192
     image_generation_model: str = "dall-e-3"
     tts_model: str = "gpt-5-mini-tts"

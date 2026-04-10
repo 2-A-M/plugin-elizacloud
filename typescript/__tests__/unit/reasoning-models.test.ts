@@ -14,7 +14,7 @@ const REASONING_MODEL_PATTERNS = [
   "o4",
   "deepseek-r1",
   "deepseek-reasoner",
-  "claude-opus-4.5",
+  "claude-opus-4.6",
   "claude-opus-4",
 ] as const;
 
@@ -34,14 +34,14 @@ describe("Reasoning model detection", () => {
     "deepseek/deepseek-r1",
     "deepseek-r1",
     "deepseek-reasoner",
-    "anthropic/claude-opus-4.5",
-    "claude-opus-4.5",
+    "anthropic/claude-opus-4.6",
+    "claude-opus-4.6",
     "claude-opus-4",
   ];
 
   const NON_REASONING_MODELS = [
     "gpt-5",
-    "gpt-5-mini",
+    "gpt-5.4-mini",
     "gpt-4o",
     "gpt-4o-mini",
     "anthropic/claude-sonnet-4",
@@ -93,7 +93,7 @@ describe("Parameter stripping for reasoning models", () => {
   });
 
   it("non-reasoning model params include temperature and penalties", () => {
-    const modelName = "gpt-5-mini";
+    const modelName = "gpt-5.4-mini";
     const reasoning = isReasoningModel(modelName);
     expect(reasoning).toBe(false);
 
@@ -133,7 +133,7 @@ describe("Reasoning model detection: edge cases", () => {
   it("handles provider-prefixed model names", () => {
     expect(isReasoningModel("openai/o3")).toBe(true);
     expect(isReasoningModel("deepseek/deepseek-r1")).toBe(true);
-    expect(isReasoningModel("anthropic/claude-opus-4.5")).toBe(true);
+    expect(isReasoningModel("anthropic/claude-opus-4.6")).toBe(true);
   });
 
   it("empty string is NOT a reasoning model", () => {

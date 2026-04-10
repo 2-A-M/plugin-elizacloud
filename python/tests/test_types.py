@@ -18,8 +18,8 @@ def test_eliza_cloud_config_defaults() -> None:
 
     assert config.api_key == "test_key"
     assert config.base_url == "https://www.elizacloud.ai/api/v1"
-    assert config.small_model == "gpt-5-mini"
-    assert config.large_model == "gpt-5"
+    assert config.small_model == "gpt-5.4-mini"
+    assert config.large_model == "claude-sonnet-4.6"
     assert config.embedding_model == "text-embedding-3-small"
     assert config.embedding_dimensions == 1536
     assert config.embedding_api_key is None

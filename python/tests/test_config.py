@@ -13,8 +13,8 @@ class TestElizaCloudConfig:
     def test_config_default_values(self) -> None:
         config = ElizaCloudConfig(api_key="test-key")
         assert config.base_url == "https://www.elizacloud.ai/api/v1"
-        assert config.small_model == "gpt-5-mini"
-        assert config.large_model == "gpt-5"
+        assert config.small_model == "gpt-5.4-mini"
+        assert config.large_model == "claude-sonnet-4.6"
         assert config.embedding_model == "text-embedding-3-small"
         assert config.embedding_dimensions == 1536
         assert config.image_generation_model == "dall-e-3"
@@ -73,7 +73,7 @@ class TestElizaCloudConfigFromEnv:
 
         api_key = os.environ.get("ELIZACLOUD_API_KEY", "")
         base_url = os.environ.get("ELIZACLOUD_BASE_URL", "https://www.elizacloud.ai/api/v1")
-        small_model = os.environ.get("ELIZACLOUD_SMALL_MODEL", "gpt-5-mini")
+        small_model = os.environ.get("ELIZACLOUD_SMALL_MODEL", "gpt-5.4-mini")
 
         config = ElizaCloudConfig(
             api_key=api_key,

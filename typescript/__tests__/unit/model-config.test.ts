@@ -37,7 +37,7 @@ function mockRuntime(settings: Record<string, string | undefined> = {}): IAgentR
 describe("Model config: small model", () => {
   it("returns default when nothing is set", () => {
     const model = getSmallModel(mockRuntime());
-    expect(model).toBe("openai/gpt-5-mini");
+    expect(model).toBe("openai/gpt-5.4-mini");
   });
 
   it("ELIZAOS_CLOUD_SMALL_MODEL takes priority", () => {
@@ -59,7 +59,7 @@ describe("Model config: small model", () => {
 describe("Model config: large model", () => {
   it("returns default when nothing is set", () => {
     const model = getLargeModel(mockRuntime());
-    expect(model).toBe("anthropic/claude-sonnet-4.5");
+    expect(model).toBe("anthropic/claude-sonnet-4.6");
   });
 
   it("ELIZAOS_CLOUD_LARGE_MODEL takes priority", () => {
@@ -80,7 +80,7 @@ describe("Model config: large model", () => {
 
 describe("Model config: nano model", () => {
   it("falls back to small model by default", () => {
-    expect(getNanoModel(mockRuntime())).toBe("openai/gpt-5-mini");
+    expect(getNanoModel(mockRuntime())).toBe("openai/gpt-5.4-mini");
   });
 
   it("prefers explicit nano model over generic and fallback slots", () => {
@@ -98,7 +98,7 @@ describe("Model config: nano model", () => {
 
 describe("Model config: mini model", () => {
   it("falls back to small model by default", () => {
-    expect(getMiniModel(mockRuntime())).toBe("openai/gpt-5-mini");
+    expect(getMiniModel(mockRuntime())).toBe("openai/gpt-5.4-mini");
   });
 
   it("prefers explicit mini model over generic and fallback slots", () => {
@@ -116,7 +116,7 @@ describe("Model config: mini model", () => {
 
 describe("Model config: mega model", () => {
   it("falls back to large model by default", () => {
-    expect(getMegaModel(mockRuntime())).toBe("anthropic/claude-sonnet-4.5");
+    expect(getMegaModel(mockRuntime())).toBe("anthropic/claude-sonnet-4.6");
   });
 
   it("prefers explicit mega model over generic and fallback slots", () => {
@@ -134,7 +134,7 @@ describe("Model config: mega model", () => {
 
 describe("Model config: response handler model", () => {
   it("falls back to mini then small by default", () => {
-    expect(getResponseHandlerModel(mockRuntime())).toBe("openai/gpt-5-mini");
+    expect(getResponseHandlerModel(mockRuntime())).toBe("openai/gpt-5.4-mini");
   });
 
   it("prefers explicit response-handler slots over generic fallbacks", () => {
@@ -154,7 +154,7 @@ describe("Model config: response handler model", () => {
 
 describe("Model config: action planner model", () => {
   it("falls back to small by default", () => {
-    expect(getActionPlannerModel(mockRuntime())).toBe("openai/gpt-5-mini");
+    expect(getActionPlannerModel(mockRuntime())).toBe("openai/gpt-5.4-mini");
   });
 
   it("prefers explicit planner slots over generic fallbacks", () => {
@@ -174,7 +174,7 @@ describe("Model config: action planner model", () => {
 
 describe("Model config: response model", () => {
   it("falls back to large by default", () => {
-    expect(getResponseModel(mockRuntime())).toBe("anthropic/claude-sonnet-4.5");
+    expect(getResponseModel(mockRuntime())).toBe("anthropic/claude-sonnet-4.6");
   });
 
   it("prefers explicit response model over the large slot", () => {
@@ -212,9 +212,9 @@ describe("Model config: reasoning small", () => {
 });
 
 describe("Model config: reasoning large", () => {
-  it("returns default claude-opus-4.5", () => {
+  it("returns default claude-opus-4.6", () => {
     const model = getReasoningLargeModel(mockRuntime());
-    expect(model).toBe("anthropic/claude-opus-4.5");
+    expect(model).toBe("anthropic/claude-opus-4.6");
   });
 
   it("ELIZAOS_CLOUD_REASONING_LARGE_MODEL takes priority", () => {
@@ -270,9 +270,9 @@ describe("Model config: transcription model", () => {
 });
 
 describe("Model config: image description model", () => {
-  it("returns default gpt-5-mini", () => {
+  it("returns default gpt-5.4-mini", () => {
     const model = getImageDescriptionModel(mockRuntime());
-    expect(model).toBe("gpt-5-mini");
+    expect(model).toBe("gpt-5.4-mini");
   });
 });
 
@@ -364,6 +364,6 @@ describe("Model config edge cases", () => {
     expect(getSmallModel(mockRuntime({ SMALL_MODEL: "generic-model" }))).toBe("generic-model");
 
     // Nothing set — default wins
-    expect(getSmallModel(mockRuntime())).toBe("openai/gpt-5-mini");
+    expect(getSmallModel(mockRuntime())).toBe("openai/gpt-5.4-mini");
   });
 });

@@ -84,14 +84,13 @@ async fn main() -> anyhow::Result<()> {
 | ---------------------- | -------------------------------- | ---------------------------------- |
 | `api_key`              | ElizaOS Cloud API key (required) | -                                  |
 | `base_url`             | Base URL for API requests        | `https://www.elizacloud.ai/api/v1` |
-| `small_model`          | Model for quick tasks            | `gpt-5-mini`                      |
-| `large_model`          | Model for complex tasks          | `gpt-5`                           |
+| `small_model`          | Model for quick tasks            | `gpt-5.4-mini`                    |
+| `large_model`          | Model for complex tasks          | `claude-sonnet-4.6`               |
 | `embedding_model`      | Model for embeddings             | `text-embedding-3-small`           |
 | `embedding_dimensions` | Embedding vector size            | `1536`                             |
 
 ## License
 
 MIT
-
 
 

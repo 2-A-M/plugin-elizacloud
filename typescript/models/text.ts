@@ -46,7 +46,7 @@ const REASONING_MODEL_PATTERNS = [
   "o4",
   "deepseek-r1",
   "deepseek-reasoner",
-  "claude-opus-4.5",
+  "claude-opus-4.6",
   "claude-opus-4",
   "gpt-5-mini",
   "gpt-5",
