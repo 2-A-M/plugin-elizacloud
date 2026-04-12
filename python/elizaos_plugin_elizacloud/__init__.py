@@ -1,6 +1,34 @@
 __version__ = "1.7.4"
 
 # ─── Model Handlers ─────────────────────────────────────────────────────────
+# ─── Cloud Actions ───────────────────────────────────────────────────────────
+from elizaos_plugin_elizacloud.actions import (
+    check_cloud_credits_action,
+    freeze_cloud_agent_action,
+    provision_cloud_agent_action,
+    resume_cloud_agent_action,
+)
+from elizaos_plugin_elizacloud.actions.check_credits import (
+    handle_check_credits,
+    validate_check_credits,
+)
+from elizaos_plugin_elizacloud.actions.freeze_agent import handle_freeze, validate_freeze
+from elizaos_plugin_elizacloud.actions.provision_agent import (
+    ServiceRegistry,
+    handle_provision,
+    validate_provision,
+)
+from elizaos_plugin_elizacloud.actions.resume_agent import handle_resume, validate_resume
+
+# ─── Cloud Providers ─────────────────────────────────────────────────────────
+from elizaos_plugin_elizacloud.cloud_providers import (
+    cloud_status_provider,
+    container_health_provider,
+    credit_balance_provider,
+)
+from elizaos_plugin_elizacloud.cloud_providers.cloud_status import get_cloud_status
+from elizaos_plugin_elizacloud.cloud_providers.container_health import get_container_health
+from elizaos_plugin_elizacloud.cloud_providers.credit_balance import get_credit_balance
 from elizaos_plugin_elizacloud.models import (
     handle_batch_text_embedding,
     handle_image_description,
@@ -19,6 +47,14 @@ from elizaos_plugin_elizacloud.models import (
 # ─── Inference Client ────────────────────────────────────────────────────────
 from elizaos_plugin_elizacloud.providers import ElizaCloudClient
 
+# ─── Cloud Services ──────────────────────────────────────────────────────────
+from elizaos_plugin_elizacloud.services import (
+    CloudAuthService,
+    CloudBackupService,
+    CloudBridgeService,
+    CloudContainerService,
+)
+
 # ─── Inference Types ─────────────────────────────────────────────────────────
 from elizaos_plugin_elizacloud.types import (
     DetokenizeTextParams,
@@ -33,40 +69,6 @@ from elizaos_plugin_elizacloud.types import (
     TokenizeTextParams,
     TranscriptionParams,
 )
-
-# ─── Cloud Services ──────────────────────────────────────────────────────────
-from elizaos_plugin_elizacloud.services import (
-    CloudAuthService,
-    CloudBackupService,
-    CloudBridgeService,
-    CloudContainerService,
-)
-
-# ─── Cloud Actions ───────────────────────────────────────────────────────────
-from elizaos_plugin_elizacloud.actions import (
-    check_cloud_credits_action,
-    freeze_cloud_agent_action,
-    provision_cloud_agent_action,
-    resume_cloud_agent_action,
-)
-from elizaos_plugin_elizacloud.actions.check_credits import handle_check_credits, validate_check_credits
-from elizaos_plugin_elizacloud.actions.freeze_agent import handle_freeze, validate_freeze
-from elizaos_plugin_elizacloud.actions.provision_agent import (
-    ServiceRegistry,
-    handle_provision,
-    validate_provision,
-)
-from elizaos_plugin_elizacloud.actions.resume_agent import handle_resume, validate_resume
-
-# ─── Cloud Providers ─────────────────────────────────────────────────────────
-from elizaos_plugin_elizacloud.cloud_providers import (
-    cloud_status_provider,
-    container_health_provider,
-    credit_balance_provider,
-)
-from elizaos_plugin_elizacloud.cloud_providers.cloud_status import get_cloud_status
-from elizaos_plugin_elizacloud.cloud_providers.container_health import get_container_health
-from elizaos_plugin_elizacloud.cloud_providers.credit_balance import get_credit_balance
 
 # ─── Cloud Utils ─────────────────────────────────────────────────────────────
 from elizaos_plugin_elizacloud.utils import CloudApiClient

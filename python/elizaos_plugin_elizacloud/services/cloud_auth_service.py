@@ -10,8 +10,8 @@ import socket
 import time
 
 from elizaos_plugin_elizacloud.types.cloud import (
-    CloudCredentials,
     DEFAULT_CLOUD_CONFIG,
+    CloudCredentials,
     DeviceAuthResponse,
     DevicePlatform,
 )

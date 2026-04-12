@@ -1,6 +1,7 @@
 """Tests for cloud-specific types."""
 
 from elizaos_plugin_elizacloud.types.cloud import (
+    DEFAULT_CLOUD_CONFIG,
     AgentSnapshot,
     BackupConfig,
     BridgeConfig,
@@ -13,13 +14,10 @@ from elizaos_plugin_elizacloud.types.cloud import (
     CloudCredentials,
     CloudPluginConfig,
     ContainerDefaults,
-    ContainerHealthData,
     CreateContainerRequest,
     CreditTransaction,
-    DEFAULT_CLOUD_CONFIG,
     DeviceAuthRequest,
     InsufficientCreditsError,
-    PollingInfo,
 )
 
 

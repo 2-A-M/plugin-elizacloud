@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import asyncio
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -18,7 +17,6 @@ from elizaos_plugin_elizacloud.services.cloud_backup_service import (
     _parse_snapshot,
 )
 from elizaos_plugin_elizacloud.services.cloud_bridge_service import (
-    ActiveConnection,
     CloudBridgeService,
 )
 from elizaos_plugin_elizacloud.services.cloud_container_service import (
@@ -26,7 +24,6 @@ from elizaos_plugin_elizacloud.services.cloud_container_service import (
     _parse_container,
 )
 from elizaos_plugin_elizacloud.utils.cloud_api import CloudApiClient
-
 
 # ─── CloudAuthService ────────────────────────────────────────────────────────
 

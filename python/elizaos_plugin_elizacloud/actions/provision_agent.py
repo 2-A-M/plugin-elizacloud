@@ -10,7 +10,7 @@ from elizaos_plugin_elizacloud.services.cloud_auth_service import CloudAuthServi
 from elizaos_plugin_elizacloud.services.cloud_backup_service import CloudBackupService
 from elizaos_plugin_elizacloud.services.cloud_bridge_service import CloudBridgeService
 from elizaos_plugin_elizacloud.services.cloud_container_service import CloudContainerService
-from elizaos_plugin_elizacloud.types.cloud import CreateContainerRequest, DEFAULT_CLOUD_CONFIG
+from elizaos_plugin_elizacloud.types.cloud import DEFAULT_CLOUD_CONFIG, CreateContainerRequest
 from elizaos_plugin_elizacloud.utils.forwarded_settings import collect_env_vars
 
 logger = logging.getLogger("elizacloud.actions.provision")

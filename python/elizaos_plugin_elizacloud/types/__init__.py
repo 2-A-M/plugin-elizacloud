@@ -3,6 +3,7 @@ from typing import Literal
 
 # Re-export all cloud types
 from elizaos_plugin_elizacloud.types.cloud import (
+    DEFAULT_CLOUD_CONFIG,
     AgentSnapshot,
     BackupConfig,
     BridgeConfig,
@@ -30,7 +31,6 @@ from elizaos_plugin_elizacloud.types.cloud import (
     CreditSummaryData,
     CreditSummaryResponse,
     CreditTransaction,
-    DEFAULT_CLOUD_CONFIG,
     DeviceAuthData,
     DeviceAuthRequest,
     DeviceAuthResponse,

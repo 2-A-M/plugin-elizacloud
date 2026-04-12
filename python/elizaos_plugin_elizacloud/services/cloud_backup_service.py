@@ -9,8 +9,8 @@ from dataclasses import dataclass
 
 from elizaos_plugin_elizacloud.services.cloud_auth_service import CloudAuthService
 from elizaos_plugin_elizacloud.types.cloud import (
-    AgentSnapshot,
     DEFAULT_CLOUD_CONFIG,
+    AgentSnapshot,
     SnapshotType,
 )
 
