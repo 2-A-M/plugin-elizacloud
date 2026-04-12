@@ -14,6 +14,10 @@ function normalizeContentItems(value: unknown): unknown[] {
 }
 
 function extractTextFromContentItem(value: unknown): string[] {
+  if (typeof value === "string") {
+    return [value];
+  }
+
   const record = asRecord(value);
   if (!record) return [];
 
@@ -62,6 +66,22 @@ function extractTextFromOutputItem(value: unknown): string[] {
   return [];
 }
 
+function extractTextFromChoice(value: unknown): string[] {
+  const record = asRecord(value);
+  if (!record) return [];
+
+  if (typeof record.text === "string" && record.text) {
+    return [record.text];
+  }
+
+  const message = asRecord(record.message);
+  if (!message) {
+    return [];
+  }
+
+  return normalizeContentItems(message.content).flatMap(extractTextFromContentItem);
+}
+
 /**
  * Recover text from Responses-style payloads, tolerating both the documented
  * `output_text` field and the common structured `output` item variants.
@@ -77,6 +97,10 @@ export function extractResponsesOutputText(data: unknown): string {
 
   if (Array.isArray(record.output)) {
     segments.push(...record.output.flatMap(extractTextFromOutputItem));
+  }
+
+  if (Array.isArray(record.choices)) {
+    segments.push(...record.choices.flatMap(extractTextFromChoice));
   }
 
   return segments.join("");

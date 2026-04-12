@@ -153,6 +153,33 @@ describe("elizacloud responses-backed text/object models", () => {
     expect(text).toBe("Hello from top-level output item");
   });
 
+  it("recovers text from chat-completions style choices payloads", async () => {
+    nextBody = JSON.stringify({
+      choices: [
+        {
+          message: {
+            content: [
+              {
+                type: "text",
+                text: "Hello from choices payload",
+              },
+            ],
+          },
+        },
+      ],
+    });
+
+    const text = await handleTextSmall(
+      createRuntime() as never,
+      {
+        prompt: "Say hello",
+        temperature: 0.2,
+      } as never
+    );
+
+    expect(text).toBe("Hello from choices payload");
+  });
+
   it("parses object generation responses from output_text JSON", async () => {
     nextBody = JSON.stringify({
       output_text: '{"status":"ok","count":2}',
