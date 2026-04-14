@@ -21,5 +21,14 @@
     }
   },
   "include": ["./**/*.ts"],
-  "exclude": ["node_modules", "dist", "python", "rust", "**/__tests__/**", "**/*.test.ts"]
+  "exclude": [
+    "node_modules",
+    "dist",
+    "python",
+    "rust",
+    "build.ts",
+    "vitest.config.ts",
+    "**/__tests__/**",
+    "**/*.test.ts"
+  ]
 }
