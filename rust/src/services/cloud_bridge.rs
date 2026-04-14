@@ -17,6 +17,12 @@ pub struct CloudBridgeService {
     _private: (),
 }
 
+impl Default for CloudBridgeService {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl CloudBridgeService {
     pub fn new() -> Self {
         Self { _private: () }

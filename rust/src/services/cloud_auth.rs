@@ -34,8 +34,14 @@ impl CloudAuthService {
             if self.validate_api_key(key).await {
                 self.credentials = Some(CloudCredentials {
                     api_key: key.clone(),
-                    user_id: settings.get("ELIZAOS_CLOUD_USER_ID").cloned().unwrap_or_default(),
-                    organization_id: settings.get("ELIZAOS_CLOUD_ORG_ID").cloned().unwrap_or_default(),
+                    user_id: settings
+                        .get("ELIZAOS_CLOUD_USER_ID")
+                        .cloned()
+                        .unwrap_or_default(),
+                    organization_id: settings
+                        .get("ELIZAOS_CLOUD_ORG_ID")
+                        .cloned()
+                        .unwrap_or_default(),
                     authenticated_at: std::time::SystemTime::now()
                         .duration_since(std::time::UNIX_EPOCH)
                         .unwrap_or_default()
@@ -90,14 +96,20 @@ impl CloudAuthService {
                 .unwrap_or_else(|| "unknown".to_string()),
         });
 
-        let resp = self.client.post_unauthenticated("/device-auth", &body).await?;
+        let resp = self
+            .client
+            .post_unauthenticated("/device-auth", &body)
+            .await?;
         let data = resp
             .get("data")
             .ok_or_else(|| ElizaCloudError::invalid_request("Missing data in response", vec![]))?;
 
         let api_key = data["apiKey"].as_str().unwrap_or_default().to_string();
         let user_id = data["userId"].as_str().unwrap_or_default().to_string();
-        let org_id = data["organizationId"].as_str().unwrap_or_default().to_string();
+        let org_id = data["organizationId"]
+            .as_str()
+            .unwrap_or_default()
+            .to_string();
         let credits = data["credits"].as_f64().unwrap_or(0.0);
         let is_new = data["isNew"].as_bool().unwrap_or(false);
 
@@ -114,7 +126,11 @@ impl CloudAuthService {
         };
         self.credentials = Some(creds.clone());
 
-        let action = if is_new { "New account created" } else { "Authenticated" };
+        let action = if is_new {
+            "New account created"
+        } else {
+            "Authenticated"
+        };
         info!("[CloudAuth] {} (credits: ${:.2})", action, credits);
 
         Ok(creds)
@@ -148,7 +164,9 @@ impl CloudAuthService {
     }
 
     pub fn organization_id(&self) -> Option<&str> {
-        self.credentials.as_ref().map(|c| c.organization_id.as_str())
+        self.credentials
+            .as_ref()
+            .map(|c| c.organization_id.as_str())
     }
 }
 

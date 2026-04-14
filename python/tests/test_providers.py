@@ -91,13 +91,12 @@ class TestCreditBalanceProvider:
     async def test_fetches_balance(self) -> None:
         # Reset cache
         import elizaos_plugin_elizacloud.cloud_providers.credit_balance as mod
+
         mod._cache = None
         mod._cache_at = 0.0
 
         auth = _mock_auth()
-        auth.get_client.return_value.get = AsyncMock(
-            return_value={"data": {"balance": 15.5}}
-        )
+        auth.get_client.return_value.get = AsyncMock(return_value={"data": {"balance": 15.5}})
 
         result = await get_credit_balance(auth=auth)
         assert "15.50" in result["text"]
@@ -107,13 +106,12 @@ class TestCreditBalanceProvider:
     @pytest.mark.asyncio
     async def test_low_balance_warning(self) -> None:
         import elizaos_plugin_elizacloud.cloud_providers.credit_balance as mod
+
         mod._cache = None
         mod._cache_at = 0.0
 
         auth = _mock_auth()
-        auth.get_client.return_value.get = AsyncMock(
-            return_value={"data": {"balance": 1.5}}
-        )
+        auth.get_client.return_value.get = AsyncMock(return_value={"data": {"balance": 1.5}})
 
         result = await get_credit_balance(auth=auth)
         assert "(LOW)" in result["text"]
@@ -122,13 +120,12 @@ class TestCreditBalanceProvider:
     @pytest.mark.asyncio
     async def test_critical_balance(self) -> None:
         import elizaos_plugin_elizacloud.cloud_providers.credit_balance as mod
+
         mod._cache = None
         mod._cache_at = 0.0
 
         auth = _mock_auth()
-        auth.get_client.return_value.get = AsyncMock(
-            return_value={"data": {"balance": 0.3}}
-        )
+        auth.get_client.return_value.get = AsyncMock(return_value={"data": {"balance": 0.3}})
 
         result = await get_credit_balance(auth=auth)
         assert "(CRITICAL)" in result["text"]

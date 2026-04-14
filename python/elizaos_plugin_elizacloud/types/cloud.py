@@ -9,9 +9,7 @@ ContainerStatus = Literal[
     "pending", "building", "deploying", "running", "stopped", "failed", "suspended"
 ]
 
-ContainerBillingStatus = Literal[
-    "active", "warning", "suspended", "shutdown_pending", "archived"
-]
+ContainerBillingStatus = Literal["active", "warning", "suspended", "shutdown_pending", "archived"]
 
 ContainerArchitecture = Literal["arm64", "x86_64"]
 

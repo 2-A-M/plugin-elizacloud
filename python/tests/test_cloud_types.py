@@ -59,17 +59,44 @@ class TestCloudContainer:
         assert c.environment_vars["KEY"] == "value"
 
     def test_container_statuses(self) -> None:
-        for status in ["pending", "building", "deploying", "running", "stopped", "failed", "suspended"]:
+        for status in [
+            "pending",
+            "building",
+            "deploying",
+            "running",
+            "stopped",
+            "failed",
+            "suspended",
+        ]:
             c = CloudContainer(
-                id="x", name="x", project_name="x", description=None,
-                organization_id="x", user_id="x", status=status,  # type: ignore[arg-type]
-                image_tag=None, port=3000, desired_count=1, cpu=1792, memory=1792,
-                architecture="arm64", environment_vars={}, health_check_path="/health",
-                load_balancer_url=None, ecr_repository_uri=None, ecr_image_tag=None,
-                cloudformation_stack_name=None, billing_status="active",
-                total_billed="0", last_deployed_at=None, last_health_check=None,
-                deployment_log=None, error_message=None, metadata={},
-                created_at="", updated_at="",
+                id="x",
+                name="x",
+                project_name="x",
+                description=None,
+                organization_id="x",
+                user_id="x",
+                status=status,  # type: ignore[arg-type]
+                image_tag=None,
+                port=3000,
+                desired_count=1,
+                cpu=1792,
+                memory=1792,
+                architecture="arm64",
+                environment_vars={},
+                health_check_path="/health",
+                load_balancer_url=None,
+                ecr_repository_uri=None,
+                ecr_image_tag=None,
+                cloudformation_stack_name=None,
+                billing_status="active",
+                total_billed="0",
+                last_deployed_at=None,
+                last_health_check=None,
+                deployment_log=None,
+                error_message=None,
+                metadata={},
+                created_at="",
+                updated_at="",
             )
             assert c.status == status
 
@@ -87,7 +114,9 @@ class TestCreateContainerRequest:
 
     def test_optional_fields_default_none(self) -> None:
         req = CreateContainerRequest(
-            name="a", project_name="b", ecr_image_uri="c",
+            name="a",
+            project_name="b",
+            ecr_image_uri="c",
         )
         assert req.description is None
         assert req.port is None

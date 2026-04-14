@@ -37,9 +37,7 @@ async def get_cloud_status(
     connected = bridge_svc.get_connected_container_ids() if bridge_svc else []
 
     running = len([c for c in containers if c.status == "running"])
-    deploying = len(
-        [c for c in containers if c.status in ("pending", "building", "deploying")]
-    )
+    deploying = len([c for c in containers if c.status in ("pending", "building", "deploying")])
 
     summaries: list[ContainerSummary] = [
         ContainerSummary(

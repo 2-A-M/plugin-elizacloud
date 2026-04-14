@@ -229,7 +229,7 @@ describe("container deployment polling simulation", () => {
       interval = Math.min(interval * 1.5, 500);
     }
 
-    expect(finalContainer).not.toBeNull();
+    expect(finalContainer === null).toBe(false);
     expect(finalContainer?.status).toBe("running");
     expect(finalContainer?.load_balancer_url).toBe("http://lb.example.com");
     expect(callCount).toBe(4); // pending, building, deploying, running

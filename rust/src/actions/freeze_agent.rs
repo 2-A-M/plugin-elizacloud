@@ -35,10 +35,7 @@ pub async fn handle_freeze_agent(
     let mut snapshot_id: Option<String> = None;
     if let Some(backup) = backup_svc {
         let mut metadata = HashMap::new();
-        metadata.insert(
-            "trigger".to_string(),
-            serde_json::json!("user-freeze"),
-        );
+        metadata.insert("trigger".to_string(), serde_json::json!("user-freeze"));
         metadata.insert(
             "containerName".to_string(),
             serde_json::json!(container.name),
@@ -56,7 +53,9 @@ pub async fn handle_freeze_agent(
         let _ = bridge.disconnect(&container_id).await;
     }
 
-    container_svc.delete_container(client, &container_id).await?;
+    container_svc
+        .delete_container(client, &container_id)
+        .await?;
 
     Ok(ActionResult::ok(
         format!("Agent \"{}\" frozen", container.name),

@@ -16,10 +16,7 @@ logger = logging.getLogger("elizacloud.bridge")
 
 BridgeMessageHandler = Callable[[BridgeMessage], None]
 
-_NOT_IMPLEMENTED_MSG = (
-    "CloudBridgeService requires a WebSocket backend. "
-    "See docs for setup."
-)
+_NOT_IMPLEMENTED_MSG = "CloudBridgeService requires a WebSocket backend. See docs for setup."
 
 
 class CloudBridgeService:

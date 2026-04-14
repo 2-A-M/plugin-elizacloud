@@ -21,13 +21,15 @@ logger = logging.getLogger("elizacloud.auth")
 
 
 def _derive_device_id() -> str:
-    raw = ":".join([
-        socket.gethostname(),
-        platform.system().lower(),
-        platform.machine(),
-        str(os.cpu_count() or 1),
-        platform.processor() or "unknown",
-    ])
+    raw = ":".join(
+        [
+            socket.gethostname(),
+            platform.system().lower(),
+            platform.machine(),
+            str(os.cpu_count() or 1),
+            platform.processor() or "unknown",
+        ]
+    )
     return hashlib.sha256(raw.encode()).hexdigest()
 
 
@@ -104,12 +106,15 @@ class CloudAuthService:
 
         logger.info("[CloudAuth] Authenticating device (platform=%s)", plat)
 
-        resp = await self._client.post_unauthenticated("/device-auth", {
-            "deviceId": device_id,
-            "platform": plat,
-            "appVersion": app_version,
-            "deviceName": socket.gethostname(),
-        })
+        resp = await self._client.post_unauthenticated(
+            "/device-auth",
+            {
+                "deviceId": device_id,
+                "platform": plat,
+                "appVersion": app_version,
+                "deviceName": socket.gethostname(),
+            },
+        )
 
         data = resp.get("data", {})
         if not isinstance(data, dict):
@@ -117,13 +122,17 @@ class CloudAuthService:
 
         auth_data = DeviceAuthResponse(
             success=bool(resp.get("success")),
-            data=type("DeviceAuthData", (), {
-                "api_key": str(data.get("apiKey", "")),
-                "user_id": str(data.get("userId", "")),
-                "organization_id": str(data.get("organizationId", "")),
-                "credits": float(data.get("credits", 0)),
-                "is_new": bool(data.get("isNew", False)),
-            })(),  # type: ignore[arg-type]
+            data=type(
+                "DeviceAuthData",
+                (),
+                {
+                    "api_key": str(data.get("apiKey", "")),
+                    "user_id": str(data.get("userId", "")),
+                    "organization_id": str(data.get("organizationId", "")),
+                    "credits": float(data.get("credits", 0)),
+                    "is_new": bool(data.get("isNew", False)),
+                },
+            )(),  # type: ignore[arg-type]
         )
 
         self._credentials = CloudCredentials(

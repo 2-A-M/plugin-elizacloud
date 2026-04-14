@@ -13,9 +13,15 @@ pub fn parse_container(data: &serde_json::Value) -> CloudContainer {
     CloudContainer {
         id: data["id"].as_str().unwrap_or_default().to_string(),
         name: data["name"].as_str().unwrap_or_default().to_string(),
-        project_name: data["project_name"].as_str().unwrap_or_default().to_string(),
+        project_name: data["project_name"]
+            .as_str()
+            .unwrap_or_default()
+            .to_string(),
         description: data["description"].as_str().map(String::from),
-        organization_id: data["organization_id"].as_str().unwrap_or_default().to_string(),
+        organization_id: data["organization_id"]
+            .as_str()
+            .unwrap_or_default()
+            .to_string(),
         user_id: data["user_id"].as_str().unwrap_or_default().to_string(),
         status: serde_json::from_value(data["status"].clone()).unwrap_or(ContainerStatus::Pending),
         image_tag: data["image_tag"].as_str().map(String::from),
@@ -53,6 +59,12 @@ pub struct CloudContainerService {
     container_defaults: crate::cloud_types::ContainerDefaults,
 }
 
+impl Default for CloudContainerService {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl CloudContainerService {
     pub fn new() -> Self {
         Self {
@@ -66,7 +78,10 @@ impl CloudContainerService {
         for c in &containers {
             self.tracked.insert(c.id.clone(), c.clone());
         }
-        info!("[CloudContainer] Loaded {} existing container(s)", containers.len());
+        info!(
+            "[CloudContainer] Loaded {} existing container(s)",
+            containers.len()
+        );
         Ok(())
     }
 
@@ -100,7 +115,8 @@ impl CloudContainerService {
         let response: CreateContainerResponse =
             serde_json::from_value(resp).map_err(ElizaCloudError::Json)?;
 
-        self.tracked.insert(response.data.id.clone(), response.data.clone());
+        self.tracked
+            .insert(response.data.id.clone(), response.data.clone());
         info!(
             "[CloudContainer] Created container \"{}\" (id={})",
             request.name, response.data.id
@@ -109,14 +125,10 @@ impl CloudContainerService {
         Ok(response)
     }
 
-    pub async fn list_containers(
-        &self,
-        client: &CloudApiClient,
-    ) -> Result<Vec<CloudContainer>> {
+    pub async fn list_containers(&self, client: &CloudApiClient) -> Result<Vec<CloudContainer>> {
         let resp = client.get("/containers").await?;
         let data = resp.get("data").cloned().unwrap_or(serde_json::json!([]));
-        let containers: Vec<CloudContainer> =
-            serde_json::from_value(data).unwrap_or_default();
+        let containers: Vec<CloudContainer> = serde_json::from_value(data).unwrap_or_default();
         Ok(containers)
     }
 
@@ -129,7 +141,8 @@ impl CloudContainerService {
         let data = resp.get("data").cloned().unwrap_or_default();
         let container: CloudContainer =
             serde_json::from_value(data).map_err(ElizaCloudError::Json)?;
-        self.tracked.insert(container_id.to_string(), container.clone());
+        self.tracked
+            .insert(container_id.to_string(), container.clone());
         Ok(container)
     }
 
@@ -138,7 +151,9 @@ impl CloudContainerService {
         client: &CloudApiClient,
         container_id: &str,
     ) -> Result<()> {
-        client.delete(&format!("/containers/{}", container_id)).await?;
+        client
+            .delete(&format!("/containers/{}", container_id))
+            .await?;
         self.tracked.remove(container_id);
         info!("[CloudContainer] Deleted container {}", container_id);
         Ok(())
@@ -247,6 +262,9 @@ mod tests {
         let c = parse_container(&data);
         assert_eq!(c.status, ContainerStatus::Running);
         assert_eq!(c.port, 8080);
-        assert_eq!(c.load_balancer_url.as_deref(), Some("https://lb.example.com"));
+        assert_eq!(
+            c.load_balancer_url.as_deref(),
+            Some("https://lb.example.com")
+        );
     }
 }

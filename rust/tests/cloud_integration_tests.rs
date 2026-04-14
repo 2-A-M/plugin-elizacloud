@@ -23,7 +23,15 @@ fn test_container_status_serialization() {
     let json = serde_json::to_string(&status).unwrap();
     assert_eq!(json, "\"running\"");
 
-    for s in &["pending", "building", "deploying", "running", "stopped", "failed", "suspended"] {
+    for s in &[
+        "pending",
+        "building",
+        "deploying",
+        "running",
+        "stopped",
+        "failed",
+        "suspended",
+    ] {
         let deser: ContainerStatus = serde_json::from_str(&format!("\"{}\"", s)).unwrap();
         assert_eq!(deser.to_string(), *s);
     }

@@ -74,7 +74,11 @@ pub async fn handle_check_credits(
                     let amount = tx["amount"].as_f64().unwrap_or(0.0);
                     let sign = if amount >= 0.0 { "+" } else { "" };
                     let desc = tx["description"].as_str().unwrap_or("");
-                    let date = tx["created_at"].as_str().unwrap_or("").get(..10).unwrap_or("");
+                    let date = tx["created_at"]
+                        .as_str()
+                        .unwrap_or("")
+                        .get(..10)
+                        .unwrap_or("");
                     lines.push(format!("  {}${:.2} — {} ({})", sign, amount, desc, date));
                 }
             }

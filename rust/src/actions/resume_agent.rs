@@ -3,7 +3,9 @@
 use std::collections::HashMap;
 
 use crate::cloud_api::CloudApiClient;
-use crate::cloud_types::{ActionResult, CloudPluginConfig, CreateContainerRequest, collect_env_vars};
+use crate::cloud_types::{
+    collect_env_vars, ActionResult, CloudPluginConfig, CreateContainerRequest,
+};
 use crate::error::Result;
 use crate::services::{CloudBackupService, CloudBridgeService, CloudContainerService};
 
@@ -26,7 +28,11 @@ pub async fn handle_resume_agent(
 
     let project_name = match options.get("project_name").and_then(|v| v.as_str()) {
         Some(p) if !p.is_empty() => p.to_string(),
-        _ => return Ok(ActionResult::err("Missing required parameter: project_name")),
+        _ => {
+            return Ok(ActionResult::err(
+                "Missing required parameter: project_name",
+            ))
+        }
     };
 
     let defs = CloudPluginConfig::default().container;
@@ -69,7 +75,9 @@ pub async fn handle_resume_agent(
     if let Some(backup) = backup_svc {
         let explicit = options.get("snapshotId").and_then(|v| v.as_str());
         if let Some(snap_id) = explicit {
-            backup.restore_snapshot(client, &container_id, snap_id).await?;
+            backup
+                .restore_snapshot(client, &container_id, snap_id)
+                .await?;
             restored_id = Some(snap_id.to_string());
         } else {
             // Find latest snapshot for this project

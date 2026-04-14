@@ -116,7 +116,8 @@ class TestProvisionFreezeResumeCycle:
         reg.backup.schedule_auto_backup = MagicMock()
 
         provision_result = await handle_provision(
-            reg, options={"name": "my-agent", "project_name": "test-proj"},
+            reg,
+            options={"name": "my-agent", "project_name": "test-proj"},
         )
 
         assert provision_result["success"] is True
@@ -156,7 +157,8 @@ class TestProvisionFreezeResumeCycle:
         reg.bridge.connect = AsyncMock()
 
         resume_result = await handle_resume(
-            reg, options={"name": "my-agent-restored", "project_name": "test-proj"},
+            reg,
+            options={"name": "my-agent-restored", "project_name": "test-proj"},
         )
 
         assert resume_result["success"] is True
@@ -174,9 +176,7 @@ class TestCreditCheckWorkflow:
         """User has plenty of credits and no running containers."""
         reg = _mock_registry()
         assert reg.auth is not None
-        reg.auth.get_client.return_value.get = AsyncMock(
-            return_value={"data": {"balance": 100.0}}
-        )
+        reg.auth.get_client.return_value.get = AsyncMock(return_value={"data": {"balance": 100.0}})
         assert reg.containers is not None
         reg.containers.get_tracked_containers.return_value = []
 
@@ -192,9 +192,7 @@ class TestCreditCheckWorkflow:
         """User has low credits with multiple running containers."""
         reg = _mock_registry()
         assert reg.auth is not None
-        reg.auth.get_client.return_value.get = AsyncMock(
-            return_value={"data": {"balance": 3.0}}
-        )
+        reg.auth.get_client.return_value.get = AsyncMock(return_value={"data": {"balance": 3.0}})
         c1 = _mock_container("c-1", "agent-1", "running")
         c2 = _mock_container("c-2", "agent-2", "running")
         c3 = _mock_container("c-3", "agent-3", "stopped")
@@ -222,27 +220,29 @@ class TestCreditCheckWorkflow:
         reg = _mock_registry()
         assert reg.auth is not None
         mock_client = MagicMock()
-        mock_client.get = AsyncMock(side_effect=[
-            {"data": {"balance": 50.0}},
-            {
-                "data": {
-                    "totalSpent": 50.0,
-                    "totalAdded": 100.0,
-                    "recentTransactions": [
-                        {
-                            "amount": -5.0,
-                            "description": "Container deployment",
-                            "created_at": "2025-01-15",
-                        },
-                        {
-                            "amount": 100.0,
-                            "description": "Credit purchase",
-                            "created_at": "2025-01-01",
-                        },
-                    ],
+        mock_client.get = AsyncMock(
+            side_effect=[
+                {"data": {"balance": 50.0}},
+                {
+                    "data": {
+                        "totalSpent": 50.0,
+                        "totalAdded": 100.0,
+                        "recentTransactions": [
+                            {
+                                "amount": -5.0,
+                                "description": "Container deployment",
+                                "created_at": "2025-01-15",
+                            },
+                            {
+                                "amount": 100.0,
+                                "description": "Credit purchase",
+                                "created_at": "2025-01-01",
+                            },
+                        ],
+                    },
                 },
-            },
-        ])
+            ]
+        )
         reg.auth.get_client.return_value = mock_client
 
         assert reg.containers is not None
@@ -278,7 +278,8 @@ class TestProvisionErrors:
     async def test_provision_unauthenticated(self) -> None:
         reg = _mock_registry(authenticated=False)
         result = await handle_provision(
-            reg, options={"name": "agent", "project_name": "proj"},
+            reg,
+            options={"name": "agent", "project_name": "proj"},
         )
         assert result["success"] is False
 
@@ -286,7 +287,8 @@ class TestProvisionErrors:
     async def test_provision_no_container_service(self) -> None:
         reg = _mock_registry(with_containers=False)
         result = await handle_provision(
-            reg, options={"name": "agent", "project_name": "proj"},
+            reg,
+            options={"name": "agent", "project_name": "proj"},
         )
         assert result["success"] is False
 
@@ -369,12 +371,11 @@ class TestProviderPipeline:
 
         # 2) Credit balance
         import elizaos_plugin_elizacloud.cloud_providers.credit_balance as cb_mod
+
         cb_mod._cache = None
         cb_mod._cache_at = 0.0
 
-        auth.get_client.return_value.get = AsyncMock(
-            return_value={"data": {"balance": 75.0}}
-        )
+        auth.get_client.return_value.get = AsyncMock(return_value={"data": {"balance": 75.0}})
         credit_result = await get_credit_balance(auth=auth)
         assert "75.00" in credit_result["text"]
         assert credit_result["values"]["cloudCredits"] == 75.0
@@ -444,36 +445,40 @@ class TestServiceLifecycle:
         auth._client = MagicMock(spec=CloudApiClient)
 
         # Mock create snapshot
-        auth._client.post = AsyncMock(return_value={
-            "success": True,
-            "data": {
-                "id": "snap-test",
-                "containerId": "c-1",
-                "organizationId": "org-1",
-                "snapshotType": "manual",
-                "storageUrl": "s3://bucket/snap.tar.gz",
-                "sizeBytes": 4096,
-                "agentConfig": {},
-                "metadata": {},
-                "created_at": "2025-01-01",
-            },
-        })
+        auth._client.post = AsyncMock(
+            return_value={
+                "success": True,
+                "data": {
+                    "id": "snap-test",
+                    "containerId": "c-1",
+                    "organizationId": "org-1",
+                    "snapshotType": "manual",
+                    "storageUrl": "s3://bucket/snap.tar.gz",
+                    "sizeBytes": 4096,
+                    "agentConfig": {},
+                    "metadata": {},
+                    "created_at": "2025-01-01",
+                },
+            }
+        )
         await svc.start(auth)
         snap = await svc.create_snapshot("c-1", "manual", {})
         assert snap.id == "snap-test"
 
         # Mock list snapshots
-        auth._client.get = AsyncMock(return_value={
-            "success": True,
-            "data": [
-                {
-                    "id": "snap-test",
-                    "snapshotType": "manual",
-                    "sizeBytes": 4096,
-                    "created_at": "2025-01-01",
-                },
-            ],
-        })
+        auth._client.get = AsyncMock(
+            return_value={
+                "success": True,
+                "data": [
+                    {
+                        "id": "snap-test",
+                        "snapshotType": "manual",
+                        "sizeBytes": 4096,
+                        "created_at": "2025-01-01",
+                    },
+                ],
+            }
+        )
         snaps = await svc.list_snapshots("c-1")
         assert len(snaps) == 1
 
@@ -506,13 +511,12 @@ class TestErrorPropagation:
         """If container creation throws, the exception propagates."""
         reg = _mock_registry()
         assert reg.containers is not None
-        reg.containers.create_container = AsyncMock(
-            side_effect=Exception("Connection refused")
-        )
+        reg.containers.create_container = AsyncMock(side_effect=Exception("Connection refused"))
 
         with pytest.raises(Exception, match="Connection refused"):
             await handle_provision(
-                reg, options={"name": "agent", "project_name": "proj"},
+                reg,
+                options={"name": "agent", "project_name": "proj"},
             )
 
 

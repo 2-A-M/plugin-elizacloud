@@ -126,7 +126,8 @@ class TestProvisionAction:
     async def test_not_authenticated_returns_error(self) -> None:
         reg = _mock_registry(authenticated=False)
         result = await handle_provision(
-            reg, options={"name": "test", "project_name": "proj"},
+            reg,
+            options={"name": "test", "project_name": "proj"},
         )
         assert result["success"] is False
         assert "not authenticated" in str(result.get("error", "")).lower()
@@ -157,7 +158,8 @@ class TestProvisionAction:
         reg.backup.schedule_auto_backup = MagicMock()
 
         result = await handle_provision(
-            reg, options={"name": "my-agent", "project_name": "test-proj"},
+            reg,
+            options={"name": "my-agent", "project_name": "test-proj"},
         )
 
         assert result["success"] is True
@@ -250,7 +252,8 @@ class TestResumeAction:
         reg.bridge.connect = AsyncMock()
 
         result = await handle_resume(
-            reg, options={"name": "restored-agent", "project_name": "proj"},
+            reg,
+            options={"name": "restored-agent", "project_name": "proj"},
         )
         assert result["success"] is True
         assert result.get("data", {}).get("containerId") == "c-resumed"
@@ -264,9 +267,7 @@ class TestCheckCreditsAction:
     async def test_basic_balance_check(self) -> None:
         reg = _mock_registry()
         assert reg.auth is not None
-        reg.auth.get_client.return_value.get = AsyncMock(
-            return_value={"data": {"balance": 42.50}}
-        )
+        reg.auth.get_client.return_value.get = AsyncMock(return_value={"data": {"balance": 42.50}})
         assert reg.containers is not None
         reg.containers.get_tracked_containers.return_value = []
 
@@ -279,9 +280,7 @@ class TestCheckCreditsAction:
     async def test_balance_with_running_containers(self) -> None:
         reg = _mock_registry()
         assert reg.auth is not None
-        reg.auth.get_client.return_value.get = AsyncMock(
-            return_value={"data": {"balance": 10.0}}
-        )
+        reg.auth.get_client.return_value.get = AsyncMock(return_value={"data": {"balance": 10.0}})
         mock_c1 = MagicMock()
         mock_c1.status = "running"
         mock_c2 = MagicMock()
@@ -302,22 +301,24 @@ class TestCheckCreditsAction:
         reg = _mock_registry()
         assert reg.auth is not None
         mock_client = MagicMock()
-        mock_client.get = AsyncMock(side_effect=[
-            {"data": {"balance": 20.0}},
-            {
-                "data": {
-                    "totalSpent": 80.0,
-                    "totalAdded": 100.0,
-                    "recentTransactions": [
-                        {
-                            "amount": -5.0,
-                            "description": "Container deploy",
-                            "created_at": "2025-01-01",
-                        },
-                    ],
+        mock_client.get = AsyncMock(
+            side_effect=[
+                {"data": {"balance": 20.0}},
+                {
+                    "data": {
+                        "totalSpent": 80.0,
+                        "totalAdded": 100.0,
+                        "recentTransactions": [
+                            {
+                                "amount": -5.0,
+                                "description": "Container deploy",
+                                "created_at": "2025-01-01",
+                            },
+                        ],
+                    },
                 },
-            },
-        ])
+            ]
+        )
         reg.auth.get_client.return_value = mock_client
         assert reg.containers is not None
         reg.containers.get_tracked_containers.return_value = []

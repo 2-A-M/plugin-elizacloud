@@ -47,9 +47,7 @@ async def get_container_health(
             id=c.id,
             name=c.name,
             healthy=(
-                c.status == "running"
-                and c.billing_status == "active"
-                and not c.error_message
+                c.status == "running" and c.billing_status == "active" and not c.error_message
             ),
             status=c.status,
             billing=c.billing_status,

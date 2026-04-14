@@ -66,9 +66,7 @@ class CloudApiClient:
         """Send an authenticated DELETE request."""
         return await self._request("DELETE", path)
 
-    async def post_unauthenticated(
-        self, path: str, body: dict[str, object]
-    ) -> dict[str, object]:
+    async def post_unauthenticated(self, path: str, body: dict[str, object]) -> dict[str, object]:
         """POST without auth header — used for device-auth."""
         return await self._request("POST", path, body, skip_auth=True)
 

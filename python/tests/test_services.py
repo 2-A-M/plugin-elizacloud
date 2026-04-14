@@ -52,11 +52,13 @@ class TestCloudAuthService:
     async def test_start_with_valid_api_key(self) -> None:
         svc = CloudAuthService()
         with patch.object(svc, "_validate_api_key", return_value=True):
-            await svc.start({
-                "ELIZAOS_CLOUD_API_KEY": "test-key-123",
-                "ELIZAOS_CLOUD_USER_ID": "user-abc",
-                "ELIZAOS_CLOUD_ORG_ID": "org-def",
-            })
+            await svc.start(
+                {
+                    "ELIZAOS_CLOUD_API_KEY": "test-key-123",
+                    "ELIZAOS_CLOUD_USER_ID": "user-abc",
+                    "ELIZAOS_CLOUD_ORG_ID": "org-def",
+                }
+            )
         assert svc.is_authenticated() is True
         assert svc.get_api_key() == "test-key-123"
         assert svc.get_user_id() == "user-abc"
@@ -125,27 +127,29 @@ class TestCloudContainerService:
     @pytest.mark.asyncio
     async def test_list_containers_parses_response(self) -> None:
         svc, auth = self._make_service()
-        auth._client.get = AsyncMock(return_value={
-            "success": True,
-            "data": [
-                {
-                    "id": "c-1",
-                    "name": "agent-1",
-                    "project_name": "proj-1",
-                    "status": "running",
-                    "port": 3000,
-                    "desired_count": 1,
-                    "cpu": 1792,
-                    "memory": 1792,
-                    "architecture": "arm64",
-                    "environment_vars": {},
-                    "health_check_path": "/health",
-                    "billing_status": "active",
-                    "total_billed": "5.00",
-                    "metadata": {},
-                },
-            ],
-        })
+        auth._client.get = AsyncMock(
+            return_value={
+                "success": True,
+                "data": [
+                    {
+                        "id": "c-1",
+                        "name": "agent-1",
+                        "project_name": "proj-1",
+                        "status": "running",
+                        "port": 3000,
+                        "desired_count": 1,
+                        "cpu": 1792,
+                        "memory": 1792,
+                        "architecture": "arm64",
+                        "environment_vars": {},
+                        "health_check_path": "/health",
+                        "billing_status": "active",
+                        "total_billed": "5.00",
+                        "metadata": {},
+                    },
+                ],
+            }
+        )
         svc._auth_service = auth
         containers = await svc.list_containers()
         assert len(containers) == 1
@@ -155,34 +159,36 @@ class TestCloudContainerService:
     @pytest.mark.asyncio
     async def test_create_container_request_construction(self) -> None:
         svc, auth = self._make_service()
-        auth._client.post = AsyncMock(return_value={
-            "success": True,
-            "data": {
-                "id": "c-new",
-                "name": "new-agent",
-                "project_name": "proj",
-                "status": "pending",
-                "port": 3000,
-                "desired_count": 1,
-                "cpu": 1792,
-                "memory": 1792,
-                "architecture": "arm64",
-                "environment_vars": {},
-                "health_check_path": "/health",
-                "billing_status": "active",
-                "total_billed": "0",
-                "metadata": {},
-            },
-            "message": "Created",
-            "creditsDeducted": 5.0,
-            "creditsRemaining": 95.0,
-            "stackName": "stack-new",
-            "polling": {
-                "endpoint": "/containers/c-new",
-                "intervalMs": 10000,
-                "expectedDurationMs": 600000,
-            },
-        })
+        auth._client.post = AsyncMock(
+            return_value={
+                "success": True,
+                "data": {
+                    "id": "c-new",
+                    "name": "new-agent",
+                    "project_name": "proj",
+                    "status": "pending",
+                    "port": 3000,
+                    "desired_count": 1,
+                    "cpu": 1792,
+                    "memory": 1792,
+                    "architecture": "arm64",
+                    "environment_vars": {},
+                    "health_check_path": "/health",
+                    "billing_status": "active",
+                    "total_billed": "0",
+                    "metadata": {},
+                },
+                "message": "Created",
+                "creditsDeducted": 5.0,
+                "creditsRemaining": 95.0,
+                "stackName": "stack-new",
+                "polling": {
+                    "endpoint": "/containers/c-new",
+                    "intervalMs": 10000,
+                    "expectedDurationMs": 600000,
+                },
+            }
+        )
         svc._auth_service = auth
 
         from elizaos_plugin_elizacloud.types.cloud import CreateContainerRequest
@@ -232,14 +238,16 @@ class TestParseContainer:
         assert c.status == "pending"  # default
 
     def test_full_data(self) -> None:
-        c = _parse_container({
-            "id": "c-2",
-            "name": "agent",
-            "project_name": "proj",
-            "status": "running",
-            "port": 8080,
-            "load_balancer_url": "https://lb.example.com",
-        })
+        c = _parse_container(
+            {
+                "id": "c-2",
+                "name": "agent",
+                "project_name": "proj",
+                "status": "running",
+                "port": 8080,
+                "load_balancer_url": "https://lb.example.com",
+            }
+        )
         assert c.status == "running"
         assert c.port == 8080
         assert c.load_balancer_url == "https://lb.example.com"
@@ -322,20 +330,22 @@ class TestCloudBackupService:
     @pytest.mark.asyncio
     async def test_create_snapshot_parses_response(self) -> None:
         svc, auth = self._make_service()
-        auth._client.post = AsyncMock(return_value={
-            "success": True,
-            "data": {
-                "id": "snap-1",
-                "containerId": "c-1",
-                "organizationId": "org-1",
-                "snapshotType": "manual",
-                "storageUrl": "s3://bucket/snap-1.tar.gz",
-                "sizeBytes": 2048,
-                "agentConfig": {},
-                "metadata": {"trigger": "test"},
-                "created_at": "2025-01-01T00:00:00Z",
-            },
-        })
+        auth._client.post = AsyncMock(
+            return_value={
+                "success": True,
+                "data": {
+                    "id": "snap-1",
+                    "containerId": "c-1",
+                    "organizationId": "org-1",
+                    "snapshotType": "manual",
+                    "storageUrl": "s3://bucket/snap-1.tar.gz",
+                    "sizeBytes": 2048,
+                    "agentConfig": {},
+                    "metadata": {"trigger": "test"},
+                    "created_at": "2025-01-01T00:00:00Z",
+                },
+            }
+        )
         await svc.start(auth)
 
         snap = await svc.create_snapshot("c-1", "manual", {"trigger": "test"})
@@ -345,13 +355,25 @@ class TestCloudBackupService:
     @pytest.mark.asyncio
     async def test_list_snapshots(self) -> None:
         svc, auth = self._make_service()
-        auth._client.get = AsyncMock(return_value={
-            "success": True,
-            "data": [
-                {"id": "s1", "snapshotType": "auto", "sizeBytes": 100, "created_at": "2025-01-01"},
-                {"id": "s2", "snapshotType": "manual", "sizeBytes": 200, "created_at": "2025-01-02"},
-            ],
-        })
+        auth._client.get = AsyncMock(
+            return_value={
+                "success": True,
+                "data": [
+                    {
+                        "id": "s1",
+                        "snapshotType": "auto",
+                        "sizeBytes": 100,
+                        "created_at": "2025-01-01",
+                    },
+                    {
+                        "id": "s2",
+                        "snapshotType": "manual",
+                        "sizeBytes": 200,
+                        "created_at": "2025-01-02",
+                    },
+                ],
+            }
+        )
         await svc.start(auth)
 
         snaps = await svc.list_snapshots("c-1")
@@ -391,13 +413,15 @@ class TestBackupHelpers:
         assert _format_bytes(2048) == "2.0 KB"
 
     def test_parse_snapshot(self) -> None:
-        snap = _parse_snapshot({
-            "id": "s-1",
-            "containerId": "c-1",
-            "snapshotType": "auto",
-            "sizeBytes": 1024,
-            "created_at": "2025-01-01",
-        })
+        snap = _parse_snapshot(
+            {
+                "id": "s-1",
+                "containerId": "c-1",
+                "snapshotType": "auto",
+                "sizeBytes": 1024,
+                "created_at": "2025-01-01",
+            }
+        )
         assert snap.id == "s-1"
         assert snap.container_id == "c-1"
         assert snap.snapshot_type == "auto"

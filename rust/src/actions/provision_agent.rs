@@ -4,8 +4,7 @@ use std::collections::HashMap;
 
 use crate::cloud_api::CloudApiClient;
 use crate::cloud_types::{
-    ActionResult, CloudPluginConfig, CreateContainerRequest,
-    collect_env_vars,
+    collect_env_vars, ActionResult, CloudPluginConfig, CreateContainerRequest,
 };
 use crate::error::Result;
 use crate::services::{CloudBackupService, CloudBridgeService, CloudContainerService};
@@ -43,7 +42,11 @@ pub async fn handle_provision_agent(
 
     let project_name = match params.get("project_name") {
         Some(p) if !p.is_empty() => p.clone(),
-        _ => return Ok(ActionResult::err("Missing required parameter: project_name")),
+        _ => {
+            return Ok(ActionResult::err(
+                "Missing required parameter: project_name",
+            ))
+        }
     };
 
     let defs = CloudPluginConfig::default().container;

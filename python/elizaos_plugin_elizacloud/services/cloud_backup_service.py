@@ -151,10 +151,14 @@ class CloudBackupService:
                 await asyncio.sleep(interval_s)
                 try:
                     logger.debug("[CloudBackup] Running auto-backup for %s", container_id)
-                    await self.create_snapshot(container_id, "auto", {
-                        "trigger": "scheduled",
-                        "scheduledIntervalMs": interval,
-                    })
+                    await self.create_snapshot(
+                        container_id,
+                        "auto",
+                        {
+                            "trigger": "scheduled",
+                            "scheduledIntervalMs": interval,
+                        },
+                    )
                     await self._prune_snapshots(container_id)
                 except Exception as exc:
                     logger.error(
@@ -186,10 +190,14 @@ class CloudBackupService:
     async def create_pre_eviction_snapshot(self, container_id: str) -> AgentSnapshot:
         """Create a pre-eviction snapshot before billing shutdown."""
         logger.info("[CloudBackup] Creating pre-eviction snapshot for %s", container_id)
-        return await self.create_snapshot(container_id, "pre-eviction", {
-            "trigger": "billing-eviction",
-            "createdAt": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-        })
+        return await self.create_snapshot(
+            container_id,
+            "pre-eviction",
+            {
+                "trigger": "billing-eviction",
+                "createdAt": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+            },
+        )
 
     # ─── Snapshot Pruning ──────────────────────────────────────────────────
 
@@ -201,7 +209,7 @@ class CloudBackupService:
             reverse=True,
         )
 
-        excess = auto_snapshots[self._max_snapshots:]
+        excess = auto_snapshots[self._max_snapshots :]
         if not excess:
             return
 

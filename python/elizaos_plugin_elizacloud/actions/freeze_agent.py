@@ -69,10 +69,14 @@ async def handle_freeze(
     # Snapshot → disconnect → stop
     snapshot_id: str | None = None
     if backup:
-        snap = await backup.create_snapshot(container_id, "manual", {
-            "trigger": "user-freeze",
-            "containerName": container.name,
-        })
+        snap = await backup.create_snapshot(
+            container_id,
+            "manual",
+            {
+                "trigger": "user-freeze",
+                "containerName": container.name,
+            },
+        )
         snapshot_id = snap.id
         backup.cancel_auto_backup(container_id)
 

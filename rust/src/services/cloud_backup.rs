@@ -9,7 +9,10 @@ pub fn parse_snapshot(data: &serde_json::Value) -> AgentSnapshot {
     AgentSnapshot {
         id: data["id"].as_str().unwrap_or_default().to_string(),
         container_id: data["containerId"].as_str().unwrap_or_default().to_string(),
-        organization_id: data["organizationId"].as_str().unwrap_or_default().to_string(),
+        organization_id: data["organizationId"]
+            .as_str()
+            .unwrap_or_default()
+            .to_string(),
         snapshot_type: serde_json::from_value(data["snapshotType"].clone())
             .unwrap_or(SnapshotType::Manual),
         storage_url: data["storageUrl"].as_str().unwrap_or_default().to_string(),
@@ -37,6 +40,12 @@ pub struct CloudBackupService {
     auto_backups: HashMap<String, bool>,
     /// Maximum number of auto snapshots to keep per container.
     pub max_snapshots: u32,
+}
+
+impl Default for CloudBackupService {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl CloudBackupService {
@@ -99,8 +108,7 @@ impl CloudBackupService {
             .await?;
 
         let data = resp.get("data").cloned().unwrap_or(serde_json::json!([]));
-        let snapshots: Vec<AgentSnapshot> =
-            serde_json::from_value(data).unwrap_or_default();
+        let snapshots: Vec<AgentSnapshot> = serde_json::from_value(data).unwrap_or_default();
         Ok(snapshots)
     }
 
@@ -139,7 +147,10 @@ impl CloudBackupService {
 
     pub fn schedule_auto_backup(&mut self, container_id: &str) {
         if self.auto_backups.contains_key(container_id) {
-            debug!("[CloudBackup] Auto-backup already scheduled for {}", container_id);
+            debug!(
+                "[CloudBackup] Auto-backup already scheduled for {}",
+                container_id
+            );
             return;
         }
         self.auto_backups.insert(container_id.to_string(), true);

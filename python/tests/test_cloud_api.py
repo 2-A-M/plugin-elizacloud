@@ -183,7 +183,9 @@ class TestCloudApiClient:
             await client.post_unauthenticated("/device-auth", {"deviceId": "abc"})
 
         call_kwargs = mock_instance.request.call_args
-        headers = call_kwargs[1].get("headers") or call_kwargs[0][2] if len(call_kwargs[0]) > 2 else {}
+        headers = (
+            call_kwargs[1].get("headers") or call_kwargs[0][2] if len(call_kwargs[0]) > 2 else {}
+        )
         # Auth header should not be present for unauthenticated requests
         if isinstance(headers, dict):
             assert "Authorization" not in headers
@@ -205,6 +207,7 @@ class TestForwardedSettings:
 
     def test_collect_from_env(self) -> None:
         import os
+
         os.environ["ELIZAOS_CLOUD_API_KEY"] = "test-env-key"
         try:
             result = collect_env_vars()
@@ -214,6 +217,7 @@ class TestForwardedSettings:
 
     def test_settings_override_env(self) -> None:
         import os
+
         os.environ["OPENAI_API_KEY"] = "env-key"
         try:
             result = collect_env_vars({"OPENAI_API_KEY": "settings-key"})

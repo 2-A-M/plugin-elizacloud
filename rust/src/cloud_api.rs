@@ -92,10 +92,12 @@ impl CloudApiClient {
             "GET" => self.client.get(&url),
             "POST" => self.client.post(&url),
             "DELETE" => self.client.delete(&url),
-            _ => return Err(ElizaCloudError::invalid_request(
-                format!("Unsupported HTTP method: {}", method),
-                vec![],
-            )),
+            _ => {
+                return Err(ElizaCloudError::invalid_request(
+                    format!("Unsupported HTTP method: {}", method),
+                    vec![],
+                ))
+            }
         };
 
         request = request.header("Content-Type", "application/json");
@@ -131,7 +133,11 @@ impl CloudApiClient {
             if !status.is_success() {
                 return Err(ElizaCloudError::Api {
                     status: status.as_u16(),
-                    message: format!("HTTP {}: {}", status.as_u16(), status.canonical_reason().unwrap_or("Unknown")),
+                    message: format!(
+                        "HTTP {}: {}",
+                        status.as_u16(),
+                        status.canonical_reason().unwrap_or("Unknown")
+                    ),
                     body: None,
                 });
             }
@@ -139,7 +145,8 @@ impl CloudApiClient {
         }
 
         let body_text = response.text().await?;
-        let body: serde_json::Value = serde_json::from_str(&body_text).map_err(ElizaCloudError::Json)?;
+        let body: serde_json::Value =
+            serde_json::from_str(&body_text).map_err(ElizaCloudError::Json)?;
 
         if !status.is_success() {
             let error_str = body
