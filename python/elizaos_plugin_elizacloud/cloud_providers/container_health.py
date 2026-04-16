@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TypedDict
+from typing import TypedDict, cast
 
 from elizaos_plugin_elizacloud.services.cloud_auth_service import CloudAuthService
 from elizaos_plugin_elizacloud.services.cloud_container_service import CloudContainerService
@@ -18,6 +18,12 @@ class HealthReport(TypedDict):
     healthy: bool
     status: str
     billing: str
+
+
+def _read_attr(container: object, name: str, default: object = None) -> object:
+    if hasattr(container, "__dict__") and name not in vars(container):
+        return default
+    return getattr(container, name, default)
 
 
 async def get_container_health(
@@ -44,13 +50,15 @@ async def get_container_health(
     # and there is no recorded error message.
     reports: list[HealthReport] = [
         HealthReport(
-            id=c.id,
-            name=c.name,
+            id=str(_read_attr(c, "id", "")),
+            name=str(_read_attr(c, "name", "")),
             healthy=(
-                c.status == "running" and c.billing_status == "active" and not c.error_message
+                _read_attr(c, "status") == "running"
+                and _read_attr(c, "billing_status", "active") == "active"
+                and _read_attr(c, "error_message") in (None, "")
             ),
-            status=c.status,
-            billing=c.billing_status,
+            status=str(_read_attr(c, "status", "")),
+            billing=str(_read_attr(c, "billing_status", "")),
         )
         for c in running
     ]
@@ -65,13 +73,15 @@ async def get_container_health(
         ],
     ]
 
+    data: dict[str, object] = {"reports": cast(object, reports)}
+
     return ProviderResult(
         text="\n".join(lines),
         values={
             "healthyContainers": healthy_count,
             "unhealthyContainers": len(reports) - healthy_count,
         },
-        data={"reports": reports},  # type: ignore[typeddict-item]
+        data=data,
     )
 
 

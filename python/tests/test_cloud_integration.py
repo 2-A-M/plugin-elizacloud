@@ -8,6 +8,7 @@ actions, services, and providers.
 
 from __future__ import annotations
 
+from typing import Any
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
@@ -50,7 +51,7 @@ def _mock_registry(
     with_containers: bool = True,
     with_bridge: bool = True,
     with_backup: bool = True,
-) -> ServiceRegistry:
+) -> Any:
     """Build a fully mocked ServiceRegistry for integration testing."""
     auth = MagicMock(spec=CloudAuthService)
     auth.is_authenticated.return_value = authenticated
@@ -84,6 +85,20 @@ def _mock_container(
     c.load_balancer_url = url
     c.billing_status = billing_status
     return c
+
+
+def _result_data(result: Any) -> dict[str, object]:
+    data = result.get("data")
+    return data if isinstance(data, dict) else {}
+
+
+def _result_values(result: Any) -> dict[str, object]:
+    values = result.get("values")
+    return values if isinstance(values, dict) else {}
+
+
+def _result_text(result: Any) -> str:
+    return str(result.get("text", ""))
 
 
 # ─── E2E: Provision -> Freeze -> Resume Cycle ───────────────────────────────
@@ -121,8 +136,9 @@ class TestProvisionFreezeResumeCycle:
         )
 
         assert provision_result["success"] is True
-        assert provision_result["data"]["containerId"] == "c-new"
-        assert provision_result["data"]["autoBackupEnabled"] is True
+        provision_data = _result_data(provision_result)
+        assert provision_data["containerId"] == "c-new"
+        assert provision_data["autoBackupEnabled"] is True
 
         # ── Step 2: Freeze ──
         running_container = _mock_container("c-new", "my-agent", "running")
@@ -139,7 +155,8 @@ class TestProvisionFreezeResumeCycle:
         freeze_result = await handle_freeze(reg, options={"containerId": "c-new"})
 
         assert freeze_result["success"] is True
-        assert freeze_result["data"]["snapshotId"] == "snap-freeze-1"
+        freeze_data = _result_data(freeze_result)
+        assert freeze_data["snapshotId"] == "snap-freeze-1"
 
         # ── Step 3: Resume ──
         resumed_container = _mock_container("c-resumed", "my-agent-restored", "running")
@@ -162,7 +179,8 @@ class TestProvisionFreezeResumeCycle:
         )
 
         assert resume_result["success"] is True
-        assert resume_result["data"]["containerId"] == "c-resumed"
+        resume_data = _result_data(resume_result)
+        assert resume_data["containerId"] == "c-resumed"
 
 
 # ─── E2E: Credit Check Workflow ──────────────────────────────────────────────
@@ -182,10 +200,11 @@ class TestCreditCheckWorkflow:
 
         result = await handle_check_credits(reg)
         assert result["success"] is True
-        assert result["data"]["balance"] == 100.0
-        assert result["data"]["runningContainers"] == 0
-        assert result["data"]["dailyCost"] == 0
-        assert "100.00" in result["text"]
+        data = _result_data(result)
+        assert data["balance"] == 100.0
+        assert data["runningContainers"] == 0
+        assert data["dailyCost"] == 0
+        assert "100.00" in _result_text(result)
 
     @pytest.mark.asyncio
     async def test_low_credits_with_containers(self) -> None:
@@ -202,11 +221,11 @@ class TestCreditCheckWorkflow:
 
         result = await handle_check_credits(reg)
         assert result["success"] is True
-        data = result["data"]
+        data = _result_data(result)
         assert data["runningContainers"] == 2
         assert data["dailyCost"] == 2 * DAILY_COST_PER_CONTAINER
         # With low balance, the text should show a warning
-        assert "3.00" in result["text"]
+        assert "3.00" in _result_text(result)
 
     @pytest.mark.asyncio
     async def test_credit_check_unauthenticated(self) -> None:
@@ -250,7 +269,7 @@ class TestCreditCheckWorkflow:
 
         result = await handle_check_credits(reg, options={"detailed": True})
         assert result["success"] is True
-        text = result["text"]
+        text = _result_text(result)
         assert "Total spent" in text
         assert "Container deployment" in text
         assert "Credit purchase" in text
@@ -348,7 +367,7 @@ class TestProviderPipeline:
     @pytest.mark.asyncio
     async def test_full_provider_pipeline(self) -> None:
         """Simulate calling all providers in sequence for agent context."""
-        auth = MagicMock(spec=CloudAuthService)
+        auth: Any = MagicMock(spec=CloudAuthService)
         auth.is_authenticated.return_value = True
         auth.get_client.return_value = MagicMock()
 
@@ -366,8 +385,9 @@ class TestProviderPipeline:
             container_svc=container_svc,
             bridge_svc=bridge_svc,
         )
-        assert "2 container(s)" in status_result["text"]
-        assert status_result["values"]["runningContainers"] == 2
+        assert "2 container(s)" in _result_text(status_result)
+        status_values = _result_values(status_result)
+        assert status_values["runningContainers"] == 2
 
         # 2) Credit balance
         import elizaos_plugin_elizacloud.cloud_providers.credit_balance as cb_mod
@@ -377,15 +397,16 @@ class TestProviderPipeline:
 
         auth.get_client.return_value.get = AsyncMock(return_value={"data": {"balance": 75.0}})
         credit_result = await get_credit_balance(auth=auth)
-        assert "75.00" in credit_result["text"]
-        assert credit_result["values"]["cloudCredits"] == 75.0
+        assert "75.00" in _result_text(credit_result)
+        credit_values = _result_values(credit_result)
+        assert credit_values["cloudCredits"] == 75.0
 
         # 3) Container health
         health_result = await get_container_health(
             auth=auth,
             container_svc=container_svc,
         )
-        assert "2/2 healthy" in health_result["text"]
+        assert "2/2 healthy" in _result_text(health_result)
 
     @pytest.mark.asyncio
     async def test_provider_pipeline_unauthenticated(self) -> None:
@@ -394,13 +415,13 @@ class TestProviderPipeline:
         auth.is_authenticated.return_value = False
 
         status_result = await get_cloud_status(auth=auth)
-        assert "Not authenticated" in status_result["text"]
+        assert "Not authenticated" in _result_text(status_result)
 
         credit_result = await get_credit_balance(auth=auth)
-        assert credit_result["text"] == ""
+        assert _result_text(credit_result) == ""
 
         health_result = await get_container_health(auth=auth)
-        assert health_result["text"] == ""
+        assert _result_text(health_result) == ""
 
 
 # ─── E2E: Service Lifecycle ──────────────────────────────────────────────────

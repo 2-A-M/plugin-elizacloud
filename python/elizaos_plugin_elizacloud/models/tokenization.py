@@ -26,7 +26,7 @@ async def handle_tokenizer_encode(
 ) -> list[int]:
     model_name = _get_model_name(config, params.model_type)
     encoding = _get_encoding(model_name)
-    return encoding.encode(params.prompt)
+    return [int(token) for token in encoding.encode(params.prompt)]
 
 
 async def handle_tokenizer_decode(
@@ -35,4 +35,5 @@ async def handle_tokenizer_decode(
 ) -> str:
     model_name = _get_model_name(config, params.model_type)
     encoding = _get_encoding(model_name)
-    return encoding.decode(params.tokens)
+    decoded = encoding.decode(params.tokens)
+    return decoded if isinstance(decoded, str) else str(decoded)

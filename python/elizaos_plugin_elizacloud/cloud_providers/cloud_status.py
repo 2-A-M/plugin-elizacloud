@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TypedDict
+from typing import TypedDict, cast
 
 from elizaos_plugin_elizacloud.services.cloud_auth_service import CloudAuthService
 from elizaos_plugin_elizacloud.services.cloud_bridge_service import CloudBridgeService
@@ -61,6 +61,8 @@ async def get_cloud_status(
         ],
     ]
 
+    data: dict[str, object] = {"containers": cast(object, summaries)}
+
     return ProviderResult(
         text="\n".join(lines),
         values={
@@ -69,7 +71,7 @@ async def get_cloud_status(
             "runningContainers": running,
             "deployingContainers": deploying,
         },
-        data={"containers": summaries},  # type: ignore[typeddict-item]
+        data=data,
     )
 
 

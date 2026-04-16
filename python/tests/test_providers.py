@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from typing import Any
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
@@ -17,23 +18,28 @@ from elizaos_plugin_elizacloud.services.cloud_bridge_service import CloudBridgeS
 from elizaos_plugin_elizacloud.services.cloud_container_service import CloudContainerService
 
 
-def _mock_auth(authenticated: bool = True) -> CloudAuthService:
+def _mock_auth(authenticated: bool = True) -> Any:
     auth = MagicMock(spec=CloudAuthService)
     auth.is_authenticated.return_value = authenticated
     auth.get_client.return_value = MagicMock()
     return auth
 
 
-def _mock_container_svc(containers: list[MagicMock] | None = None) -> CloudContainerService:
+def _mock_container_svc(containers: list[MagicMock] | None = None) -> Any:
     svc = MagicMock(spec=CloudContainerService)
     svc.get_tracked_containers.return_value = containers or []
     return svc
 
 
-def _mock_bridge_svc(connected: list[str] | None = None) -> CloudBridgeService:
+def _mock_bridge_svc(connected: list[str] | None = None) -> Any:
     svc = MagicMock(spec=CloudBridgeService)
     svc.get_connected_container_ids.return_value = connected or []
     return svc
+
+
+def _result_values(result: Any) -> dict[str, object]:
+    values = result.get("values")
+    return values if isinstance(values, dict) else {}
 
 
 # ─── Cloud Status Provider ───────────────────────────────────────────────────
@@ -44,7 +50,8 @@ class TestCloudStatusProvider:
     async def test_unauthenticated(self) -> None:
         result = await get_cloud_status(auth=_mock_auth(False))
         assert "Not authenticated" in result["text"]
-        assert result.get("values", {}).get("cloudAuthenticated") is False
+        values = _result_values(result)
+        assert values.get("cloudAuthenticated") is False
 
     @pytest.mark.asyncio
     async def test_no_containers(self) -> None:
@@ -54,7 +61,8 @@ class TestCloudStatusProvider:
             bridge_svc=_mock_bridge_svc([]),
         )
         assert "0 container(s)" in result["text"]
-        assert result.get("values", {}).get("runningContainers") == 0
+        values = _result_values(result)
+        assert values.get("runningContainers") == 0
 
     @pytest.mark.asyncio
     async def test_with_containers(self) -> None:
@@ -72,7 +80,7 @@ class TestCloudStatusProvider:
             bridge_svc=_mock_bridge_svc(["c-1"]),
         )
         assert "2 container(s)" in result["text"]
-        values = result.get("values", {})
+        values = _result_values(result)
         assert values.get("runningContainers") == 1
         assert values.get("deployingContainers") == 1
         assert "(bridged)" in result["text"]
@@ -100,8 +108,9 @@ class TestCreditBalanceProvider:
 
         result = await get_credit_balance(auth=auth)
         assert "15.50" in result["text"]
-        assert result.get("values", {}).get("cloudCredits") == 15.5
-        assert result.get("values", {}).get("cloudCreditsLow") is False
+        values = _result_values(result)
+        assert values.get("cloudCredits") == 15.5
+        assert values.get("cloudCreditsLow") is False
 
     @pytest.mark.asyncio
     async def test_low_balance_warning(self) -> None:
@@ -115,7 +124,8 @@ class TestCreditBalanceProvider:
 
         result = await get_credit_balance(auth=auth)
         assert "(LOW)" in result["text"]
-        assert result.get("values", {}).get("cloudCreditsLow") is True
+        values = _result_values(result)
+        assert values.get("cloudCreditsLow") is True
 
     @pytest.mark.asyncio
     async def test_critical_balance(self) -> None:
@@ -129,12 +139,13 @@ class TestCreditBalanceProvider:
 
         result = await get_credit_balance(auth=auth)
         assert "(CRITICAL)" in result["text"]
-        assert result.get("values", {}).get("cloudCreditsCritical") is True
+        values = _result_values(result)
+        assert values.get("cloudCreditsCritical") is True
 
     def test_format_balance_helper(self) -> None:
         result = _format_balance(50.0)
         assert "$50.00" in result["text"]
-        assert result["values"]["cloudCreditsLow"] is False
+        assert _result_values(result)["cloudCreditsLow"] is False
 
         result = _format_balance(0.1)
         assert "(CRITICAL)" in result["text"]
@@ -169,7 +180,8 @@ class TestContainerHealthProvider:
             container_svc=_mock_container_svc([c1, c2]),
         )
         assert "2/2 healthy" in result["text"]
-        assert result.get("values", {}).get("healthyContainers") == 2
+        values = _result_values(result)
+        assert values.get("healthyContainers") == 2
 
     @pytest.mark.asyncio
     async def test_unhealthy_container(self) -> None:
@@ -183,5 +195,6 @@ class TestContainerHealthProvider:
             container_svc=_mock_container_svc([c1, c2]),
         )
         assert "1/2 healthy" in result["text"]
-        assert result.get("values", {}).get("unhealthyContainers") == 1
+        values = _result_values(result)
+        assert values.get("unhealthyContainers") == 1
         assert "UNHEALTHY" in result["text"]

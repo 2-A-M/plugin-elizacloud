@@ -6,6 +6,7 @@ variables. Used by both provision_agent and resume_agent actions.
 from __future__ import annotations
 
 import os
+from collections.abc import Mapping
 
 FORWARDED_SETTINGS: list[str] = [
     "OPENAI_API_KEY",
@@ -19,7 +20,7 @@ FORWARDED_SETTINGS: list[str] = [
 ]
 
 
-def collect_env_vars(settings: dict[str, str | None] | None = None) -> dict[str, str]:
+def collect_env_vars(settings: Mapping[str, str | None] | None = None) -> dict[str, str]:
     """Collect forwarded settings from runtime settings dict or os.environ."""
     result: dict[str, str] = {}
     for key in FORWARDED_SETTINGS:

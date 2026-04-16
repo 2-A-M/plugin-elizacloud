@@ -5,6 +5,8 @@ from __future__ import annotations
 import logging
 
 from elizaos_plugin_elizacloud.actions.provision_agent import ActionResult, ServiceRegistry
+from elizaos_plugin_elizacloud.services.cloud_backup_service import CloudBackupService
+from elizaos_plugin_elizacloud.services.cloud_container_service import CloudContainerService
 from elizaos_plugin_elizacloud.types.cloud import (
     DEFAULT_CLOUD_CONFIG,
     AgentSnapshot,
@@ -28,8 +30,8 @@ def _extract_params(
 
 
 async def _find_latest_project_snapshot(
-    backup,  # noqa: ANN001 – CloudBackupService
-    containers,  # noqa: ANN001 – CloudContainerService
+    backup: CloudBackupService,
+    containers: CloudContainerService,
     project_name: str,
 ) -> AgentSnapshot | None:
     all_containers = await containers.list_containers()

@@ -14,7 +14,7 @@
     "noEmit": true,
     "outDir": "./dist",
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
-    "types": ["node", "bun"],
+    "types": ["node", "bun-types"],
     "noImplicitAny": false,
     "noUnusedLocals": false,
     "noUnusedParameters": false,

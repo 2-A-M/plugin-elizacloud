@@ -18,6 +18,19 @@ SIZE_TO_ASPECT_RATIO: dict[str, str] = {
 }
 
 
+def _as_float_list(value: object) -> list[float]:
+    if not isinstance(value, list):
+        raise ValueError("Invalid embedding payload")
+
+    result: list[float] = []
+    for item in value:
+        if isinstance(item, (int, float)):
+            result.append(float(item))
+            continue
+        raise ValueError("Invalid embedding payload")
+    return result
+
+
 class ElizaCloudClient:
     def __init__(self, config: ElizaCloudConfig) -> None:
         self.config = config
@@ -94,9 +107,20 @@ class ElizaCloudClient:
                 },
             )
             response.raise_for_status()
-            data = response.json()
+            payload = response.json()
 
-        embeddings = [item["embedding"] for item in data["data"]]
+        if not isinstance(payload, dict):
+            raise ValueError("Invalid embedding response")
+
+        raw_items = payload.get("data", [])
+        if not isinstance(raw_items, list):
+            raise ValueError("Invalid embedding response")
+
+        embeddings: list[list[float]] = []
+        for item in raw_items:
+            if not isinstance(item, dict):
+                raise ValueError("Invalid embedding response")
+            embeddings.append(_as_float_list(item.get("embedding", [])))
 
         if params.text and not params.texts:
             return embeddings[0]

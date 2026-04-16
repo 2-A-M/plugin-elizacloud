@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from typing import Any
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
@@ -36,7 +37,7 @@ def _mock_registry(
     with_containers: bool = True,
     with_bridge: bool = True,
     with_backup: bool = True,
-) -> ServiceRegistry:
+) -> Any:
     auth = MagicMock(spec=CloudAuthService)
     auth.is_authenticated.return_value = authenticated
     auth.get_client.return_value = MagicMock()
@@ -52,6 +53,11 @@ def _mock_registry(
         backup=backup,
         settings={},
     )
+
+
+def _result_data(result: Any) -> dict[str, object]:
+    data = result.get("data")
+    return data if isinstance(data, dict) else {}
 
 
 # ─── Validation Tests ────────────────────────────────────────────────────────
@@ -163,8 +169,9 @@ class TestProvisionAction:
         )
 
         assert result["success"] is True
-        assert result.get("data", {}).get("containerId") == "c-new"
-        assert result.get("data", {}).get("autoBackupEnabled") is True
+        data = _result_data(result)
+        assert data.get("containerId") == "c-new"
+        assert data.get("autoBackupEnabled") is True
 
 
 # ─── Freeze Action ───────────────────────────────────────────────────────────
@@ -213,7 +220,8 @@ class TestFreezeAction:
 
         result = await handle_freeze(reg, options={"containerId": "c-1"})
         assert result["success"] is True
-        assert result.get("data", {}).get("snapshotId") == "snap-123"
+        data = _result_data(result)
+        assert data.get("snapshotId") == "snap-123"
 
 
 # ─── Resume Action ───────────────────────────────────────────────────────────
@@ -256,7 +264,8 @@ class TestResumeAction:
             options={"name": "restored-agent", "project_name": "proj"},
         )
         assert result["success"] is True
-        assert result.get("data", {}).get("containerId") == "c-resumed"
+        data = _result_data(result)
+        assert data.get("containerId") == "c-resumed"
 
 
 # ─── Check Credits Action ───────────────────────────────────────────────────
@@ -273,7 +282,8 @@ class TestCheckCreditsAction:
 
         result = await handle_check_credits(reg)
         assert result["success"] is True
-        assert result.get("data", {}).get("balance") == 42.50
+        data = _result_data(result)
+        assert data.get("balance") == 42.50
         assert "42.50" in str(result.get("text", ""))
 
     @pytest.mark.asyncio
@@ -292,7 +302,7 @@ class TestCheckCreditsAction:
         reg.containers.get_tracked_containers.return_value = [mock_c1, mock_c2, mock_c3]
 
         result = await handle_check_credits(reg)
-        data = result.get("data", {})
+        data = _result_data(result)
         assert data.get("runningContainers") == 2
         assert data.get("dailyCost") == 2 * DAILY_COST_PER_CONTAINER
 

@@ -6,6 +6,7 @@ import asyncio
 import logging
 import time
 from dataclasses import dataclass
+from typing import cast
 
 from elizaos_plugin_elizacloud.services.cloud_auth_service import CloudAuthService
 from elizaos_plugin_elizacloud.types.cloud import (
@@ -13,8 +14,44 @@ from elizaos_plugin_elizacloud.types.cloud import (
     AgentSnapshot,
     SnapshotType,
 )
+from elizaos_plugin_elizacloud.utils.cloud_api import CloudApiClient
 
 logger = logging.getLogger("elizacloud.backup")
+
+
+def _as_str(value: object, default: str = "") -> str:
+    return value if isinstance(value, str) else default
+
+
+def _as_int(value: object, default: int) -> int:
+    if isinstance(value, bool):
+        return default
+    if isinstance(value, int):
+        return value
+    if isinstance(value, float):
+        return int(value)
+    if isinstance(value, str):
+        try:
+            return int(value)
+        except ValueError:
+            return default
+    return default
+
+
+def _as_object_dict(value: object) -> dict[str, object]:
+    if not isinstance(value, dict):
+        return {}
+    return {key: raw for key, raw in value.items() if isinstance(key, str)}
+
+
+def _as_object_list(value: object) -> list[object]:
+    return value if isinstance(value, list) else []
+
+
+def _as_snapshot_type(value: object) -> SnapshotType:
+    if value in ("manual", "auto", "pre-eviction"):
+        return cast(SnapshotType, value)
+    return "manual"
 
 
 def _format_bytes(num_bytes: int) -> str:
@@ -29,15 +66,15 @@ def _format_bytes(num_bytes: int) -> str:
 
 def _parse_snapshot(data: dict[str, object]) -> AgentSnapshot:
     return AgentSnapshot(
-        id=str(data.get("id", "")),
-        container_id=str(data.get("containerId", "")),
-        organization_id=str(data.get("organizationId", "")),
-        snapshot_type=str(data.get("snapshotType", "manual")),  # type: ignore[arg-type]
-        storage_url=str(data.get("storageUrl", "")),
-        size_bytes=int(data.get("sizeBytes", 0)),  # type: ignore[arg-type]
-        agent_config=dict(data.get("agentConfig", {})),  # type: ignore[arg-type]
-        metadata=dict(data.get("metadata", {})),  # type: ignore[arg-type]
-        created_at=str(data.get("created_at", "")),
+        id=_as_str(data.get("id")),
+        container_id=_as_str(data.get("containerId")),
+        organization_id=_as_str(data.get("organizationId")),
+        snapshot_type=_as_snapshot_type(data.get("snapshotType", "manual")),
+        storage_url=_as_str(data.get("storageUrl")),
+        size_bytes=_as_int(data.get("sizeBytes", 0), 0),
+        agent_config=_as_object_dict(data.get("agentConfig")),
+        metadata=_as_object_dict(data.get("metadata")),
+        created_at=_as_str(data.get("created_at")),
     )
 
 
@@ -68,7 +105,7 @@ class CloudBackupService:
         self._auto_backups.clear()
         logger.info("[CloudBackup] Service stopped")
 
-    def _get_client(self):  # noqa: ANN202
+    def _get_client(self) -> CloudApiClient:
         if not self._auth_service:
             raise RuntimeError("CloudBackupService not initialized")
         return self._auth_service.get_client()
@@ -108,9 +145,7 @@ class CloudBackupService:
     async def list_snapshots(self, container_id: str) -> list[AgentSnapshot]:
         client = self._get_client()
         resp = await client.get(f"/agent-state/{container_id}/snapshots")
-        raw_list = resp.get("data", [])
-        if not isinstance(raw_list, list):
-            raw_list = []
+        raw_list = _as_object_list(resp.get("data", []))
         return [_parse_snapshot(s) for s in raw_list if isinstance(s, dict)]
 
     async def restore_snapshot(self, container_id: str, snapshot_id: str) -> None:

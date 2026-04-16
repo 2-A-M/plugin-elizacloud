@@ -12,6 +12,7 @@ import time
 from elizaos_plugin_elizacloud.types.cloud import (
     DEFAULT_CLOUD_CONFIG,
     CloudCredentials,
+    DeviceAuthData,
     DeviceAuthResponse,
     DevicePlatform,
 )
@@ -122,17 +123,13 @@ class CloudAuthService:
 
         auth_data = DeviceAuthResponse(
             success=bool(resp.get("success")),
-            data=type(
-                "DeviceAuthData",
-                (),
-                {
-                    "api_key": str(data.get("apiKey", "")),
-                    "user_id": str(data.get("userId", "")),
-                    "organization_id": str(data.get("organizationId", "")),
-                    "credits": float(data.get("credits", 0)),
-                    "is_new": bool(data.get("isNew", False)),
-                },
-            )(),  # type: ignore[arg-type]
+            data=DeviceAuthData(
+                api_key=str(data.get("apiKey", "")),
+                user_id=str(data.get("userId", "")),
+                organization_id=str(data.get("organizationId", "")),
+                credits=float(data.get("credits", 0)),
+                is_new=bool(data.get("isNew", False)),
+            ),
         )
 
         self._credentials = CloudCredentials(

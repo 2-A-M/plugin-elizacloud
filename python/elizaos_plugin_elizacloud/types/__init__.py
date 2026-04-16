@@ -1,3 +1,4 @@
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from typing import Literal
 
@@ -78,7 +79,7 @@ class TextGenerationParams:
 @dataclass
 class ObjectGenerationParams:
     prompt: str
-    schema: dict[str, object] | None = None
+    schema: Mapping[str, object] | None = None
     temperature: float = 0.0
 
 

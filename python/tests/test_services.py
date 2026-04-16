@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -117,7 +118,7 @@ class TestAuthHelpers:
 
 
 class TestCloudContainerService:
-    def _make_service(self) -> tuple[CloudContainerService, CloudAuthService]:
+    def _make_service(self) -> tuple[CloudContainerService, Any]:
         svc = CloudContainerService()
         auth = CloudAuthService()
         auth._credentials = MagicMock()
@@ -320,7 +321,7 @@ class TestCloudBridgeService:
 
 
 class TestCloudBackupService:
-    def _make_service(self) -> tuple[CloudBackupService, CloudAuthService]:
+    def _make_service(self) -> tuple[CloudBackupService, Any]:
         svc = CloudBackupService()
         auth = CloudAuthService()
         auth._credentials = MagicMock()

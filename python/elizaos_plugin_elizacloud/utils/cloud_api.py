@@ -24,6 +24,33 @@ logger = logging.getLogger("elizacloud.api")
 T = TypeVar("T")
 
 
+def _as_object_dict(value: object) -> dict[str, object] | None:
+    return value if isinstance(value, dict) else None
+
+
+def _as_float(value: object) -> float | None:
+    if isinstance(value, (int, float)):
+        return float(value)
+    if isinstance(value, str):
+        try:
+            return float(value)
+        except ValueError:
+            return None
+    return None
+
+
+def _as_int_dict(value: object) -> dict[str, int] | None:
+    if not isinstance(value, dict):
+        return None
+
+    parsed: dict[str, int] = {}
+    for key, raw in value.items():
+        if not isinstance(key, str) or not isinstance(raw, int):
+            return None
+        parsed[key] = raw
+    return parsed
+
+
 class CloudApiClient:
     """HTTP client for the ElizaCloud REST API."""
 
@@ -113,15 +140,16 @@ class CloudApiClient:
                 )
             return {"success": True}
 
-        data: dict[str, object] = response.json()
+        payload = response.json()
+        data = payload if isinstance(payload, dict) else {}
 
         if not response.is_success:
             err_body = CloudApiErrorBody(
                 success=False,
                 error=str(data.get("error", f"HTTP {response.status_code}")),
-                details=data.get("details"),  # type: ignore[arg-type]
-                required_credits=data.get("requiredCredits"),  # type: ignore[arg-type]
-                quota=data.get("quota"),  # type: ignore[arg-type]
+                details=_as_object_dict(data.get("details")),
+                required_credits=_as_float(data.get("requiredCredits")),
+                quota=_as_int_dict(data.get("quota")),
             )
             if response.status_code == 402:
                 raise InsufficientCreditsError(err_body)
