@@ -15,6 +15,7 @@ const runtimeCaches = new WeakMap<IAgentRuntime, { value: ModelsByProvider; at: 
 export const modelRegistryProvider: Provider = {
   name: "elizacloud_models",
   description: "Available AI models from ElizaCloud grouped by provider",
+  descriptionCompressed: "Available AI models from ElizaCloud by provider.",
   dynamic: true,
   position: 92,
   async get(runtime: IAgentRuntime, _message: Memory, _state: State): Promise<ProviderResult> {

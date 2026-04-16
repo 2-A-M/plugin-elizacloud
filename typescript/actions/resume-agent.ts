@@ -50,6 +50,7 @@ export const resumeCloudAgentAction: Action = {
   name: "RESUME_CLOUD_AGENT",
   description:
     "Resume a frozen cloud agent from snapshot. Re-provisions, restores state, reconnects bridge.",
+  descriptionCompressed: "Resume frozen cloud agent from snapshot.",
   similes: ["resume agent", "unfreeze agent", "restart cloud agent", "restore agent"],
   tags: ["cloud", "container", "restore"],
   parameters: [

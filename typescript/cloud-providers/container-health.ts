@@ -9,6 +9,7 @@ import type { CloudContainerService } from "../services/cloud-container";
 export const containerHealthProvider: Provider = {
   name: "elizacloud_health",
   description: "ElizaCloud container health",
+  descriptionCompressed: "ElizaCloud container health.",
   dynamic: true,
   position: 92,
   private: true,

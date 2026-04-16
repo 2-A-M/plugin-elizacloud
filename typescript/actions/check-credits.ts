@@ -20,6 +20,7 @@ const DAILY_COST_PER_CONTAINER = 0.67;
 export const checkCloudCreditsAction: Action = {
   name: "CHECK_CLOUD_CREDITS",
   description: "Check ElizaCloud credit balance, container costs, and estimated remaining runtime.",
+  descriptionCompressed: "Check ElizaCloud credits, container costs, remaining runtime.",
   similes: ["check credits", "check balance", "how much credit", "cloud billing"],
   tags: ["cloud", "billing"],
   parameters: [

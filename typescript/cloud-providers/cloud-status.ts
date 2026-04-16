@@ -10,6 +10,7 @@ import type { CloudContainerService } from "../services/cloud-container";
 export const cloudStatusProvider: Provider = {
   name: "elizacloud_status",
   description: "ElizaCloud container and connection status",
+  descriptionCompressed: "ElizaCloud container/connection status.",
   dynamic: true,
   position: 90,
   async get(runtime: IAgentRuntime, _message: Memory, _state: State): Promise<ProviderResult> {

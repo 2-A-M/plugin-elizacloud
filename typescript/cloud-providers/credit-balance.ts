@@ -12,6 +12,7 @@ const TTL = 60_000;
 export const creditBalanceProvider: Provider = {
   name: "elizacloud_credits",
   description: "ElizaCloud credit balance",
+  descriptionCompressed: "ElizaCloud credit balance.",
   dynamic: true,
   position: 91,
   async get(runtime: IAgentRuntime, _message: Memory, _state: State): Promise<ProviderResult> {

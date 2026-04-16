@@ -30,6 +30,7 @@ function getContainerId(message: Memory, options?: Record<string, unknown>): str
 export const freezeCloudAgentAction: Action = {
   name: "FREEZE_CLOUD_AGENT",
   description: "Freeze a cloud agent: snapshot state, disconnect bridge, stop container.",
+  descriptionCompressed: "Freeze cloud agent: snapshot, disconnect, stop container.",
   similes: ["freeze agent", "hibernate agent", "pause agent", "stop cloud agent"],
   tags: ["cloud", "container", "backup"],
   parameters: [
