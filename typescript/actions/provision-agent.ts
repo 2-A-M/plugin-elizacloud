@@ -40,7 +40,8 @@ export const provisionCloudAgentAction: Action = {
   name: "PROVISION_CLOUD_AGENT",
   description:
     "Deploy an ElizaOS agent to ElizaCloud. Provisions a container, waits for deployment, connects the bridge, and starts auto-backup.",
-  descriptionCompressed: "Deploy agent to ElizaCloud. Provisions container, connects bridge, starts backup.",
+  descriptionCompressed:
+    "Deploy agent to ElizaCloud. Provisions container, connects bridge, starts backup.",
   similes: [
     "deploy agent to cloud",
     "launch cloud agent",
