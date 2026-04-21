@@ -52,8 +52,8 @@ const REASONING_MODEL_PATTERNS = [
   "o4",
   "deepseek-r1",
   "deepseek-reasoner",
-  "claude-opus-4.6",
-  "claude-opus-4",
+  "claude-opus-4.7",
+  "claude-opus-4-7",
   "gpt-5",
 ] as const;
 const RESPONSES_ROUTED_PREFIXES = ["openai/", "anthropic/"] as const;
