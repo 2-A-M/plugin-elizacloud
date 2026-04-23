@@ -19,6 +19,7 @@
     "noUnusedLocals": false,
     "noUnusedParameters": false,
     "allowImportingTsExtensions": true,
+    "ignoreDeprecations": "6.0",
     "baseUrl": "../../../",
     "paths": {
       "@elizaos/core": ["packages/typescript/dist/node"],
