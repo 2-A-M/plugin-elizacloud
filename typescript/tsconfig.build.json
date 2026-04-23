@@ -10,20 +10,11 @@
     "ignoreDeprecations": "6.0",
     "baseUrl": ".",
     "paths": {
-      "@elizaos/core": [
-        "../../../packages/typescript/dist"
-      ]
+      "@elizaos/core": ["../../../packages/typescript/dist"]
     },
-    "types": [
-      "node",
-      "bun-types"
-    ]
+    "types": ["node", "bun-types"]
   },
-  "include": [
-    "index.ts",
-    "index.node.ts",
-    "index.browser.ts"
-  ],
+  "include": ["index.ts", "index.node.ts", "index.browser.ts"],
   "exclude": [
     "node_modules",
     "dist",
