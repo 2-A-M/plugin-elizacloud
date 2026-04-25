@@ -30,6 +30,7 @@ import {
 // Cloud services
 import { CloudAuthService } from "./services/cloud-auth";
 import { CloudBackupService } from "./services/cloud-backup";
+import { CloudBootstrapServiceImpl } from "./services/cloud-bootstrap";
 import { CloudBridgeService } from "./services/cloud-bridge";
 import { CloudContainerService } from "./services/cloud-container";
 import { CloudManagedGatewayRelayService } from "./services/cloud-managed-gateway-relay";
@@ -111,12 +112,14 @@ export const elizaOSCloudPlugin: Plugin = {
   // ─── Cloud Services ──────────────────────────────────────────────────
   // Services are registered in dependency order:
   //   1. CloudAuthService — must start first (other services depend on it)
-  //   2. CloudManagedGatewayRelayService — optional local-runtime relay via shared cloud ingress
-  //   3. CloudContainerService — needs auth to list/create containers
-  //   4. CloudBridgeService — needs auth for WebSocket connections
-  //   5. CloudBackupService — needs auth for snapshot API calls
+  //   2. CloudBootstrapServiceImpl — pure trust-anchor accessor; no deps
+  //   3. CloudManagedGatewayRelayService — optional local-runtime relay via shared cloud ingress
+  //   4. CloudContainerService — needs auth to list/create containers
+  //   5. CloudBridgeService — needs auth for WebSocket connections
+  //   6. CloudBackupService — needs auth for snapshot API calls
   services: [
     CloudAuthService,
+    CloudBootstrapServiceImpl,
     CloudManagedGatewayRelayService,
     CloudModelRegistryService,
     CloudContainerService,
