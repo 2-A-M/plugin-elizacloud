@@ -349,32 +349,8 @@ export const DEFAULT_CLOUD_CONFIG: CloudPluginConfig = {
 
 // ─── API Error Types ────────────────────────────────────────────────────────
 
-export interface CloudApiErrorBody {
-  success: false;
-  error: string;
-  details?: Record<string, unknown>;
-  requiredCredits?: number;
-  quota?: { current: number; max: number };
-}
-
-export class CloudApiError extends Error {
-  readonly statusCode: number;
-  readonly errorBody: CloudApiErrorBody;
-
-  constructor(statusCode: number, body: CloudApiErrorBody) {
-    super(body.error);
-    this.name = "CloudApiError";
-    this.statusCode = statusCode;
-    this.errorBody = body;
-  }
-}
-
-export class InsufficientCreditsError extends CloudApiError {
-  readonly requiredCredits: number;
-
-  constructor(body: CloudApiErrorBody) {
-    super(402, body);
-    this.name = "InsufficientCreditsError";
-    this.requiredCredits = body.requiredCredits ?? 0;
-  }
-}
+export {
+  CloudApiError,
+  InsufficientCreditsError,
+} from "@elizaos/cloud-sdk";
+export type { CloudApiErrorBody } from "@elizaos/cloud-sdk";
