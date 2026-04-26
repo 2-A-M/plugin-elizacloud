@@ -72,24 +72,9 @@ export async function handleTranscription(
 
   const formData = new FormData();
   formData.append("audio", blob, filename);
-  formData.append("model", String(modelName));
   if (extraParams) {
     if (typeof extraParams.language === "string") {
       formData.append("languageCode", String(extraParams.language));
-    }
-    if (typeof extraParams.response_format === "string") {
-      formData.append("response_format", String(extraParams.response_format));
-    }
-    if (typeof extraParams.prompt === "string") {
-      formData.append("prompt", String(extraParams.prompt));
-    }
-    if (typeof extraParams.temperature === "number") {
-      formData.append("temperature", String(extraParams.temperature));
-    }
-    if (Array.isArray(extraParams.timestampGranularities)) {
-      for (const g of extraParams.timestampGranularities) {
-        formData.append("timestamp_granularities[]", String(g));
-      }
     }
   }
 
