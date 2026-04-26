@@ -4,7 +4,14 @@ import { existsSync } from "node:fs";
 import { mkdir, rename, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 
-const externalDeps = ["@elizaos/core", "@ai-sdk/openai", "ai", "js-tiktoken"];
+const externalDeps = [
+  "@elizaos/core",
+  "@elizaos/shared",
+  "@ai-sdk/openai",
+  "ai",
+  "js-tiktoken",
+  "jose",
+];
 
 async function build() {
   const totalStart = Date.now();
