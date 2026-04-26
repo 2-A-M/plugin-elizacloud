@@ -12,13 +12,16 @@ async function fetchTextToSpeech(
 ): Promise<ReadableStream<Uint8Array> | Readable> {
   const defaultModel = getSetting(runtime, "ELIZAOS_CLOUD_TTS_MODEL", "gpt-5-mini-tts");
   const defaultVoice = getSetting(runtime, "ELIZAOS_CLOUD_TTS_VOICE", "nova");
-  const defaultInstructions = getSetting(runtime, "ELIZAOS_CLOUD_TTS_INSTRUCTIONS", "");
 
   const model = options.model || (defaultModel as string);
   const voice = options.voice || (defaultVoice as string);
-  const instructions = options.instructions ?? (defaultInstructions as string);
   const format = options.format || "mp3";
-  const modelId = model.includes("/") ? model.split("/").slice(1).join("/") : model;
+  const modelId = model.startsWith("elevenlabs/")
+    ? model.split("/").slice(1).join("/")
+    : model.startsWith("eleven_")
+      ? model
+      : undefined;
+  const voiceId = voice && voice !== "nova" ? voice : undefined;
 
   try {
     const res = await createElizaCloudClient(runtime).routes.postApiV1VoiceTts({
@@ -27,10 +30,8 @@ async function fetchTextToSpeech(
       },
       json: {
         text: options.text,
-        voiceId: voice,
-        modelId,
-        ...(instructions && { instructions }),
-        ...(format && { format }),
+        ...(voiceId ? { voiceId } : {}),
+        ...(modelId ? { modelId } : {}),
       },
     });
 
