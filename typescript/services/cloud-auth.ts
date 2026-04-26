@@ -23,7 +23,7 @@ import {
   type RuntimeEnvRecord,
   resolveApiSecurityConfig,
   resolveDesktopApiPort,
-} from "@elizaos/shared/runtime-env";
+} from "@elizaos/shared";
 import { createRemoteJWKSet, jwtVerify } from "jose";
 import type { CloudCredentials, DeviceAuthResponse, DevicePlatform } from "../types/cloud";
 import { DEFAULT_CLOUD_CONFIG } from "../types/cloud";

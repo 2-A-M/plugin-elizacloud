@@ -349,8 +349,8 @@ export const DEFAULT_CLOUD_CONFIG: CloudPluginConfig = {
 
 // ─── API Error Types ────────────────────────────────────────────────────────
 
+export type { CloudApiErrorBody } from "@elizaos/cloud-sdk";
 export {
   CloudApiError,
   InsufficientCreditsError,
 } from "@elizaos/cloud-sdk";
-export type { CloudApiErrorBody } from "@elizaos/cloud-sdk";
