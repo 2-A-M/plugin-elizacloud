@@ -64,6 +64,11 @@ async function generateObjectByModelType(
     model: modelName,
     input,
     max_output_tokens: params.maxTokens ?? 8192,
+    // Enforce JSON output at the API layer. Without this, the model
+    // can ignore the caller's `schema` parameter and return prose
+    // ("I'll help you...") or markdown-fenced JSON, both of which
+    // choke the JSON.parse below.
+    text: { format: { type: "json_object" } },
   };
   if (!reasoning && typeof params.temperature === "number") {
     requestBody.temperature = params.temperature;
@@ -116,10 +121,18 @@ async function generateObjectByModelType(
     });
   }
 
-  const jsonText = extractResponsesOutputText(data);
+  let jsonText = extractResponsesOutputText(data);
   if (!jsonText.trim()) {
     throw new Error("Object generation returned empty response");
   }
+
+  // Strip leading/trailing markdown code fences before JSON.parse. Models
+  // routinely wrap structured output in ```json ... ``` even when JSON is
+  // requested, and the repair function does not handle the leading backtick.
+  jsonText = jsonText
+    .replace(/^[\s]*```(?:json)?\s*\n?/i, "")
+    .replace(/\n?```\s*$/i, "")
+    .trim();
 
   try {
     return JSON.parse(jsonText) as Record<string, JsonValue>;
