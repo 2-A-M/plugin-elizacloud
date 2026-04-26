@@ -463,11 +463,9 @@ export class CloudAuthService extends Service {
 
   private async validateApiKey(key: string): Promise<boolean> {
     try {
-      const resp = await fetch(`${this.client.getBaseUrl()}/models`, {
-        headers: { Authorization: `Bearer ${key}` },
-        signal: AbortSignal.timeout(10_000),
-      });
-      return resp.ok;
+      const validationClient = new CloudApiClient(this.client.getBaseUrl(), key);
+      await validationClient.get("/models", { timeoutMs: 10_000 });
+      return true;
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       logger.warn(`[CloudAuth] Could not reach cloud API to validate key: ${msg}`);

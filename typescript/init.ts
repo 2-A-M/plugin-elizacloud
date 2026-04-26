@@ -1,5 +1,6 @@
 import { type IAgentRuntime, logger } from "@elizaos/core";
-import { getApiKey, getAuthHeader, getBaseURL, isBrowser } from "./utils/config";
+import { getApiKey, isBrowser } from "./utils/config";
+import { createCloudApiClient } from "./utils/sdk-client";
 
 export function initializeOpenAI(
   _config: Record<string, string | null>,
@@ -15,22 +16,11 @@ export function initializeOpenAI(
         return;
       }
       try {
-        const baseURL = getBaseURL(runtime);
-        const response = await fetch(`${baseURL}/models`, {
-          headers: { ...getAuthHeader(runtime) },
-        });
-        if (!response.ok) {
-          logger.warn(`ElizaOS Cloud API key validation failed: ${response.statusText}`);
-          logger.warn(
-            "ElizaOS Cloud functionality will be limited until a valid API key is provided"
-          );
-          logger.info("Get your API key from https://www.elizacloud.ai/dashboard/api-keys");
-        } else {
-          logger.log("ElizaOS Cloud API key validated successfully");
-        }
+        await createCloudApiClient(runtime).get("/models");
+        logger.log("ElizaOS Cloud API key validated successfully");
       } catch (fetchError) {
         const message = fetchError instanceof Error ? fetchError.message : String(fetchError);
-        logger.warn(`Error validating ElizaOS Cloud API key: ${message}`);
+        logger.warn(`ElizaOS Cloud API key validation failed: ${message}`);
         logger.warn(
           "ElizaOS Cloud functionality will be limited until a valid API key is provided"
         );

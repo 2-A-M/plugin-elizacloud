@@ -9,8 +9,6 @@ import type { LanguageModel } from "ai";
 import { createOpenAIClient } from "../providers/openai";
 import {
   getActionPlannerModel,
-  getAuthHeader,
-  getBaseURL,
   getExperimentalTelemetry,
   getLargeModel,
   getMediumModel,
@@ -21,6 +19,7 @@ import {
 } from "../utils/config";
 import { emitModelUsageEvent } from "../utils/events";
 import { extractResponsesOutputText } from "../utils/responses-output";
+import { createCloudApiClient } from "../utils/sdk-client";
 
 const TEXT_NANO_MODEL_TYPE = (ModelType.TEXT_NANO ?? "TEXT_NANO") as ModelTypeName;
 const TEXT_MEDIUM_MODEL_TYPE = (ModelType.TEXT_MEDIUM ?? "TEXT_MEDIUM") as ModelTypeName;
@@ -235,15 +234,12 @@ async function generateTextWithModel(
     requestBody.temperature = params.temperature;
   }
 
-  const response = await fetch(`${getBaseURL(runtime)}/responses`, {
-    method: "POST",
+  const response = await createCloudApiClient(runtime).requestRaw("POST", "/responses", {
     headers: {
-      ...getAuthHeader(runtime),
-      "Content-Type": "application/json",
       "X-Eliza-Llm-Purpose": getPurposeForModelType(modelType),
       "X-Eliza-Model-Type": modelType,
     },
-    body: JSON.stringify(requestBody),
+    json: requestBody,
   });
   const responseText = await response.text();
   let data: ResponsesApiResponse = {};

@@ -32,15 +32,6 @@ export function isProxyMode(runtime: IAgentRuntime): boolean {
   return isBrowser() && !!getSetting(runtime, "ELIZAOS_CLOUD_BROWSER_BASE_URL");
 }
 
-export function getAuthHeader(
-  runtime: IAgentRuntime,
-  forEmbedding = false
-): Record<string, string> {
-  if (isBrowser()) return {};
-  const key = forEmbedding ? getEmbeddingApiKey(runtime) : getApiKey(runtime);
-  return key ? { Authorization: `Bearer ${key}` } : {};
-}
-
 export function getBaseURL(runtime: IAgentRuntime): string {
   const browserURL = getSetting(runtime, "ELIZAOS_CLOUD_BROWSER_BASE_URL");
   const baseURL = (

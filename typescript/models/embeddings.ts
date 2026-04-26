@@ -1,7 +1,8 @@
 import type { IAgentRuntime, TextEmbeddingParams } from "@elizaos/core";
 import { logger, ModelType, VECTOR_DIMS } from "@elizaos/core";
-import { getAuthHeader, getEmbeddingBaseURL, getSetting } from "../utils/config";
+import { getSetting } from "../utils/config";
 import { emitModelUsageEvent } from "../utils/events";
+import { createCloudApiClient } from "../utils/sdk-client";
 
 const MAX_BATCH_SIZE = 100;
 function extractRateLimitInfo(response: Response): {
@@ -99,7 +100,7 @@ export async function handleBatchTextEmbedding(
   texts: string[]
 ): Promise<number[][]> {
   const { embeddingModelName, embeddingDimension } = getEmbeddingConfig(runtime);
-  const embeddingBaseURL = getEmbeddingBaseURL(runtime);
+  const client = createCloudApiClient(runtime, true);
 
   if (!texts || texts.length === 0) {
     logger.warn("[BatchEmbeddings] Empty texts array");
@@ -133,16 +134,11 @@ export async function handleBatchTextEmbedding(
     );
 
     try {
-      const response = await fetch(`${embeddingBaseURL}/embeddings`, {
-        method: "POST",
-        headers: {
-          ...getAuthHeader(runtime, true),
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
+      const response = await client.requestRaw("POST", "/embeddings", {
+        json: {
           model: embeddingModelName,
           input: batchTexts,
-        }),
+        },
       });
 
       const rateLimitInfo = extractRateLimitInfo(response);
@@ -158,16 +154,11 @@ export async function handleBatchTextEmbedding(
         logger.warn(`[BatchEmbeddings] Rate limited, waiting ${retryAfter}s...`);
         await new Promise((resolve) => setTimeout(resolve, retryAfter * 1000));
 
-        const retryResponse = await fetch(`${embeddingBaseURL}/embeddings`, {
-          method: "POST",
-          headers: {
-            ...getAuthHeader(runtime, true),
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
+        const retryResponse = await client.requestRaw("POST", "/embeddings", {
+          json: {
             model: embeddingModelName,
             input: batchTexts,
-          }),
+          },
         });
 
         if (!retryResponse.ok) {

@@ -1,9 +1,10 @@
 import type { IAgentRuntime, JsonValue, ObjectGenerationParams } from "@elizaos/core";
 import { logger, ModelType } from "@elizaos/core";
-import { getAuthHeader, getBaseURL, getLargeModel, getSmallModel } from "../utils/config";
+import { getLargeModel, getSmallModel } from "../utils/config";
 import { emitModelUsageEvent } from "../utils/events";
 import { getJsonRepairFunction } from "../utils/helpers";
 import { extractResponsesOutputText } from "../utils/responses-output";
+import { createCloudApiClient } from "../utils/sdk-client";
 
 /**
  * Models that are reasoning-class and don't support temperature.
@@ -74,13 +75,8 @@ async function generateObjectByModelType(
     requestBody.temperature = params.temperature;
   }
 
-  const response = await fetch(`${getBaseURL(runtime)}/responses`, {
-    method: "POST",
-    headers: {
-      ...getAuthHeader(runtime),
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(requestBody),
+  const response = await createCloudApiClient(runtime).requestRaw("POST", "/responses", {
+    json: requestBody,
   });
   const responseText = await response.text();
   let data: ResponsesApiResponse = {};

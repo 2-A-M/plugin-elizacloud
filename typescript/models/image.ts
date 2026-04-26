@@ -1,14 +1,13 @@
 import type { IAgentRuntime, ImageDescriptionParams, ImageGenerationParams } from "@elizaos/core";
 import { logger, ModelType } from "@elizaos/core";
 import {
-  getAuthHeader,
-  getBaseURL,
   getImageDescriptionModel,
   getImageGenerationModel,
   getSetting,
 } from "../utils/config";
 import { emitModelUsageEvent } from "../utils/events";
 import { parseImageDescriptionResponse } from "../utils/helpers";
+import { createElizaCloudClient } from "../utils/sdk-client";
 
 export async function handleImageGeneration(
   runtime: IAgentRuntime,
@@ -20,8 +19,6 @@ export async function handleImageGeneration(
   const modelName = getImageGenerationModel(runtime);
   logger.log(`[ELIZAOS_CLOUD] Using IMAGE model: ${modelName}`);
 
-  const baseURL = getBaseURL(runtime);
-
   const aspectRatioMap: Record<string, string> = {
     "1024x1024": "1:1",
     "1792x1024": "16:9",
@@ -30,7 +27,6 @@ export async function handleImageGeneration(
   const aspectRatio = aspectRatioMap[size] || "1:1";
 
   try {
-    const requestUrl = `${baseURL}/generate-image`;
     const requestBody = {
       prompt: prompt,
       numImages: numImages,
@@ -38,25 +34,7 @@ export async function handleImageGeneration(
       model: modelName,
     };
 
-    const response = await fetch(requestUrl, {
-      method: "POST",
-      headers: {
-        ...getAuthHeader(runtime),
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(requestBody),
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Failed to generate image: ${response.status} ${errorText}`);
-    }
-
-    const data = await response.json();
-    const typedData = data as {
-      images: Array<{ url?: string; image: string }>;
-      numImages: number;
-    };
+    const typedData = await createElizaCloudClient(runtime).generateImage(requestBody);
 
     const result = typedData.images.map((img) => ({
       url: img.url || img.image,
@@ -101,7 +79,7 @@ export async function handleImageDescription(
     },
   ];
 
-  const baseURL = getBaseURL(runtime);
+  const client = createElizaCloudClient(runtime);
 
   try {
     const requestBody: Record<string, unknown> = {
@@ -113,13 +91,8 @@ export async function handleImageDescription(
     // Retry with exponential backoff for transient errors (429 rate limit)
     let response: Response | null = null;
     for (let attempt = 0; attempt < 3; attempt++) {
-      response = await fetch(`${baseURL}/chat/completions`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...getAuthHeader(runtime),
-        },
-        body: JSON.stringify(requestBody),
+      response = await client.routes.postApiV1ChatCompletionsRaw({
+        json: requestBody,
       });
 
       if (response.status === 429 && attempt < 2) {

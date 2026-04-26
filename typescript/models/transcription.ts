@@ -1,8 +1,9 @@
 import type { IAgentRuntime } from "@elizaos/core";
 import { logger } from "@elizaos/core";
 import type { OpenAITranscriptionParams } from "../types";
-import { getAuthHeader, getBaseURL, getSetting } from "../utils/config";
+import { getSetting } from "../utils/config";
 import { detectAudioMimeType } from "../utils/helpers";
+import { createElizaCloudClient } from "../utils/sdk-client";
 
 export async function handleTranscription(
   runtime: IAgentRuntime,
@@ -10,8 +11,6 @@ export async function handleTranscription(
 ): Promise<string> {
   let modelName = getSetting(runtime, "ELIZAOS_CLOUD_TRANSCRIPTION_MODEL", "gpt-5-mini-transcribe");
   logger.log(`[ELIZAOS_CLOUD] Using TRANSCRIPTION model: ${modelName}`);
-
-  const baseURL = getBaseURL(runtime);
 
   let blob: Blob;
   let extraParams: OpenAITranscriptionParams | null = null;
@@ -72,11 +71,11 @@ export async function handleTranscription(
             : "recording.bin");
 
   const formData = new FormData();
-  formData.append("file", blob, filename);
+  formData.append("audio", blob, filename);
   formData.append("model", String(modelName));
   if (extraParams) {
     if (typeof extraParams.language === "string") {
-      formData.append("language", String(extraParams.language));
+      formData.append("languageCode", String(extraParams.language));
     }
     if (typeof extraParams.response_format === "string") {
       formData.append("response_format", String(extraParams.response_format));
@@ -95,11 +94,7 @@ export async function handleTranscription(
   }
 
   try {
-    const response = await fetch(`${baseURL}/audio/transcriptions`, {
-      method: "POST",
-      headers: {
-        ...getAuthHeader(runtime),
-      },
+    const response = await createElizaCloudClient(runtime).routes.postApiV1VoiceSttRaw({
       body: formData,
     });
 

@@ -2,8 +2,9 @@ import type { Readable } from "node:stream";
 import type { IAgentRuntime } from "@elizaos/core";
 import { logger } from "@elizaos/core";
 import type { OpenAITextToSpeechParams } from "../types";
-import { getAuthHeader, getBaseURL, getSetting, isBrowser } from "../utils/config";
+import { getSetting, isBrowser } from "../utils/config";
 import { webStreamToNodeStream } from "../utils/helpers";
+import { createElizaCloudClient } from "../utils/sdk-client";
 
 async function fetchTextToSpeech(
   runtime: IAgentRuntime,
@@ -12,28 +13,25 @@ async function fetchTextToSpeech(
   const defaultModel = getSetting(runtime, "ELIZAOS_CLOUD_TTS_MODEL", "gpt-5-mini-tts");
   const defaultVoice = getSetting(runtime, "ELIZAOS_CLOUD_TTS_VOICE", "nova");
   const defaultInstructions = getSetting(runtime, "ELIZAOS_CLOUD_TTS_INSTRUCTIONS", "");
-  const baseURL = getBaseURL(runtime);
 
   const model = options.model || (defaultModel as string);
   const voice = options.voice || (defaultVoice as string);
   const instructions = options.instructions ?? (defaultInstructions as string);
   const format = options.format || "mp3";
+  const modelId = model.includes("/") ? model.split("/").slice(1).join("/") : model;
 
   try {
-    const res = await fetch(`${baseURL}/audio/speech`, {
-      method: "POST",
+    const res = await createElizaCloudClient(runtime).routes.postApiV1VoiceTts({
       headers: {
-        ...getAuthHeader(runtime),
-        "Content-Type": "application/json",
         ...(format === "mp3" ? { Accept: "audio/mpeg" } : {}),
       },
-      body: JSON.stringify({
-        model,
-        voice,
-        input: options.text,
-        format,
+      json: {
+        text: options.text,
+        voiceId: voice,
+        modelId,
         ...(instructions && { instructions }),
-      }),
+        ...(format && { format }),
+      },
     });
 
     if (!res.ok) {

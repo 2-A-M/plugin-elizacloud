@@ -8,8 +8,9 @@ import type {
   ResearchResult,
 } from "@elizaos/core";
 import { logger, ModelType } from "@elizaos/core";
-import { getAuthHeader, getBaseURL, getResearchModel } from "../utils/config";
+import { getResearchModel } from "../utils/config";
 import { emitModelUsageEvent } from "../utils/events";
+import { createCloudApiClient } from "../utils/sdk-client";
 
 interface ResponsesAPIOutput {
   id: string;
@@ -197,8 +198,6 @@ export async function handleResearch(
   const modelName = params.model ?? getResearchModel(runtime);
   logger.log(`[ELIZAOS_CLOUD] Using RESEARCH model: ${modelName}`);
 
-  const baseURL = getBaseURL(runtime);
-
   const tools = params.tools ?? [{ type: "web_search_preview" }];
 
   const requestBody: Record<string, unknown> = {
@@ -220,13 +219,8 @@ export async function handleResearch(
     requestBody.reasoning = { summary: params.reasoningSummary };
   }
 
-  const response = await fetch(`${baseURL}/responses`, {
-    method: "POST",
-    headers: {
-      ...getAuthHeader(runtime),
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(requestBody),
+  const response = await createCloudApiClient(runtime).requestRaw("POST", "/responses", {
+    json: requestBody,
   });
 
   if (!response.ok) {

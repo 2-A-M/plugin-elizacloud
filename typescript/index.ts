@@ -35,7 +35,7 @@ import { CloudBridgeService } from "./services/cloud-bridge";
 import { CloudContainerService } from "./services/cloud-container";
 import { CloudManagedGatewayRelayService } from "./services/cloud-managed-gateway-relay";
 import { CloudModelRegistryService } from "./services/cloud-model-registry";
-import { getApiKey, getBaseURL } from "./utils/config";
+import { createCloudApiClient } from "./utils/sdk-client";
 
 const TEXT_NANO_MODEL_TYPE = (ModelType.TEXT_NANO ?? "TEXT_NANO") as string;
 const TEXT_MEDIUM_MODEL_TYPE = (ModelType.TEXT_MEDIUM ?? "TEXT_MEDIUM") as string;
@@ -167,22 +167,15 @@ export const elizaOSCloudPlugin: Plugin = {
         {
           name: "ELIZAOS_CLOUD_test_url_and_api_key_validation",
           fn: async (runtime: IAgentRuntime) => {
-            const baseURL = getBaseURL(runtime);
-            const response = await fetch(`${baseURL}/models`, {
-              headers: {
-                Authorization: `Bearer ${getApiKey(runtime)}`,
-              },
-            });
-            const data = await response.json();
+            const data = await createCloudApiClient(runtime).get<{
+              data?: Array<Record<string, never>>;
+            }>("/models");
             logger.log(
               {
-                data: (data as { data?: Array<Record<string, never>> })?.data?.length ?? "N/A",
+                data: data.data?.length ?? "N/A",
               },
               "Models Available"
             );
-            if (!response.ok) {
-              throw new Error(`Failed to validate OpenAI API key: ${response.statusText}`);
-            }
           },
         },
         {

@@ -26,6 +26,15 @@ const REQUEST_TIMEOUT_MS = POLL_TIMEOUT_MS + 5_000;
 const RETRY_DELAY_MS = 2_000;
 const IDLE_DELAY_MS = 250;
 
+type RelayRequestMethod = "GET" | "POST" | "DELETE";
+
+interface RelayRequestJsonOptions {
+  method: RelayRequestMethod;
+  json?: unknown;
+  query?: Record<string, string | number | boolean>;
+  timeoutMs?: number;
+}
+
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -304,41 +313,30 @@ export class CloudManagedGatewayRelayService extends Service {
     return this.runtime.character?.name?.trim() || "Milady";
   }
 
-  private getApiBaseUrl(): string {
+  private getClient() {
     const client = this.authService?.getClient();
-    const baseUrl = client?.getBaseUrl();
-    if (!baseUrl) {
-      throw new Error("Cloud base URL is unavailable");
+    if (!client) {
+      throw new Error("Cloud API client is unavailable");
     }
-    return baseUrl.replace(/\/+$/, "");
-  }
-
-  private getAuthorizationHeader(): string {
-    const apiKey = this.authService?.getApiKey();
-    if (!apiKey) {
-      throw new Error("Cloud API key is unavailable");
-    }
-    return `Bearer ${apiKey}`;
+    return client;
   }
 
   private async requestJson<T>(
     path: string,
-    init: RequestInit & { timeoutMs?: number } = {}
+    options: RelayRequestJsonOptions
   ): Promise<{ status: number; body: T }> {
-    const timeoutMs = init.timeoutMs ?? REQUEST_TIMEOUT_MS;
+    const timeoutMs = options.timeoutMs ?? REQUEST_TIMEOUT_MS;
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
     this.activeAbortController = controller;
 
     try {
-      const response = await fetch(`${this.getApiBaseUrl()}${path}`, {
-        ...init,
+      const response = await this.getClient().requestRaw(options.method, path, {
         headers: {
           Accept: "application/json",
-          "Content-Type": "application/json",
-          Authorization: this.getAuthorizationHeader(),
-          ...(init.headers ?? {}),
         },
+        json: options.json,
+        query: options.query,
         signal: controller.signal,
       });
 
@@ -357,10 +355,10 @@ export class CloudManagedGatewayRelayService extends Service {
       "/milady/gateway-relay/sessions",
       {
         method: "POST",
-        body: JSON.stringify({
+        json: {
           runtimeAgentId: this.runtime.agentId,
           agentName: this.getAgentName(),
-        }),
+        },
       }
     );
 
@@ -394,9 +392,10 @@ export class CloudManagedGatewayRelayService extends Service {
 
   private async pollNextRequest(sessionId: string): Promise<GatewayRelayRequestEnvelope | null> {
     const { status, body } = await this.requestJson<PollGatewayRelayResponse>(
-      `/milady/gateway-relay/sessions/${encodeURIComponent(sessionId)}/next?timeoutMs=${POLL_TIMEOUT_MS}`,
+      `/milady/gateway-relay/sessions/${encodeURIComponent(sessionId)}/next`,
       {
         method: "GET",
+        query: { timeoutMs: POLL_TIMEOUT_MS },
         timeoutMs: POLL_TIMEOUT_MS + 5_000,
       }
     );
@@ -421,7 +420,7 @@ export class CloudManagedGatewayRelayService extends Service {
       `/milady/gateway-relay/sessions/${encodeURIComponent(sessionId)}/responses`,
       {
         method: "POST",
-        body: JSON.stringify({ requestId, response }),
+        json: { requestId, response },
       }
     );
 
