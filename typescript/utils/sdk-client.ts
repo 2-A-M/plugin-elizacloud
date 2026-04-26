@@ -1,5 +1,5 @@
-import type { IAgentRuntime } from "@elizaos/core";
 import { CloudApiClient, ElizaCloudClient } from "@elizaos/cloud-sdk";
+import type { IAgentRuntime } from "@elizaos/core";
 import {
   getApiKey,
   getBaseURL,

@@ -1,10 +1,6 @@
 import type { IAgentRuntime, ImageDescriptionParams, ImageGenerationParams } from "@elizaos/core";
 import { logger, ModelType } from "@elizaos/core";
-import {
-  getImageDescriptionModel,
-  getImageGenerationModel,
-  getSetting,
-} from "../utils/config";
+import { getImageDescriptionModel, getImageGenerationModel, getSetting } from "../utils/config";
 import { emitModelUsageEvent } from "../utils/events";
 import { parseImageDescriptionResponse } from "../utils/helpers";
 import { createElizaCloudClient } from "../utils/sdk-client";
