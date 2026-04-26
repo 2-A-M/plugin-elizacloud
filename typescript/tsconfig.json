@@ -22,7 +22,7 @@
     "ignoreDeprecations": "6.0",
     "baseUrl": "../../../",
     "paths": {
-      "@elizaos/cloud-sdk": ["cloud/packages/sdk/src/index.ts"],
+      "@elizaos/cloud-sdk": ["cloud/packages/sdk/dist/index.d.ts"],
       "@elizaos/core": ["packages/typescript/dist/node"],
       "@elizaos/core/*": ["packages/typescript/dist/*"]
     }
