@@ -666,6 +666,27 @@ mod tests {
     }
 
     #[test]
+    fn test_action_result_confirmation_required() {
+        let result = ActionResult::confirmation_required(
+            "Confirm this",
+            serde_json::json!({"id": "c-1"}),
+        );
+        assert!(!result.success);
+        assert_eq!(result.text.as_deref(), Some("Confirm this"));
+        let data = result.data.unwrap();
+        assert_eq!(data["requiresConfirmation"], serde_json::json!(true));
+        assert_eq!(data["preview"], serde_json::json!("Confirm this"));
+    }
+
+    #[test]
+    fn test_is_confirmed_option() {
+        let mut opts = HashMap::new();
+        assert!(!is_confirmed_option(&opts));
+        opts.insert("confirmed".to_string(), serde_json::json!(true));
+        assert!(is_confirmed_option(&opts));
+    }
+
+    #[test]
     fn test_bridge_message_request() {
         let mut params = HashMap::new();
         params.insert(
