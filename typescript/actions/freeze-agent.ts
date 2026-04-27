@@ -18,11 +18,7 @@ import type { CloudAuthService } from "../services/cloud-auth";
 import type { CloudBackupService } from "../services/cloud-backup";
 import type { CloudBridgeService } from "../services/cloud-bridge";
 import type { CloudContainerService } from "../services/cloud-container";
-import {
-  confirmationRequired,
-  isConfirmed,
-  mergedOptions,
-} from "./confirmation";
+import { confirmationRequired, isConfirmed, mergedOptions } from "./confirmation";
 
 function getContainerId(message: Memory, options?: HandlerOptions): string | null {
   const params = mergedOptions(options);
@@ -43,7 +39,7 @@ export const freezeCloudAgentAction: Action = {
     {
       name: "containerId",
       description: "ID of the container to freeze",
-        required: true,
+      required: true,
       schema: { type: "string" },
     },
     {

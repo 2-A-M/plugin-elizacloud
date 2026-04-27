@@ -16,14 +16,10 @@ export function isConfirmed(options?: HandlerOptions): boolean {
   return raw === true || raw === "true";
 }
 
-export function confirmationRequired(
-  preview: string,
-  data: OptionsRecord,
-): ActionResult {
+export function confirmationRequired(preview: string, data: OptionsRecord): ActionResult {
   return {
     success: false,
     text: preview,
     data: { requiresConfirmation: true, preview, ...data },
   };
 }
-

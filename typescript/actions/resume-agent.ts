@@ -21,16 +21,9 @@ import type { CloudContainerService } from "../services/cloud-container";
 import type { AgentSnapshot, CreateContainerRequest } from "../types/cloud";
 import { DEFAULT_CLOUD_CONFIG } from "../types/cloud";
 import { collectEnvVars } from "../utils/forwarded-settings";
-import {
-  confirmationRequired,
-  isConfirmed,
-  mergedOptions,
-} from "./confirmation";
+import { confirmationRequired, isConfirmed, mergedOptions } from "./confirmation";
 
-function extractParams(
-  message: Memory,
-  options?: HandlerOptions
-): Record<string, unknown> {
+function extractParams(message: Memory, options?: HandlerOptions): Record<string, unknown> {
   const params = mergedOptions(options);
   if (Object.keys(params).length > 0) return params;
   const meta = message.metadata as Record<string, unknown> | undefined;
