@@ -1,12 +1,11 @@
 # @elizaos/plugin-elizacloud
 
-ElizaOS Cloud plugin - Multi-model AI generation with text, image, and audio support.
-
-Available in **TypeScript**, **Python**, and **Rust** with uniform APIs.
+Eliza Cloud plugin for elizaOS agents. The TypeScript package is backed by
+`@elizaos/cloud-sdk`, so runtime Cloud API calls, auth helpers, route wrappers,
+TTS, STT, image generation, containers, and gateway relay code use the same SDK
+surface as other Eliza Cloud clients.
 
 ## Installation
-
-### TypeScript / JavaScript
 
 ```bash
 npm install @elizaos/plugin-elizacloud
@@ -14,254 +13,172 @@ npm install @elizaos/plugin-elizacloud
 bun add @elizaos/plugin-elizacloud
 ```
 
-### Python
-
-```bash
-pip install elizaos-plugin-elizacloud
-```
-
-### Rust
-
-```toml
-[dependencies]
-elizaos-plugin-elizacloud = "1.7.4"
-```
-
-## API Comparison
-
-All three implementations provide the same model handlers with uniform naming conventions:
-
-| Model Type             | TypeScript                 | Python                        | Rust                          |
-| ---------------------- | -------------------------- | ----------------------------- | ----------------------------- |
-| TEXT_SMALL             | `handleTextSmall`          | `handle_text_small`           | `handle_text_small`           |
-| TEXT_LARGE             | `handleTextLarge`          | `handle_text_large`           | `handle_text_large`           |
-| OBJECT_SMALL           | `handleObjectSmall`        | `handle_object_small`         | `handle_object_small`         |
-| OBJECT_LARGE           | `handleObjectLarge`        | `handle_object_large`         | `handle_object_large`         |
-| TEXT_EMBEDDING         | `handleTextEmbedding`      | `handle_text_embedding`       | `handle_text_embedding`       |
-| TEXT_EMBEDDING (batch) | `handleBatchTextEmbedding` | `handle_batch_text_embedding` | `handle_batch_text_embedding` |
-| IMAGE                  | `handleImageGeneration`    | `handle_image_generation`     | `handle_image_generation`     |
-| IMAGE_DESCRIPTION      | `handleImageDescription`   | `handle_image_description`    | `handle_image_description`    |
-| TEXT_TO_SPEECH         | `handleTextToSpeech`       | `handle_text_to_speech`       | `handle_text_to_speech`       |
-| TRANSCRIPTION          | `handleTranscription`      | `handle_transcription`        | `handle_transcription`        |
-| TEXT_TOKENIZER_ENCODE  | `handleTokenizerEncode`    | `handle_tokenizer_encode`     | `handle_tokenizer_encode`     |
-| TEXT_TOKENIZER_DECODE  | `handleTokenizerDecode`    | `handle_tokenizer_decode`     | `handle_tokenizer_decode`     |
-
-## Type Definitions
-
-All implementations share the same type structures:
-
-| Type                     | Description                                  |
-| ------------------------ | -------------------------------------------- |
-| `ElizaCloudConfig`       | Client configuration (API key, models, etc.) |
-| `TextGenerationParams`   | Parameters for text generation               |
-| `ObjectGenerationParams` | Parameters for structured JSON generation    |
-| `TextEmbeddingParams`    | Parameters for embeddings (single or batch)  |
-| `ImageGenerationParams`  | Parameters for image generation              |
-| `ImageDescriptionParams` | Parameters for image description             |
-| `ImageDescriptionResult` | Result from image description                |
-| `TextToSpeechParams`     | Parameters for TTS                           |
-| `TranscriptionParams`    | Parameters for audio transcription           |
-| `TokenizeTextParams`     | Parameters for tokenization                  |
-| `DetokenizeTextParams`   | Parameters for detokenization                |
-
-## Configuration
-
-Get your API key from [https://www.elizacloud.ai/dashboard/api-keys](https://www.elizacloud.ai/dashboard/api-keys)
-
-| Setting                                             | Description                          | Default                            |
-| --------------------------------------------------- | ------------------------------------ | ---------------------------------- |
-| `api_key` / `ELIZAOS_CLOUD_API_KEY`                 | Your API key (format: `eliza_xxxxx`) | Required                           |
-| `base_url` / `ELIZAOS_CLOUD_BASE_URL`               | Base URL for API requests            | `https://www.elizacloud.ai/api/v1` |
-| `small_model` / `ELIZAOS_CLOUD_SMALL_MODEL`         | Small/fast model                     | `gpt-5.4-mini`                    |
-| `large_model` / `ELIZAOS_CLOUD_LARGE_MODEL`         | Large/powerful model                 | `claude-sonnet-4.6`               |
-| `embedding_model` / `ELIZAOS_CLOUD_EMBEDDING_MODEL` | Embedding model                      | `text-embedding-3-small`           |
-| `embedding_dimensions`                              | Embedding vector size                | `1536`                             |
-
-## Usage Examples
-
-### TypeScript
+Register the plugin with your agent runtime:
 
 ```typescript
 import { elizaOSCloudPlugin } from "@elizaos/plugin-elizacloud";
 
-// Register the plugin with your agent
 const agent = new Agent({
   plugins: [elizaOSCloudPlugin],
 });
+```
 
-// Use models via runtime
+## SDK Contract
+
+The TypeScript package has a hard dependency on `@elizaos/cloud-sdk`.
+Development checkouts resolve it with `workspace:*`; published packages are
+expected to consume the npm-published SDK version.
+
+Runtime code must not build direct Eliza Cloud HTTP calls by hand. Use the SDK
+helpers in `typescript/utils/sdk-client.ts`:
+
+| Helper | Use |
+| --- | --- |
+| `createCloudApiClient(runtime)` | API-base requests such as `/responses`, `/embeddings`, `/models`, auth validation, containers, and relay JSON endpoints |
+| `createCloudApiClient(runtime, true)` | Embedding requests that may use `ELIZAOS_CLOUD_EMBEDDING_URL` / `ELIZAOS_CLOUD_EMBEDDING_API_KEY` |
+| `createElizaCloudClient(runtime)` | High-level SDK helpers and generated `client.routes.*` wrappers |
+| `typescript/utils/cloud-api.ts` | Backwards-compatible re-export of SDK classes and types |
+
+`ELIZAOS_CLOUD_BASE_URL` remains the API base URL and defaults to
+`https://www.elizacloud.ai/api/v1`. `createElizaCloudClient` derives the site
+root from that API URL when generated SDK route wrappers need `/api/v1/...`
+paths.
+
+`typescript/providers/openai.ts` is the one intentional transport adapter that
+passes the configured base URL to the Vercel AI SDK's OpenAI-compatible client.
+It is not a hand-rolled Cloud API fetch path.
+
+## Runtime Coverage
+
+| Plugin capability | SDK path |
+| --- | --- |
+| Text generation (`TEXT_NANO`, `TEXT_SMALL`, `TEXT_MEDIUM`, `TEXT_LARGE`, `TEXT_MEGA`, response handler, planner) | `CloudApiClient.requestRaw("POST", "/responses", ...)` |
+| Structured object generation | `CloudApiClient.requestRaw("POST", "/responses", ...)` |
+| Research generation | `CloudApiClient.requestRaw("POST", "/responses", ...)` |
+| Text embeddings | `CloudApiClient.requestRaw("POST", "/embeddings", ...)` |
+| Image generation | `ElizaCloudClient.generateImage(...)` |
+| Image description | generated SDK route `client.routes.postApiV1ChatCompletionsRaw(...)` |
+| Text-to-speech | generated SDK route `client.routes.postApiV1VoiceTts(...)` |
+| Audio transcription | generated SDK route `client.routes.postApiV1VoiceSttRaw(...)` |
+| Model registry and credit status | `CloudApiClient` |
+| Device auth and API-key validation | `CloudApiClient` |
+| Cloud containers | `CloudApiClient` supplied by `CloudAuthService` |
+| Managed gateway relay | `CloudApiClient` |
+
+The only remaining runtime-adjacent `fetch()` usage is in the plugin test block
+for downloading a public audio fixture. It is not an Eliza Cloud API call.
+
+## Configuration
+
+Get an API key from
+[https://www.elizacloud.ai/dashboard/api-keys](https://www.elizacloud.ai/dashboard/api-keys).
+
+| Setting | Description | Default |
+| --- | --- | --- |
+| `ELIZAOS_CLOUD_API_KEY` | API key used for authenticated Cloud requests | Required |
+| `ELIZAOS_CLOUD_BASE_URL` | Eliza Cloud API base URL | `https://www.elizacloud.ai/api/v1` |
+| `ELIZAOS_CLOUD_ENABLED` | Enables container provisioning, device auth, bridge, and backup services | `false` |
+| `ELIZAOS_CLOUD_NANO_MODEL` | Nano/cheapest model override | `NANO_MODEL` or `openai/gpt-5.4-nano` |
+| `ELIZAOS_CLOUD_SMALL_MODEL` | Small/fast model override | `SMALL_MODEL` or `gpt-5.4-mini` |
+| `ELIZAOS_CLOUD_MEDIUM_MODEL` | Medium planning model override | `MEDIUM_MODEL` or `claude-sonnet-4.6` |
+| `ELIZAOS_CLOUD_LARGE_MODEL` | Large model override | `LARGE_MODEL` or `claude-sonnet-4.6` |
+| `ELIZAOS_CLOUD_MEGA_MODEL` | Mega model override | `MEGA_MODEL` or large model |
+| `ELIZAOS_CLOUD_RESPONSE_HANDLER_MODEL` | Response handler model override | nano model |
+| `ELIZAOS_CLOUD_ACTION_PLANNER_MODEL` | Action planner model override | medium model |
+| `ELIZAOS_CLOUD_RESEARCH_MODEL` | Research model override | large model |
+| `ELIZAOS_CLOUD_EMBEDDING_MODEL` | Embedding model | `text-embedding-3-small` |
+| `ELIZAOS_CLOUD_EMBEDDING_URL` | Optional custom embedding API base URL | unset |
+| `ELIZAOS_CLOUD_EMBEDDING_API_KEY` | Optional custom embedding API key | `ELIZAOS_CLOUD_API_KEY` |
+| `ELIZAOS_CLOUD_EMBEDDING_DIMENSIONS` | Embedding vector size | `1536` |
+| `ELIZAOS_CLOUD_IMAGE_DESCRIPTION_MODEL` | Vision model used for image descriptions | `gpt-5.4-mini` |
+| `ELIZAOS_CLOUD_IMAGE_DESCRIPTION_MAX_TOKENS` | Max image-description response tokens | `8192` |
+| `ELIZAOS_CLOUD_IMAGE_GENERATION_MODEL` | Image generation model override | service default |
+| `ELIZAOS_CLOUD_TTS_MODEL` | Text-to-speech model | `gpt-5-mini-tts` |
+| `ELIZAOS_CLOUD_TTS_VOICE` | Text-to-speech voice | `nova` |
+| `ELIZAOS_CLOUD_TTS_INSTRUCTIONS` | Optional TTS style instructions | unset |
+| `ELIZAOS_CLOUD_TRANSCRIPTION_MODEL` | Audio transcription model | service default |
+| `ELIZAOS_CLOUD_EXPERIMENTAL_TELEMETRY` | Enables experimental telemetry metadata | `false` |
+
+Browser builds must not receive secrets directly. Use
+`ELIZAOS_CLOUD_BROWSER_BASE_URL` and `ELIZAOS_CLOUD_BROWSER_EMBEDDING_URL` for
+browser-only proxy endpoints.
+
+## Usage Examples
+
+```typescript
+import { ModelType } from "@elizaos/core";
+
 const text = await runtime.useModel(ModelType.TEXT_LARGE, {
-  prompt: "What is the meaning of life?",
+  prompt: "Summarize the current agent state.",
 });
 
-// Structured object generation
-const obj = await runtime.useModel(ModelType.OBJECT_LARGE, {
-  prompt: "Generate a user profile with name and age",
+const object = await runtime.useModel(ModelType.OBJECT_LARGE, {
+  prompt: "Return a JSON user profile with name and role.",
 });
 
 const embedding = await runtime.useModel(ModelType.TEXT_EMBEDDING, {
   text: "Hello, world!",
 });
 
-// Tokenization
-const tokens = await runtime.useModel(ModelType.TEXT_TOKENIZER_ENCODE, {
-  prompt: "Hello tokenizer!",
-  modelType: ModelType.TEXT_SMALL,
+const speech = await runtime.useModel(ModelType.TEXT_TO_SPEECH, {
+  text: "Cloud text to speech is active.",
 });
 ```
 
-### Python
+## Adding Cloud Calls
 
-```python
-import asyncio
-from elizaos_plugin_elizacloud import (
-    ElizaCloudClient,
-    ElizaCloudConfig,
-    TextGenerationParams,
-    ObjectGenerationParams,
-    handle_object_large,
-    handle_tokenizer_encode,
-    TokenizeTextParams,
-)
+1. Prefer an existing high-level SDK method when one exists.
+2. Otherwise use a generated `createElizaCloudClient(runtime).routes.*` wrapper.
+3. Use `createCloudApiClient(runtime)` for raw API-base endpoints that do not
+   yet have a generated wrapper.
+4. Keep all Eliza Cloud API auth/header/base-URL behavior inside the SDK helper
+   layer.
+5. Do not add direct `fetch()` calls for Eliza Cloud API routes in runtime code.
 
-async def main():
-    config = ElizaCloudConfig(api_key="eliza_xxxxx")
+When the Cloud API adds or changes public routes, update the SDK first:
 
-    async with ElizaCloudClient(config) as client:
-        # Text generation
-        text = await client.generate_text(
-            TextGenerationParams(prompt="Hello!"),
-            model_size="large",
-        )
-        print(text)
-
-    # Structured object generation
-    obj = await handle_object_large(
-        config,
-        ObjectGenerationParams(prompt="Generate a user profile"),
-    )
-    print(obj)
-
-    # Tokenization
-    tokens = await handle_tokenizer_encode(
-        config,
-        TokenizeTextParams(prompt="Hello tokenizer!"),
-    )
-    print(f"Tokens: {tokens}")
-
-asyncio.run(main())
+```bash
+cd ../../cloud/packages/sdk
+bun run generate:routes
+bun run check:routes
+bun run test:e2e
 ```
 
-### Rust
-
-```rust
-use elizaos_plugin_elizacloud::{
-    ElizaCloudClient, ElizaCloudConfig, TextGenerationParams,
-    ObjectGenerationParams, TokenizeTextParams,
-    handle_object_large, handle_tokenizer_encode,
-};
-
-#[tokio::main]
-async fn main() -> anyhow::Result<()> {
-    let config = ElizaCloudConfig::new("eliza_xxxxx");
-    let client = ElizaCloudClient::new(config.clone())?;
-
-    // Text generation
-    let text = client.generate_text_large(TextGenerationParams {
-        prompt: "What is the meaning of life?".to_string(),
-        ..Default::default()
-    }).await?;
-    println!("{}", text);
-
-    // Structured object generation
-    let obj = handle_object_large(config.clone(), ObjectGenerationParams {
-        prompt: "Generate a user profile".to_string(),
-        ..Default::default()
-    }).await?;
-    println!("{}", obj);
-
-    // Tokenization
-    let tokens = handle_tokenizer_encode(config, TokenizeTextParams {
-        prompt: "Hello tokenizer!".to_string(),
-        ..Default::default()
-    }).await?;
-    println!("Tokens: {:?}", tokens);
-
-    Ok(())
-}
-```
-
-## Features
-
-| Feature                 | Description                                         |
-| ----------------------- | --------------------------------------------------- |
-| **Text Generation**     | Small (fast) and large (powerful) model support     |
-| **Object Generation**   | Structured JSON output from natural language        |
-| **Text Embeddings**     | Single and batch embedding with rate limit handling |
-| **Image Generation**    | DALL-E style image generation                       |
-| **Image Description**   | Vision model for describing images                  |
-| **Text-to-Speech**      | Multiple voice options                              |
-| **Audio Transcription** | Whisper-based audio transcription                   |
-| **Tokenization**        | Token counting, encoding, and decoding              |
+Then update this plugin to consume the new SDK route or helper.
 
 ## Development
 
-### Building
+From the TypeScript package:
 
 ```bash
-# TypeScript
+cd typescript
+bun run typecheck
+bun run test
 bun run build
-
-# Python
-cd python && pip install -e ".[dev]"
-
-# Rust
-cd rust && cargo build --release
+npm pack --dry-run
 ```
 
-### Testing
+From the SDK package:
 
 ```bash
-# TypeScript
-npx vitest typescript/
-
-# Python
-cd python && pytest tests/
-
-# Rust
-cd rust && cargo test
+cd ../../cloud/packages/sdk
+bun run check:routes
+bun run test:e2e
 ```
 
-### Linting
-
-```bash
-# TypeScript
-bun run format
-
-# Python
-cd python && ruff check . && ruff format .
-
-# Rust
-cd rust && cargo clippy && cargo fmt
-```
+`bun run test:e2e` in the SDK runs public real API checks by default and skips
+credentialed or destructive cases unless the required credentials and opt-in
+environment flags are present.
 
 ## Publishing
 
-This package is published to:
+The TypeScript package is published to npm as `@elizaos/plugin-elizacloud`.
+Publishing must include a compatible `@elizaos/cloud-sdk` release because the
+plugin depends on it directly.
 
-- **npm**: `@elizaos/plugin-elizacloud`
-- **PyPI**: `elizaos-plugin-elizacloud`
-- **crates.io**: `elizaos-plugin-elizacloud`
-
-Publishing happens automatically via GitHub Actions when the version in `package.json` changes.
-
-### Required Secrets
-
-Add these secrets to your GitHub repository:
-
-- `NPM_TOKEN` - npm access token
-- `PYPI_TOKEN` - PyPI API token
-- `CRATES_IO_TOKEN` - crates.io API token
+The repository also contains legacy Python and Rust package directories. The
+Milady runtime integration and npm package are the TypeScript implementation
+documented above.
 
 ## License
 
