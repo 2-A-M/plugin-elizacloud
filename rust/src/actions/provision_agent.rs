@@ -4,7 +4,8 @@ use std::collections::HashMap;
 
 use crate::cloud_api::CloudApiClient;
 use crate::cloud_types::{
-    collect_env_vars, ActionResult, CloudPluginConfig, CreateContainerRequest,
+    collect_env_vars, is_confirmed_option, ActionResult, CloudPluginConfig,
+    CreateContainerRequest,
 };
 use crate::error::Result;
 use crate::services::{CloudBackupService, CloudBridgeService, CloudContainerService};
@@ -49,6 +50,27 @@ pub async fn handle_provision_agent(
         }
     };
 
+    let auto_backup = options
+        .get("auto_backup")
+        .and_then(|v| v.as_bool())
+        .unwrap_or(true);
+    let preview = format!(
+        "Confirmation required before provisioning Eliza Cloud agent:\nName: {}\nProject: {}\nAuto-backup: {}",
+        name,
+        project_name,
+        if auto_backup { "enabled" } else { "disabled" }
+    );
+    if !is_confirmed_option(options) {
+        return Ok(ActionResult::confirmation_required(
+            preview,
+            serde_json::json!({
+                "name": name,
+                "project_name": project_name,
+                "auto_backup": auto_backup,
+            }),
+        ));
+    }
+
     let defs = CloudPluginConfig::default().container;
     let mut env_vars = collect_env_vars(settings);
     if let Some(extra) = options.get("environment_vars") {
@@ -89,11 +111,6 @@ pub async fn handle_provision_agent(
         // Bridge is not yet implemented; treat failure as non-fatal.
         bridge_connected = bridge.connect(&container_id).await.is_ok();
     }
-
-    let auto_backup = options
-        .get("auto_backup")
-        .and_then(|v| v.as_bool())
-        .unwrap_or(true);
 
     if auto_backup {
         if let Some(backup) = backup_svc {

@@ -3,7 +3,9 @@
 use std::collections::HashMap;
 
 use crate::cloud_api::CloudApiClient;
-use crate::cloud_types::{ActionResult, ContainerStatus, SnapshotType};
+use crate::cloud_types::{
+    is_confirmed_option, ActionResult, ContainerStatus, SnapshotType,
+};
 use crate::error::Result;
 use crate::services::{CloudBackupService, CloudBridgeService, CloudContainerService};
 
@@ -29,6 +31,20 @@ pub async fn handle_freeze_agent(
             "Container not running (status: {})",
             container.status
         )));
+    }
+
+    let preview = format!(
+        "Confirmation required before freezing Eliza Cloud agent:\nContainer: {}\nID: {}\nEffects: create snapshot, disconnect bridge, stop container.",
+        container.name, container_id
+    );
+    if !is_confirmed_option(options) {
+        return Ok(ActionResult::confirmation_required(
+            preview,
+            serde_json::json!({
+                "containerId": container_id,
+                "containerName": container.name,
+            }),
+        ));
     }
 
     // Snapshot → disconnect → stop

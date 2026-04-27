@@ -4,7 +4,12 @@ from __future__ import annotations
 
 import logging
 
-from elizaos_plugin_elizacloud.actions.provision_agent import ActionResult, ServiceRegistry
+from elizaos_plugin_elizacloud.actions.provision_agent import (
+    ActionResult,
+    ServiceRegistry,
+    _confirmation_required,
+    _is_confirmed,
+)
 from elizaos_plugin_elizacloud.services.cloud_backup_service import CloudBackupService
 from elizaos_plugin_elizacloud.services.cloud_container_service import CloudContainerService
 from elizaos_plugin_elizacloud.types.cloud import (
@@ -76,6 +81,12 @@ resume_cloud_agent_action: dict[str, object] = {
             "required": False,
             "schema": {"type": "object"},
         },
+        {
+            "name": "confirmed",
+            "description": "Must be true to resume the cloud agent after preview",
+            "required": False,
+            "schema": {"type": "boolean", "default": False},
+        },
     ],
 }
 
@@ -104,6 +115,25 @@ async def handle_resume(
             error="Missing required parameters: name and project_name",
         )
 
+    explicit_snapshot = params.get("snapshotId") if isinstance(params.get("snapshotId"), str) else None
+    preview = "\n".join(
+        [
+            "Confirmation required before resuming Eliza Cloud agent:",
+            f"Name: {params['name']}",
+            f"Project: {params['project_name']}",
+            f"Snapshot: {explicit_snapshot or 'latest available'}",
+        ]
+    )
+    if not _is_confirmed(params):
+        return _confirmation_required(
+            preview,
+            {
+                "name": str(params["name"]),
+                "project_name": str(params["project_name"]),
+                "snapshotId": explicit_snapshot,
+            },
+        )
+
     defs = DEFAULT_CLOUD_CONFIG.container
     env_vars = collect_env_vars(registry.settings)
     extra_env = params.get("environment_vars")
@@ -130,7 +160,7 @@ async def handle_resume(
     # Restore from snapshot
     restored_id: str | None = None
     if backup:
-        explicit = params.get("snapshotId")
+        explicit = explicit_snapshot
         if explicit:
             await backup.restore_snapshot(container_id, str(explicit))
             restored_id = str(explicit)

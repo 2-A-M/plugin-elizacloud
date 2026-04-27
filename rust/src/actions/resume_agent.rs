@@ -4,7 +4,8 @@ use std::collections::HashMap;
 
 use crate::cloud_api::CloudApiClient;
 use crate::cloud_types::{
-    collect_env_vars, ActionResult, CloudPluginConfig, CreateContainerRequest,
+    collect_env_vars, is_confirmed_option, ActionResult, CloudPluginConfig,
+    CreateContainerRequest,
 };
 use crate::error::Result;
 use crate::services::{CloudBackupService, CloudBridgeService, CloudContainerService};
@@ -34,6 +35,27 @@ pub async fn handle_resume_agent(
             ))
         }
     };
+
+    let explicit_snapshot = options
+        .get("snapshotId")
+        .and_then(|v| v.as_str())
+        .map(str::to_string);
+    let preview = format!(
+        "Confirmation required before resuming Eliza Cloud agent:\nName: {}\nProject: {}\nSnapshot: {}",
+        name,
+        project_name,
+        explicit_snapshot.as_deref().unwrap_or("latest available")
+    );
+    if !is_confirmed_option(options) {
+        return Ok(ActionResult::confirmation_required(
+            preview,
+            serde_json::json!({
+                "name": name,
+                "project_name": project_name,
+                "snapshotId": explicit_snapshot,
+            }),
+        ));
+    }
 
     let defs = CloudPluginConfig::default().container;
     let mut env_vars = collect_env_vars(settings);
@@ -73,8 +95,7 @@ pub async fn handle_resume_agent(
     // Restore from snapshot
     let mut restored_id: Option<String> = None;
     if let Some(backup) = backup_svc {
-        let explicit = options.get("snapshotId").and_then(|v| v.as_str());
-        if let Some(snap_id) = explicit {
+        if let Some(snap_id) = explicit_snapshot.as_deref() {
             backup
                 .restore_snapshot(client, &container_id, snap_id)
                 .await?;

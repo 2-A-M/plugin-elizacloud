@@ -542,6 +542,34 @@ impl ActionResult {
             data: None,
         }
     }
+
+    pub fn confirmation_required(
+        preview: impl Into<String>,
+        mut data: serde_json::Value,
+    ) -> Self {
+        let preview = preview.into();
+        if let Some(obj) = data.as_object_mut() {
+            obj.insert(
+                "requiresConfirmation".to_string(),
+                serde_json::Value::Bool(true),
+            );
+            obj.insert(
+                "preview".to_string(),
+                serde_json::Value::String(preview.clone()),
+            );
+        }
+        Self {
+            success: false,
+            error: None,
+            text: Some(preview.clone()),
+            data: Some(data),
+        }
+    }
+}
+
+pub fn is_confirmed_option(options: &HashMap<String, serde_json::Value>) -> bool {
+    matches!(options.get("confirmed"), Some(serde_json::Value::Bool(true)))
+        || matches!(options.get("confirmed").and_then(|v| v.as_str()), Some("true"))
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

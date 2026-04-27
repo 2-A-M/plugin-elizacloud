@@ -21,6 +21,8 @@ class ActionResult(TypedDict, total=False):
     error: str | None
     text: str | None
     data: dict[str, object] | None
+    requiresConfirmation: bool
+    preview: str
 
 
 class ServiceRegistry:
@@ -56,6 +58,21 @@ def _extract_params(
         "name": name_match.group(1).strip() if name_match else None,
         "project_name": project_match.group(1).strip() if project_match else None,
     }
+
+
+def _is_confirmed(params: dict[str, object]) -> bool:
+    raw = params.get("confirmed")
+    return raw is True or raw == "true"
+
+
+def _confirmation_required(preview: str, data: dict[str, object]) -> ActionResult:
+    return ActionResult(
+        success=False,
+        text=preview,
+        requiresConfirmation=True,
+        preview=preview,
+        data={"requiresConfirmation": True, "preview": preview, **data},
+    )
 
 
 provision_cloud_agent_action: dict[str, object] = {
@@ -102,6 +119,12 @@ provision_cloud_agent_action: dict[str, object] = {
             "required": False,
             "schema": {"type": "boolean"},
         },
+        {
+            "name": "confirmed",
+            "description": "Must be true to provision the cloud agent after preview",
+            "required": False,
+            "schema": {"type": "boolean", "default": False},
+        },
     ],
 }
 
@@ -134,6 +157,25 @@ async def handle_provision(
             error="Missing required parameters: name and project_name",
         )
 
+    auto_backup = params.get("auto_backup") is not False
+    preview = "\n".join(
+        [
+            "Confirmation required before provisioning Eliza Cloud agent:",
+            f"Name: {params['name']}",
+            f"Project: {params['project_name']}",
+            f"Auto-backup: {'enabled' if auto_backup else 'disabled'}",
+        ]
+    )
+    if not _is_confirmed(params):
+        return _confirmation_required(
+            preview,
+            {
+                "name": str(params["name"]),
+                "project_name": str(params["project_name"]),
+                "auto_backup": auto_backup,
+            },
+        )
+
     defs = DEFAULT_CLOUD_CONFIG.container
     env_vars = collect_env_vars(registry.settings)
     extra_env = params.get("environment_vars")
@@ -162,7 +204,6 @@ async def handle_provision(
         await bridge.connect(container_id)
         logger.info("[PROVISION] Bridge connected to %s", container_id)
 
-    auto_backup = params.get("auto_backup") is not False
     if auto_backup and backup:
         backup.schedule_auto_backup(container_id)
 

@@ -139,6 +139,22 @@ class TestProvisionAction:
         assert "not authenticated" in str(result.get("error", "")).lower()
 
     @pytest.mark.asyncio
+    async def test_provision_requires_confirmation(self) -> None:
+        reg = _mock_registry()
+        assert reg.containers is not None
+        reg.containers.create_container = AsyncMock()
+
+        result = await handle_provision(
+            reg,
+            options={"name": "my-agent", "project_name": "test-proj"},
+        )
+
+        assert result["success"] is False
+        assert result["requiresConfirmation"] is True
+        assert _result_data(result).get("requiresConfirmation") is True
+        reg.containers.create_container.assert_not_called()
+
+    @pytest.mark.asyncio
     async def test_successful_provision(self) -> None:
         reg = _mock_registry()
         # Mock container creation response
@@ -165,7 +181,7 @@ class TestProvisionAction:
 
         result = await handle_provision(
             reg,
-            options={"name": "my-agent", "project_name": "test-proj"},
+            options={"name": "my-agent", "project_name": "test-proj", "confirmed": True},
         )
 
         assert result["success"] is True
@@ -199,6 +215,23 @@ class TestFreezeAction:
         assert "not running" in str(result.get("error", "")).lower()
 
     @pytest.mark.asyncio
+    async def test_freeze_requires_confirmation(self) -> None:
+        reg = _mock_registry()
+        mock_container = MagicMock()
+        mock_container.status = "running"
+        mock_container.name = "my-agent"
+
+        assert reg.containers is not None
+        reg.containers.get_container = AsyncMock(return_value=mock_container)
+        reg.containers.delete_container = AsyncMock()
+
+        result = await handle_freeze(reg, options={"containerId": "c-1"})
+        assert result["success"] is False
+        assert result["requiresConfirmation"] is True
+        assert _result_data(result).get("requiresConfirmation") is True
+        reg.containers.delete_container.assert_not_called()
+
+    @pytest.mark.asyncio
     async def test_successful_freeze(self) -> None:
         reg = _mock_registry()
         mock_container = MagicMock()
@@ -218,7 +251,7 @@ class TestFreezeAction:
         assert reg.bridge is not None
         reg.bridge.disconnect = AsyncMock()
 
-        result = await handle_freeze(reg, options={"containerId": "c-1"})
+        result = await handle_freeze(reg, options={"containerId": "c-1", "confirmed": True})
         assert result["success"] is True
         data = _result_data(result)
         assert data.get("snapshotId") == "snap-123"
@@ -234,6 +267,21 @@ class TestResumeAction:
         result = await handle_resume(reg, options={})
         assert result["success"] is False
         assert "Missing required" in str(result.get("error", ""))
+
+    @pytest.mark.asyncio
+    async def test_resume_requires_confirmation(self) -> None:
+        reg = _mock_registry()
+        assert reg.containers is not None
+        reg.containers.create_container = AsyncMock()
+
+        result = await handle_resume(
+            reg,
+            options={"name": "restored-agent", "project_name": "proj"},
+        )
+        assert result["success"] is False
+        assert result["requiresConfirmation"] is True
+        assert _result_data(result).get("requiresConfirmation") is True
+        reg.containers.create_container.assert_not_called()
 
     @pytest.mark.asyncio
     async def test_successful_resume(self) -> None:
@@ -261,7 +309,7 @@ class TestResumeAction:
 
         result = await handle_resume(
             reg,
-            options={"name": "restored-agent", "project_name": "proj"},
+            options={"name": "restored-agent", "project_name": "proj", "confirmed": True},
         )
         assert result["success"] is True
         data = _result_data(result)

@@ -18,9 +18,15 @@ import type { CloudAuthService } from "../services/cloud-auth";
 import type { CloudBackupService } from "../services/cloud-backup";
 import type { CloudBridgeService } from "../services/cloud-bridge";
 import type { CloudContainerService } from "../services/cloud-container";
+import {
+  confirmationRequired,
+  isConfirmed,
+  mergedOptions,
+} from "./confirmation";
 
-function getContainerId(message: Memory, options?: Record<string, unknown>): string | null {
-  if (options?.containerId) return String(options.containerId);
+function getContainerId(message: Memory, options?: HandlerOptions): string | null {
+  const params = mergedOptions(options);
+  if (params.containerId) return String(params.containerId);
   const meta = (message.metadata as Record<string, unknown> | undefined)?.actionParams as
     | Record<string, unknown>
     | undefined;
@@ -37,8 +43,14 @@ export const freezeCloudAgentAction: Action = {
     {
       name: "containerId",
       description: "ID of the container to freeze",
-      required: true,
+        required: true,
       schema: { type: "string" },
+    },
+    {
+      name: "confirmed",
+      description: "Must be true to freeze the cloud agent after preview.",
+      required: false,
+      schema: { type: "boolean", default: false },
     },
   ],
 
@@ -86,7 +98,7 @@ export const freezeCloudAgentAction: Action = {
     runtime: IAgentRuntime,
     message: Memory,
     _state?: State,
-    options?: Record<string, unknown>,
+    options?: HandlerOptions,
     callback?: HandlerCallback
   ): Promise<ActionResult> {
     const containers = runtime.getService("CLOUD_CONTAINER") as CloudContainerService;
@@ -102,6 +114,20 @@ export const freezeCloudAgentAction: Action = {
         success: false,
         error: `Container not running (status: ${container.status})`,
       };
+    }
+
+    const preview = [
+      "Confirmation required before freezing Eliza Cloud agent:",
+      `Container: ${container.name}`,
+      `ID: ${containerId}`,
+      "Effects: create snapshot, disconnect bridge, stop container.",
+    ].join("\n");
+    if (!isConfirmed(options)) {
+      await callback?.({ text: preview, actions: ["FREEZE_CLOUD_AGENT"] });
+      return confirmationRequired(preview, {
+        containerId,
+        containerName: container.name,
+      });
     }
 
     const notify = async (text: string) => {

@@ -21,12 +21,18 @@ import type { CloudContainerService } from "../services/cloud-container";
 import type { AgentSnapshot, CreateContainerRequest } from "../types/cloud";
 import { DEFAULT_CLOUD_CONFIG } from "../types/cloud";
 import { collectEnvVars } from "../utils/forwarded-settings";
+import {
+  confirmationRequired,
+  isConfirmed,
+  mergedOptions,
+} from "./confirmation";
 
 function extractParams(
   message: Memory,
-  options?: Record<string, unknown>
+  options?: HandlerOptions
 ): Record<string, unknown> {
-  if (options && Object.keys(options).length > 0) return options;
+  const params = mergedOptions(options);
+  if (Object.keys(params).length > 0) return params;
   const meta = message.metadata as Record<string, unknown> | undefined;
   return (meta?.actionParams as Record<string, unknown>) ?? {};
 }
@@ -78,6 +84,12 @@ export const resumeCloudAgentAction: Action = {
       required: false,
       schema: { type: "object" },
     },
+    {
+      name: "confirmed",
+      description: "Must be true to resume the cloud agent after preview.",
+      required: false,
+      schema: { type: "boolean", default: false },
+    },
   ],
 
   validate: async (
@@ -124,7 +136,7 @@ export const resumeCloudAgentAction: Action = {
     runtime: IAgentRuntime,
     message: Memory,
     _state?: State,
-    options?: Record<string, unknown>,
+    options?: HandlerOptions,
     callback?: HandlerCallback
   ): Promise<ActionResult> {
     const containerSvc = runtime.getService("CLOUD_CONTAINER") as CloudContainerService;
@@ -137,6 +149,25 @@ export const resumeCloudAgentAction: Action = {
         success: false,
         error: "Missing required parameters: name and project_name",
       };
+    }
+
+    const explicitSnapshot =
+      typeof params.snapshotId === "string" && params.snapshotId.length > 0
+        ? params.snapshotId
+        : null;
+    const preview = [
+      "Confirmation required before resuming Eliza Cloud agent:",
+      `Name: ${String(params.name)}`,
+      `Project: ${String(params.project_name)}`,
+      `Snapshot: ${explicitSnapshot ?? "latest available"}`,
+    ].join("\n");
+    if (!isConfirmed(options)) {
+      await callback?.({ text: preview, actions: ["RESUME_CLOUD_AGENT"] });
+      return confirmationRequired(preview, {
+        name: String(params.name),
+        project_name: String(params.project_name),
+        snapshotId: explicitSnapshot,
+      });
     }
 
     const notify = async (text: string) => {
@@ -169,7 +200,7 @@ export const resumeCloudAgentAction: Action = {
     // Restore from snapshot
     let restoredId: string | null = null;
     if (backup) {
-      const explicit = params.snapshotId as string | undefined;
+      const explicit = explicitSnapshot ?? undefined;
       if (explicit) {
         await backup.restoreSnapshot(id, explicit);
         restoredId = explicit;

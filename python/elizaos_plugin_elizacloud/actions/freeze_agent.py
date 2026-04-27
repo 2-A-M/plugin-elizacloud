@@ -4,7 +4,12 @@ from __future__ import annotations
 
 import logging
 
-from elizaos_plugin_elizacloud.actions.provision_agent import ActionResult, ServiceRegistry
+from elizaos_plugin_elizacloud.actions.provision_agent import (
+    ActionResult,
+    ServiceRegistry,
+    _confirmation_required,
+    _is_confirmed,
+)
 
 logger = logging.getLogger("elizacloud.actions.freeze")
 
@@ -22,6 +27,16 @@ def _get_container_id(
     return None
 
 
+def _get_params(
+    message_metadata: dict[str, object] | None = None,
+    options: dict[str, object] | None = None,
+) -> dict[str, object]:
+    if options:
+        return options
+    action_params = message_metadata.get("actionParams") if message_metadata else None
+    return action_params if isinstance(action_params, dict) else {}
+
+
 freeze_cloud_agent_action: dict[str, object] = {
     "name": "FREEZE_CLOUD_AGENT",
     "description": "Freeze a cloud agent: snapshot state, disconnect bridge, stop container.",
@@ -33,6 +48,12 @@ freeze_cloud_agent_action: dict[str, object] = {
             "description": "ID of the container to freeze",
             "required": True,
             "schema": {"type": "string"},
+        },
+        {
+            "name": "confirmed",
+            "description": "Must be true to freeze the cloud agent after preview",
+            "required": False,
+            "schema": {"type": "boolean", "default": False},
         },
     ],
 }
@@ -64,6 +85,21 @@ async def handle_freeze(
         return ActionResult(
             success=False,
             error=f"Container not running (status: {container.status})",
+        )
+
+    params = _get_params(message_metadata, options)
+    preview = "\n".join(
+        [
+            "Confirmation required before freezing Eliza Cloud agent:",
+            f"Container: {container.name}",
+            f"ID: {container_id}",
+            "Effects: create snapshot, disconnect bridge, stop container.",
+        ]
+    )
+    if not _is_confirmed(params):
+        return _confirmation_required(
+            preview,
+            {"containerId": container_id, "containerName": container.name},
         )
 
     # Snapshot → disconnect → stop

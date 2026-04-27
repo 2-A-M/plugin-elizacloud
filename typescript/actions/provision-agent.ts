@@ -21,12 +21,18 @@ import type { CloudContainerService } from "../services/cloud-container";
 import type { CreateContainerRequest } from "../types/cloud";
 import { DEFAULT_CLOUD_CONFIG } from "../types/cloud";
 import { collectEnvVars } from "../utils/forwarded-settings";
+import {
+  confirmationRequired,
+  isConfirmed,
+  mergedOptions,
+} from "./confirmation";
 
 function extractParams(
   message: Memory,
-  options?: Record<string, unknown>
+  options?: HandlerOptions
 ): Record<string, unknown> {
-  if (options && Object.keys(options).length > 0) return options;
+  const params = mergedOptions(options);
+  if (Object.keys(params).length > 0) return params;
   const meta = message.metadata as Record<string, unknown> | undefined;
   if (meta?.actionParams) return meta.actionParams as Record<string, unknown>;
   // Regex fallback from free-text
@@ -80,6 +86,12 @@ export const provisionCloudAgentAction: Action = {
       required: false,
       schema: { type: "boolean" },
     },
+    {
+      name: "confirmed",
+      description: "Must be true to provision the cloud agent after preview.",
+      required: false,
+      schema: { type: "boolean", default: false },
+    },
   ],
 
   validate: async (
@@ -125,7 +137,7 @@ export const provisionCloudAgentAction: Action = {
     runtime: IAgentRuntime,
     message: Memory,
     _state?: State,
-    options?: Record<string, unknown>,
+    options?: HandlerOptions,
     callback?: HandlerCallback
   ): Promise<ActionResult> {
     const auth = runtime.getService("CLOUD_AUTH") as CloudAuthService;
@@ -146,6 +158,22 @@ export const provisionCloudAgentAction: Action = {
         success: false,
         error: "Missing required parameters: name and project_name",
       };
+    }
+
+    const autoBackup = params.auto_backup !== false;
+    const preview = [
+      "Confirmation required before provisioning Eliza Cloud agent:",
+      `Name: ${String(params.name)}`,
+      `Project: ${String(params.project_name)}`,
+      `Auto-backup: ${autoBackup ? "enabled" : "disabled"}`,
+    ].join("\n");
+    if (!isConfirmed(options)) {
+      await callback?.({ text: preview, actions: ["PROVISION_CLOUD_AGENT"] });
+      return confirmationRequired(preview, {
+        name: String(params.name),
+        project_name: String(params.project_name),
+        auto_backup: autoBackup,
+      });
     }
 
     const notify = async (text: string) => {
@@ -184,7 +212,6 @@ export const provisionCloudAgentAction: Action = {
       logger.info(`[PROVISION] Bridge connected to ${id}`);
     }
 
-    const autoBackup = params.auto_backup !== false;
     if (autoBackup && backup) backup.scheduleAutoBackup(id);
 
     await notify(`Agent "${params.name}" deployed.${autoBackup ? " Auto-backup enabled." : ""}`);
