@@ -27,6 +27,7 @@ const RETRY_DELAY_MS = 2_000;
 const IDLE_DELAY_MS = 250;
 
 type RelayRequestMethod = "GET" | "POST" | "DELETE";
+type RelayRuntimeStatus = "idle" | "registered" | "polling" | "error" | "stopped";
 
 interface RelayRequestJsonOptions {
   method: RelayRequestMethod;
@@ -208,6 +209,8 @@ export class CloudManagedGatewayRelayService extends Service {
   private currentSessionId: string | null = null;
   private stopping = false;
   private activeAbortController: AbortController | null = null;
+  private relayStatus: RelayRuntimeStatus = "idle";
+  private lastSeenAt: string | null = null;
 
   static async start(runtime: IAgentRuntime): Promise<Service> {
     const service = new CloudManagedGatewayRelayService(runtime);
@@ -217,6 +220,7 @@ export class CloudManagedGatewayRelayService extends Service {
 
   async stop(): Promise<void> {
     this.stopping = true;
+    this.relayStatus = "stopped";
     this.activeAbortController?.abort();
 
     if (this.loopPromise) {
@@ -239,6 +243,7 @@ export class CloudManagedGatewayRelayService extends Service {
   private async initialize(): Promise<void> {
     if (!isNodeHost()) {
       logger.debug("[CloudManagedGatewayRelay] Skipping gateway relay outside Node.js runtime");
+      this.relayStatus = "stopped";
       return;
     }
 
@@ -246,17 +251,20 @@ export class CloudManagedGatewayRelayService extends Service {
       logger.debug(
         "[CloudManagedGatewayRelay] Skipping local relay inside provisioned cloud runtime"
       );
+      this.relayStatus = "stopped";
       return;
     }
 
     if (!this.runtime.messageService) {
       logger.debug("[CloudManagedGatewayRelay] Skipping gateway relay without message service");
+      this.relayStatus = "idle";
       return;
     }
 
     const auth = this.runtime.getService("CLOUD_AUTH");
     if (!auth) {
       logger.debug("[CloudManagedGatewayRelay] CloudAuthService not available");
+      this.relayStatus = "idle";
       return;
     }
 
@@ -265,11 +273,59 @@ export class CloudManagedGatewayRelayService extends Service {
       logger.debug(
         "[CloudManagedGatewayRelay] Skipping gateway relay while cloud auth is inactive"
       );
+      this.relayStatus = "idle";
       return;
     }
 
+    this.startRelayLoopIfReady();
+  }
+
+  getSessionInfo(): {
+    sessionId: string | null;
+    organizationId: string | null;
+    userId: string | null;
+    agentName: string | null;
+    platform: string | null;
+    lastSeenAt: string | null;
+    status: RelayRuntimeStatus;
+  } {
+    const auth = this.authService;
+    const status =
+      this.stopping || this.relayStatus === "stopped"
+        ? "stopped"
+        : auth?.isAuthenticated() === false
+          ? "idle"
+          : this.relayStatus;
+
+    return {
+      sessionId: this.currentSessionId,
+      organizationId: auth?.getOrganizationId() ?? null,
+      userId: auth?.getUserId() ?? null,
+      agentName: this.getAgentName(),
+      platform: "local-runtime",
+      lastSeenAt: this.lastSeenAt,
+      status,
+    };
+  }
+
+  startRelayLoopIfReady(): boolean {
+    if (this.loopPromise && !this.stopping) {
+      return true;
+    }
+
+    const auth =
+      this.authService ?? (this.runtime.getService("CLOUD_AUTH") as CloudAuthService | null);
+    if (!auth?.isAuthenticated() || !this.runtime.messageService) {
+      this.relayStatus = "idle";
+      return false;
+    }
+
+    this.authService = auth;
+    this.stopping = false;
+    this.relayStatus = "idle";
     this.loopPromise = this.runLoop();
     logger.info("[CloudManagedGatewayRelay] Local gateway relay loop started");
+    return true;
   }
 
   private async runLoop(): Promise<void> {
@@ -277,17 +333,23 @@ export class CloudManagedGatewayRelayService extends Service {
       try {
         if (!this.currentSessionId) {
           this.currentSessionId = await this.registerSession();
+          this.relayStatus = "registered";
+          this.lastSeenAt = new Date().toISOString();
           continue;
         }
 
+        this.relayStatus = "polling";
         const request = await this.pollNextRequest(this.currentSessionId);
+        this.lastSeenAt = new Date().toISOString();
         if (!request) {
+          this.relayStatus = "registered";
           await sleep(IDLE_DELAY_MS);
           continue;
         }
 
         const response = await this.handleRequest(request.rpc);
         await this.submitResponse(this.currentSessionId, request.requestId, response);
+        this.relayStatus = "registered";
       } catch (error) {
         if (this.stopping) {
           return;
@@ -295,10 +357,12 @@ export class CloudManagedGatewayRelayService extends Service {
 
         if (error instanceof SessionMissingError) {
           this.currentSessionId = null;
+          this.relayStatus = "idle";
           await sleep(IDLE_DELAY_MS);
           continue;
         }
 
+        this.relayStatus = "error";
         logger.warn(
           `[CloudManagedGatewayRelay] Relay loop error: ${
             error instanceof Error ? error.message : String(error)
@@ -383,9 +447,9 @@ export class CloudManagedGatewayRelayService extends Service {
       );
     } catch (error) {
       logger.debug(
-        `[CloudManagedGatewayRelay] Failed to disconnect relay session ${
-          sessionId
-        }: ${error instanceof Error ? error.message : String(error)}`
+        `[CloudManagedGatewayRelay] Failed to disconnect relay session ${sessionId}: ${
+          error instanceof Error ? error.message : String(error)
+        }`
       );
     }
   }
@@ -550,9 +614,9 @@ export class CloudManagedGatewayRelayService extends Service {
       const responseMemory = createMessageMemory({
         id: createUniqueUuid(
           this.runtime,
-          `${payload.source}:${payload.roomKey}:${String(rpc.id ?? Date.now())}:response:${
-            callbackTexts.length
-          }`
+          `${payload.source}:${payload.roomKey}:${String(
+            rpc.id ?? Date.now()
+          )}:response:${callbackTexts.length}`
         ),
         entityId: this.runtime.agentId,
         agentId: this.runtime.agentId,

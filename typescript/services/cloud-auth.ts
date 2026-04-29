@@ -141,6 +141,12 @@ interface RawTokenResponse {
   scope?: unknown;
 }
 
+interface ApiKeyAuthInput {
+  apiKey: string;
+  organizationId?: string;
+  userId?: string;
+}
+
 interface RawIdTokenPayload {
   iss?: unknown;
   sub?: unknown;
@@ -423,7 +429,11 @@ export class CloudAuthService extends Service {
       this.credentials = {
         apiKey: key,
         userId: String(this.runtime.getSetting("ELIZAOS_CLOUD_USER_ID") ?? ""),
-        organizationId: String(this.runtime.getSetting("ELIZAOS_CLOUD_ORG_ID") ?? ""),
+        organizationId: String(
+          this.runtime.getSetting("ELIZAOS_CLOUD_ORG_ID") ??
+            this.runtime.getSetting("ELIZA_CLOUD_ORGANIZATION_ID") ??
+            ""
+        ),
         authenticatedAt: Date.now(),
       };
       logger.info("[CloudAuth] Authenticated with saved API key");
@@ -509,6 +519,29 @@ export class CloudAuthService extends Service {
     logger.info(`[CloudAuth] ${action} (credits: $${response.data.credits.toFixed(2)})`);
 
     return this.credentials;
+  }
+
+  authenticateWithApiKey(input: ApiKeyAuthInput): CloudCredentials {
+    const apiKey = input.apiKey.trim();
+    if (!apiKey) {
+      throw new Error("Eliza Cloud API key is required");
+    }
+
+    this.client.setApiKey(apiKey);
+    this.credentials = {
+      apiKey,
+      userId: input.userId ?? "",
+      organizationId: input.organizationId ?? "",
+      authenticatedAt: Date.now(),
+    };
+
+    logger.info("[CloudAuth] Authenticated with API key");
+    return this.credentials;
+  }
+
+  clearAuth(): void {
+    this.credentials = null;
+    this.client.setApiKey(undefined);
   }
 
   isAuthenticated(): boolean {
