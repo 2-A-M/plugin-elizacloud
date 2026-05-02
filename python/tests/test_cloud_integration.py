@@ -132,7 +132,11 @@ class TestProvisionFreezeResumeCycle:
 
         provision_result = await handle_provision(
             reg,
-            options={"name": "my-agent", "project_name": "test-proj"},
+            options={
+                "name": "my-agent",
+                "project_name": "test-proj",
+                "confirmed": True,
+            },
         )
 
         assert provision_result["success"] is True
@@ -537,7 +541,11 @@ class TestErrorPropagation:
         with pytest.raises(Exception, match="Connection refused"):
             await handle_provision(
                 reg,
-                options={"name": "agent", "project_name": "proj"},
+                options={
+                    "name": "agent",
+                    "project_name": "proj",
+                    "confirmed": True,
+                },
             )
 
 
