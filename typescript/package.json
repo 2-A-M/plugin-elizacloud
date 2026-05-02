@@ -2,7 +2,7 @@
   "name": "@elizaos/plugin-elizacloud",
   "version": "2.0.0-alpha.8",
   "type": "module",
-  "main": "dist/cjs/index.node.cjs",
+  "main": "dist/node/index.node.js",
   "module": "dist/node/index.node.js",
   "types": "dist/node/index.d.ts",
   "browser": "dist/browser/index.browser.js",
@@ -23,7 +23,6 @@
       "node": {
         "types": "./dist/node/index.d.ts",
         "import": "./dist/node/index.node.js",
-        "require": "./dist/cjs/index.node.cjs",
         "default": "./dist/node/index.node.js"
       },
       "default": "./dist/node/index.node.js"
