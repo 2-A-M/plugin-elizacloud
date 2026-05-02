@@ -156,7 +156,10 @@ class TestProvisionFreezeResumeCycle:
 
         reg.bridge.disconnect = AsyncMock()
 
-        freeze_result = await handle_freeze(reg, options={"containerId": "c-new"})
+        freeze_result = await handle_freeze(
+            reg,
+            options={"containerId": "c-new", "confirmed": True},
+        )
 
         assert freeze_result["success"] is True
         freeze_data = _result_data(freeze_result)
@@ -179,7 +182,11 @@ class TestProvisionFreezeResumeCycle:
 
         resume_result = await handle_resume(
             reg,
-            options={"name": "my-agent-restored", "project_name": "test-proj"},
+            options={
+                "name": "my-agent-restored",
+                "project_name": "test-proj",
+                "confirmed": True,
+            },
         )
 
         assert resume_result["success"] is True
