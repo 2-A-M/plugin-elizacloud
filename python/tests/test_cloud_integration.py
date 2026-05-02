@@ -548,7 +548,11 @@ class TestErrorPropagation:
         with pytest.raises(Exception, match="Connection refused"):
             await handle_provision(
                 reg,
-                options={"name": "agent", "project_name": "proj", "confirmed": True},
+                options={
+                    "name": "agent",
+                    "project_name": "proj",
+                    "confirmed": True,
+                },
             )
 
 
