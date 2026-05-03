@@ -125,10 +125,65 @@ async function generateObjectByModelType(
   // Strip leading/trailing markdown code fences before JSON.parse. Models
   // routinely wrap structured output in ```json ... ``` even when JSON is
   // requested, and the repair function does not handle the leading backtick.
+  // Some upstreams emit a single backtick or an unusual fence count, so the
+  // pattern accepts 1+ backticks rather than exactly 3.
   jsonText = jsonText
-    .replace(/^[\s]*```(?:json)?\s*\n?/i, "")
-    .replace(/\n?```\s*$/i, "")
+    .replace(/^[\s]*`{1,}(?:json)?\s*\n?/i, "")
+    .replace(/\n?`{1,}\s*$/i, "")
     .trim();
+
+  // If the response contained extra prose or — more commonly — duplicated
+  // copies of the JSON glued together with stray fences between them (which
+  // happens when extractResponsesOutputText concatenates output_text and
+  // output[] segments containing the same body), walk from the first { or [
+  // and stop at its matching close. This isolates exactly one balanced
+  // top-level JSON value so we don't re-introduce the duplicate-content
+  // parse failure downstream.
+  if (jsonText.length > 0 && !/^[{\[]/.test(jsonText)) {
+    const firstObj = jsonText.indexOf("{");
+    const firstArr = jsonText.indexOf("[");
+    const start =
+      firstObj === -1
+        ? firstArr
+        : firstArr === -1
+          ? firstObj
+          : Math.min(firstObj, firstArr);
+    if (start >= 0) {
+      const open = jsonText[start];
+      const close = open === "{" ? "}" : "]";
+      let depth = 0;
+      let inString = false;
+      let escape = false;
+      let end = -1;
+      for (let i = start; i < jsonText.length; i++) {
+        const ch = jsonText[i];
+        if (escape) {
+          escape = false;
+          continue;
+        }
+        if (ch === "\\") {
+          escape = true;
+          continue;
+        }
+        if (ch === '"') {
+          inString = !inString;
+          continue;
+        }
+        if (inString) continue;
+        if (ch === open) depth++;
+        else if (ch === close) {
+          depth--;
+          if (depth === 0) {
+            end = i;
+            break;
+          }
+        }
+      }
+      if (end > start) {
+        jsonText = jsonText.slice(start, end + 1).trim();
+      }
+    }
+  }
 
   try {
     return JSON.parse(jsonText) as Record<string, JsonValue>;
