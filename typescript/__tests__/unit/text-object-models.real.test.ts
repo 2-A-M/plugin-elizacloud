@@ -236,4 +236,57 @@ describe("elizacloud responses-backed text/object models", () => {
 
     expect(result).toEqual({ status: "ok", count: 3 });
   });
+
+  it("strips a single-backtick fence around object output", async () => {
+    nextBody = JSON.stringify({
+      output_text: '`json\n{"status":"ok","count":4}\n`',
+      usage: { input_tokens: 5, output_tokens: 5, total_tokens: 10 },
+    });
+
+    const result = await handleObjectSmall(
+      createRuntime() as never,
+      {
+        prompt: "Return a JSON object",
+        temperature: 0,
+      } as never
+    );
+
+    expect(result).toEqual({ status: "ok", count: 4 });
+  });
+
+  it("dedupes a duplicated responses body glued together with stray fences", async () => {
+    nextBody = JSON.stringify({
+      output_text:
+        '{"status":"ok","count":5}\n```\n```json\n{"status":"ok","count":5}',
+      usage: { input_tokens: 6, output_tokens: 6, total_tokens: 12 },
+    });
+
+    const result = await handleObjectSmall(
+      createRuntime() as never,
+      {
+        prompt: "Return a JSON object",
+        temperature: 0,
+      } as never
+    );
+
+    expect(result).toEqual({ status: "ok", count: 5 });
+  });
+
+  it("recovers JSON when the response has a prose prefix and no fence", async () => {
+    nextBody = JSON.stringify({
+      output_text:
+        'Sure, here is the JSON: {"status":"ok","count":6}',
+      usage: { input_tokens: 7, output_tokens: 7, total_tokens: 14 },
+    });
+
+    const result = await handleObjectSmall(
+      createRuntime() as never,
+      {
+        prompt: "Return a JSON object",
+        temperature: 0,
+      } as never
+    );
+
+    expect(result).toEqual({ status: "ok", count: 6 });
+  });
 });

@@ -36,6 +36,61 @@ function isReasoningModel(modelName: string): boolean {
   return REASONING_MODEL_PATTERNS.some((pattern) => lower.includes(pattern));
 }
 
+/**
+ * Walk from the first `{` or `[` in `text` to its matching close bracket,
+ * respecting JSON string escapes, and return the slice. Returns the input
+ * unchanged when no opener is found or no matching closer is reached.
+ *
+ * Exported for unit-testability; called unconditionally by the `responses`
+ * object-generation path so duplicated/prose-prefixed bodies parse cleanly.
+ */
+export function extractFirstBalancedJsonValue(text: string): string {
+  if (text.length === 0) return text;
+  const firstObj = text.indexOf("{");
+  const firstArr = text.indexOf("[");
+  const start =
+    firstObj === -1
+      ? firstArr
+      : firstArr === -1
+        ? firstObj
+        : Math.min(firstObj, firstArr);
+  if (start < 0) return text;
+  const open = text[start];
+  const close = open === "{" ? "}" : "]";
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+  let end = -1;
+  for (let i = start; i < text.length; i++) {
+    const ch = text[i];
+    if (escaped) {
+      escaped = false;
+      continue;
+    }
+    if (ch === "\\") {
+      escaped = true;
+      continue;
+    }
+    if (ch === '"') {
+      inString = !inString;
+      continue;
+    }
+    if (inString) continue;
+    if (ch === open) depth++;
+    else if (ch === close) {
+      depth--;
+      if (depth === 0) {
+        end = i;
+        break;
+      }
+    }
+  }
+  if (end > start) {
+    return text.slice(start, end + 1).trim();
+  }
+  return text;
+}
+
 async function generateObjectByModelType(
   runtime: IAgentRuntime,
   params: ObjectGenerationParams,
@@ -132,58 +187,14 @@ async function generateObjectByModelType(
     .replace(/\n?`{1,}\s*$/i, "")
     .trim();
 
-  // If the response contained extra prose or — more commonly — duplicated
-  // copies of the JSON glued together with stray fences between them (which
-  // happens when extractResponsesOutputText concatenates output_text and
-  // output[] segments containing the same body), walk from the first { or [
-  // and stop at its matching close. This isolates exactly one balanced
-  // top-level JSON value so we don't re-introduce the duplicate-content
-  // parse failure downstream.
-  if (jsonText.length > 0 && !/^[{\[]/.test(jsonText)) {
-    const firstObj = jsonText.indexOf("{");
-    const firstArr = jsonText.indexOf("[");
-    const start =
-      firstObj === -1
-        ? firstArr
-        : firstArr === -1
-          ? firstObj
-          : Math.min(firstObj, firstArr);
-    if (start >= 0) {
-      const open = jsonText[start];
-      const close = open === "{" ? "}" : "]";
-      let depth = 0;
-      let inString = false;
-      let escape = false;
-      let end = -1;
-      for (let i = start; i < jsonText.length; i++) {
-        const ch = jsonText[i];
-        if (escape) {
-          escape = false;
-          continue;
-        }
-        if (ch === "\\") {
-          escape = true;
-          continue;
-        }
-        if (ch === '"') {
-          inString = !inString;
-          continue;
-        }
-        if (inString) continue;
-        if (ch === open) depth++;
-        else if (ch === close) {
-          depth--;
-          if (depth === 0) {
-            end = i;
-            break;
-          }
-        }
-      }
-      if (end > start) {
-        jsonText = jsonText.slice(start, end + 1).trim();
-      }
-    }
-  }
+  // Isolate exactly one balanced top-level JSON value. Handles two failure
+  // modes seen in production: (a) the response carries extra prose before
+  // the JSON, and (b) the response contains duplicated copies of the JSON
+  // glued together with stray fences between them (which happens when
+  // extractResponsesOutputText concatenates output_text and output[]
+  // segments containing the same body). Runs unconditionally — for already
+  // clean single-value input start=0 and the slice returns the same string.
+  jsonText = extractFirstBalancedJsonValue(jsonText);
 
   try {
     return JSON.parse(jsonText) as Record<string, JsonValue>;
