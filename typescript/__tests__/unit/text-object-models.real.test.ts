@@ -289,4 +289,22 @@ describe("elizacloud responses-backed text/object models", () => {
 
     expect(result).toEqual({ status: "ok", count: 6 });
   });
+
+  it("skips bracketed prose and recovers JSON appearing later", async () => {
+    nextBody = JSON.stringify({
+      output_text:
+        '[note] Here is the JSON you requested: {"status":"ok","count":7}',
+      usage: { input_tokens: 8, output_tokens: 8, total_tokens: 16 },
+    });
+
+    const result = await handleObjectSmall(
+      createRuntime() as never,
+      {
+        prompt: "Return a JSON object",
+        temperature: 0,
+      } as never
+    );
+
+    expect(result).toEqual({ status: "ok", count: 7 });
+  });
 });

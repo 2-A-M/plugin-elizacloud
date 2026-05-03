@@ -37,56 +37,74 @@ function isReasoningModel(modelName: string): boolean {
 }
 
 /**
- * Walk from the first `{` or `[` in `text` to its matching close bracket,
- * respecting JSON string escapes, and return the slice. Returns the input
- * unchanged when no opener is found or no matching closer is reached.
+ * Iterate every `{` / `[` in `text`, walk each candidate to its matching
+ * close bracket (respecting JSON string escapes), and return the first slice
+ * that successfully parses as JSON. Falls back to returning the input
+ * unchanged when no candidate parses — caller routes to `jsonRepair` from
+ * there.
+ *
+ * Locking onto the *first* opener (an earlier draft) misroutes payloads where
+ * prose contains markdown checkboxes, citations, or other bracketed text
+ * before the actual JSON block — `[note] {"x":1}` would return `[note]`
+ * even though valid JSON appears later. Try-parsing each candidate avoids
+ * that.
  *
  * Exported for unit-testability; called unconditionally by the `responses`
  * object-generation path so duplicated/prose-prefixed bodies parse cleanly.
  */
 export function extractFirstBalancedJsonValue(text: string): string {
   if (text.length === 0) return text;
-  const firstObj = text.indexOf("{");
-  const firstArr = text.indexOf("[");
-  const start =
-    firstObj === -1
-      ? firstArr
-      : firstArr === -1
-        ? firstObj
-        : Math.min(firstObj, firstArr);
-  if (start < 0) return text;
-  const open = text[start];
-  const close = open === "{" ? "}" : "]";
-  let depth = 0;
-  let inString = false;
-  let escaped = false;
-  let end = -1;
-  for (let i = start; i < text.length; i++) {
-    const ch = text[i];
-    if (escaped) {
-      escaped = false;
-      continue;
-    }
-    if (ch === "\\") {
-      escaped = true;
-      continue;
-    }
-    if (ch === '"') {
-      inString = !inString;
-      continue;
-    }
-    if (inString) continue;
-    if (ch === open) depth++;
-    else if (ch === close) {
-      depth--;
-      if (depth === 0) {
-        end = i;
-        break;
+  let searchFrom = 0;
+  while (searchFrom < text.length) {
+    const firstObj = text.indexOf("{", searchFrom);
+    const firstArr = text.indexOf("[", searchFrom);
+    const start =
+      firstObj === -1
+        ? firstArr
+        : firstArr === -1
+          ? firstObj
+          : Math.min(firstObj, firstArr);
+    if (start < 0) break;
+    const open = text[start];
+    const close = open === "{" ? "}" : "]";
+    let depth = 0;
+    let inString = false;
+    let escaped = false;
+    let end = -1;
+    for (let i = start; i < text.length; i++) {
+      const ch = text[i];
+      if (escaped) {
+        escaped = false;
+        continue;
+      }
+      if (ch === "\\") {
+        escaped = true;
+        continue;
+      }
+      if (ch === '"') {
+        inString = !inString;
+        continue;
+      }
+      if (inString) continue;
+      if (ch === open) depth++;
+      else if (ch === close) {
+        depth--;
+        if (depth === 0) {
+          end = i;
+          break;
+        }
       }
     }
-  }
-  if (end > start) {
-    return text.slice(start, end + 1).trim();
+    if (end > start) {
+      const candidate = text.slice(start, end + 1).trim();
+      try {
+        JSON.parse(candidate);
+        return candidate;
+      } catch {
+        // not parseable — advance past this opener and try the next one
+      }
+    }
+    searchFrom = start + 1;
   }
   return text;
 }
